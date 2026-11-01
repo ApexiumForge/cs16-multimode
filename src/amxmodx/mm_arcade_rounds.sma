@@ -127,7 +127,7 @@ bool:discover_regamedll_cvars()
 {
     new bool:available = true
 
-    for (new index = 0; index < CVAR_COUNT; index++)
+    for (new ArcadeCvar:index = CVAR_ROUND_INFINITE; index < CVAR_COUNT; index++)
     {
         g_regamedll_cvars[index] = get_cvar_pointer(REGAMEDLL_CVAR_NAMES[index])
         if (!g_regamedll_cvars[index])
@@ -170,7 +170,7 @@ enable_arcade_round_policy()
         save_current_cvars()
     }
 
-    for (new index = 0; index < CVAR_COUNT; index++)
+    for (new ArcadeCvar:index = CVAR_ROUND_INFINITE; index < CVAR_COUNT; index++)
     {
         set_pcvar_string(g_regamedll_cvars[index], ARCADE_CVAR_VALUES[index])
     }
@@ -190,7 +190,7 @@ save_current_cvars()
         return
     }
 
-    for (new index = 0; index < CVAR_COUNT; index++)
+    for (new ArcadeCvar:index = CVAR_ROUND_INFINITE; index < CVAR_COUNT; index++)
     {
         get_pcvar_string(g_regamedll_cvars[index], g_saved_values[index], charsmax(g_saved_values[]))
     }
@@ -204,7 +204,7 @@ restore_saved_cvars()
         return
     }
 
-    for (new index = 0; index < CVAR_COUNT; index++)
+    for (new ArcadeCvar:index = CVAR_ROUND_INFINITE; index < CVAR_COUNT; index++)
     {
         set_pcvar_string(g_regamedll_cvars[index], g_saved_values[index])
     }
