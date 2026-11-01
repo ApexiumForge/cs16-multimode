@@ -1,0 +1,43 @@
+# Development instructions
+
+## Scope
+
+- Preserve the phase boundaries in `README.md`. Do not implement a later phase unless the user explicitly requests it.
+- This repository targets Counter-Strike 1.6 / GoldSrc with Metamod and AMX Mod X. Never introduce SourceMod or Source-engine dependencies.
+- Prefer the stock Steam HLDS baseline. Engine replacements are optional future decisions, not implicit dependencies.
+
+## Architecture
+
+- Keep plugins small and single-purpose. Never grow `mm_core` into a monolith.
+- Planned module boundaries are: core/lifecycle, mode selection, Classic, one plugin per arcade mode, progression, persistence, sounds/cosmetics, and administration.
+- Shared systems expose narrow natives/forwards or include contracts. Mode plugins consume those contracts; they do not reach into another mode's private state.
+- Exactly one mode may own gameplay behavior. A mode transition must stop timers/tasks, remove temporary entities, clear per-player transient state, restore modified cvars, and only then activate the next mode.
+- `mm_mode_manager` is the sole owner of active mode, requested mode, transition state, and Classic format. Other plugins must use `include/mm_mode_api.inc`; never duplicate mode state.
+- `mm_classic` owns Phase 3 Classic team limits, match lifecycle, scoring, and Classic cvars. Arcade configuration files remain non-gameplay markers until their corresponding gameplay phases.
+- `mm_deathmatch` owns Phase 4.1 team-based respawn, loadouts, protection, and transient DM scores. It must remain inactive outside Deathmatch and must not introduce FFA behavior.
+- `mm_armsrace` owns Phase 4.2 weapon progression, Arms Race respawns, HUD, and transient standings. Its final level remains a knife kill, and it must not introduce FFA behavior.
+- `mm_awponly` owns Phase 4.3 AWP/Knife restriction, respawns, protection, transient standings, and optional dedicated-map selection. Its map restoration guard must prevent `changelevel` loops.
+- Persistent profile data and competitive rating are separate concerns. Unbalanced Classic matches are casual until requirements explicitly change.
+
+## Pawn conventions
+
+- Source files live in `src/amxmodx`; generated `.amxx` files never belong in Git.
+- Prefix project cvars, commands, natives, forwards, and task identifiers with `mm_`.
+- Enable warnings and treat compiler warnings as defects. Use constants instead of unexplained numeric values.
+- Register plugin name/version/author as constants and log a clear initialization message.
+- Validate player indices and connection state before player operations. Clean up transient state on disconnect and mode shutdown.
+
+## PowerShell conventions
+
+- Scripts must use terminating errors (`$ErrorActionPreference = 'Stop'`) and explicit, resolved paths.
+- Installation must be non-destructive: reject non-empty targets unless a future command has a clearly documented, explicit upgrade mode.
+- Pin third-party artifacts and verify checksums. Use official or maintained upstream sources; do not guess URLs or versions.
+- State when Administrator rights are required. Server installation, compilation, start, and stop should not require elevation.
+
+## Verification and documentation
+
+- Never claim a runtime test that was not executed. Distinguish static checks, compilation, local launch, and second-computer LAN tests.
+- Update `docs/VALIDATION.md` whenever startup, loading, networking, or plugin behavior changes.
+- Keep secrets, local configs, downloads, installed server files, logs, and compiled plugins ignored.
+- Prefer focused commits that leave the server launchable and the current phase independently testable.
+

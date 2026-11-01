@@ -1,0 +1,32 @@
+# Installed server and downloaded dependencies
+/runtime/
+/downloads/
+/backups/
+/.tmp-deps/
+/.runtime/
+
+# Compiled/generated AMX Mod X artifacts
+*.amxx
+*.inc.cache
+
+# Local/unverified media and experimental sound harness
+/config/cstrike/sound/
+/src/amxmodx/mm_sounds_test.sma
+
+# Local configuration and secrets
+*.local.cfg
+*.secret.cfg
+secrets/
+.env
+.env.*
+!.env.example
+
+# Logs, crash dumps, and editor/OS files
+*.log
+*.dmp
+*.mdmp
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+
