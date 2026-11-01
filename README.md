@@ -2,7 +2,7 @@
 
 A LAN-first Counter-Strike 1.6 dedicated server project, provisionally named **Multi-Mode Network**. Phase 1 establishes a clean vanilla HLDS baseline on Windows, then layers pinned Metamod-P and AMX Mod X on top. Phase 2 adds modular menus and authoritative mode state. Phase 3 adds the isolated Classic match system.
 
-Version **0.4.3** implements the server foundation, native menus, administrator-controlled mode selection, playable Classic matches, team-based Deathmatch, team-based Arms Race, and an AWP Only MVP with optional dedicated-map selection. Phase 4.3.1 source preparation adds a centralized arcade-round controller, but continuous rounds remain unavailable until a separately approved ReGameDLL_CS migration passes staged runtime validation. HE Battle, voting, shared progression, persistence, cosmetics, and advanced administration remain roadmap items.
+Version **0.4.3** implements the server foundation, native menus, administrator-controlled mode selection, playable Classic matches, team-based Deathmatch, team-based Arms Race, and an AWP Only MVP with optional dedicated-map selection. Phase 4.3.2 adds a guarded isolated-clone workflow for manually evaluating the centralized arcade-round controller with ReGameDLL_CS. Continuous rounds remain unverified until that gameplay matrix passes; the production GameDLL is unchanged. HE Battle, voting, shared progression, persistence, cosmetics, and advanced administration remain roadmap items.
 
 ## Phase 1 contents
 
@@ -55,6 +55,7 @@ To change the provisional hostname, edit `runtime\hlds\cstrike\server.cfg` after
 - **Phase 4.2 — Arms Race MVP (implemented):** configurable 15-level gun progression, team-based respawns, HUD/leaderboard, and a final knife-kill victory.
 - **Phase 4.3 — AWP Only MVP (implemented):** team-based AWP/Knife restriction, respawns, protection, standings, and configurable dedicated-map selection.
 - **Phase 4.3.1 — shared round fix (prepared, migration unapproved):** centralized arcade round/objective policy and a staged ReGameDLL_CS compatibility, backup, validation, and rollback plan. The live GameDLL is unchanged.
+- **Phase 4.3.2 — isolated ReGameDLL trial (prepared, untested):** clone-only setup/install/start/stop/status/rollback scripts, pinned official artifact verification, separate port/state, and a manual Classic/arcade compatibility matrix. No production migration has occurred.
 - **Later Phase 4 — remaining arcade:** isolated HE Battle module. FFA behavior is a separate future decision.
 - **Phase 5 — shared systems:** SQLite profiles, global XP/levels/coins, separate competitive rating, mastery, achievements, HUD, menus, audio, cosmetics, leaderboards, missions, events, and administration.
 - **Optional later:** Next.js/TypeScript management dashboard and public-hosting hardening.

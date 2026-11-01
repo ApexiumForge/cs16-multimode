@@ -4,6 +4,7 @@
 /backups/
 /.tmp-deps/
 /.runtime/
+/.regamedll-trial/
 
 # Compiled/generated AMX Mod X artifacts
 *.amxx

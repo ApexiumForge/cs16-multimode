@@ -1,6 +1,6 @@
 # ReGameDLL_CS compatibility and staged migration
 
-Phase 4.3.1 requires a GameDLL capability that Valve's stock CS 1.6 `mp.dll` does not provide. This document prepares a migration but does not authorize or perform one.
+Phase 4.3.1 requires a GameDLL capability that Valve's stock CS 1.6 `mp.dll` does not provide. Phase 4.3.2 adds an isolated, clone-only preparation workflow; it does not authorize replacement of the production GameDLL or claim runtime compatibility. See [REGAMEDLL_TRIAL.md](REGAMEDLL_TRIAL.md) for the scripts, exact commands, manual gameplay matrix, and rollback procedure.
 
 ## Inspected runtime
 
@@ -20,7 +20,7 @@ The official ReGameDLL_CS project says it is compatible with Valve CS 1.6/CZero 
 
 This is a positive static compatibility result, not a runtime certification. The exact combination of stock `steam_legacy` HLDS, Metamod-P, AMX Mod X, YaPB, and every project plugin must still pass the staged tests below. ReHLDS is not required for the proposed GameDLL-only trial and must not be introduced as part of this phase.
 
-As of the inspection date, the latest stable upstream release is `5.30.0.814` (published 2026-05-18). Its official release provides `regamedll-bin-5.30.0.814.zip` and a detached `.asc` signature. Use only the stable asset from the official `rehlds/ReGameDLL_CS` release. Do not use development builds, third-party repacks, loose DLLs, or Windows system directories.
+As of the inspection date, the latest stable upstream release is `5.30.0.814` (published 2026-05-18). Its official release provides `regamedll-bin-5.30.0.814.zip` and a detached `.asc` signature. The isolated installer pins the official metadata SHA-256 values for both assets. Use only the stable asset from the official `rehlds/ReGameDLL_CS` release. Do not use development builds, third-party repacks, loose DLLs, or Windows system directories.
 
 ## Central round policy
 
@@ -43,9 +43,9 @@ Arcade-to-arcade transitions retain the saved pre-arcade baseline and reapply th
 
 With Valve's stock GameDLL, the controller reports every missing ReGameDLL cvar, changes no GameDLL cvars, and leaves the known round-end limitation in place. `mm_arcade_round_status` prints this diagnostic in the HLDS console. It deliberately does not register fake `mp_*` cvars.
 
-## Backup before an approved trial
+## Superseded manual preparation
 
-Stop the test server first. Never copy a loaded GameDLL. Use a separate clone of the known-good runtime; do not perform the first trial against `runtime\hlds-steam-legacy`.
+The commands below record the original design and are superseded by the guarded scripts in [REGAMEDLL_TRIAL.md](REGAMEDLL_TRIAL.md). Do not perform the first trial against `runtime\hlds-steam-legacy`.
 
 From the repository root, choose explicit paths and create a timestamped backup inside the ignored `backups` directory:
 
@@ -72,7 +72,7 @@ Get-FileHash -Algorithm SHA256 (Join-Path $backupRoot 'mp.dll') | Format-List
 
 Review both resolved runtime paths before executing these commands. The trial target must not exist, and the source must be the project-owned runtime. The backup copy of `mp.dll` must hash to the inspected Valve value above before proceeding.
 
-After explicit migration approval, verify the official archive signature, record its SHA-256 in this document, extract to a temporary directory, and copy the release's Windows `cstrike` GameDLL/config files into the trial runtime only. Do not change `liblist.gam`: it must continue to load Metamod. Do not install ReAPI, ReHLDS, Metamod-R, or built-in zBot as part of this isolated trial. SteamCMD `validate` can restore Valve files, so do not run it between installing ReGameDLL and testing unless the intention is to revert the replacement.
+The prepared installer performs the pinned download, hash checks, temporary extraction, expected-layout validation, and clone-only copy. Do not change `liblist.gam`: it must continue to load Metamod. Do not install ReAPI, ReHLDS, Metamod-R, or built-in zBot as part of this isolated trial. SteamCMD `validate` can restore Valve files, so do not run it inside the trial between installing ReGameDLL and testing unless the intention is to revert the replacement.
 
 ## Required staged validation
 

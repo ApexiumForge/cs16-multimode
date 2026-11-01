@@ -23,6 +23,17 @@ Record the date, machine, command output, and pass/fail result. Do not mark an i
 - [ ] Switch Classic → Deathmatch → Arms Race → AWP Only → Classic; confirm the saved round/objective cvars are retained across arcade-to-arcade transitions and restored before Classic.
 - [ ] Restart and change maps; confirm the controller reapplies policy without mode-change or AWP-map loops.
 - [ ] Perform the documented rollback in the trial runtime and confirm Valve `mp.dll` hash `1DE43E39DC9B085D5B0FE7920C520A319A8244532835C9EF7A4F5DA930BACE54` is restored.
+
+## Phase 4.3.2 isolated workflow checks (manual; not yet executed)
+
+- [ ] Follow `docs/REGAMEDLL_TRIAL.md` in order and record every script output; do not reuse or merge an old trial directory.
+- [ ] Confirm setup refuses a running production executable, identical source/trial paths, paths outside the project runtime, and pre-existing trial/state directories.
+- [ ] Confirm `manifest.json` records the production and clone paths, original GameDLL hash, verified backup records, and preserved Metamod/AMXX configuration hashes.
+- [ ] Confirm install accepts only official `5.30.0.814` assets with the pinned archive/signature hashes and expected Windows archive layout.
+- [ ] Confirm status reports the production GameDLL unchanged and the installed clone GameDLL matching `install.json`.
+- [ ] Confirm the clone binds to `27016`, uses its own PID record and logs, and does not conflict with production `27015`.
+- [ ] Complete every Deathmatch, Arms Race, AWP Only, arcade-transition, and Classic-restoration observation in `REGAMEDLL_TRIAL.md`.
+- [ ] Confirm rollback refuses a running clone, verifies backups, restores/removes only manifest-listed GameDLL files, preserves addon/plugin configuration, and leaves production unchanged.
 - [ ] `runtime\hlds-steam-legacy\cstrike\addons\amxmodx\plugins\mm_core.amxx` exists.
 
 ## Server startup and plugin loading
