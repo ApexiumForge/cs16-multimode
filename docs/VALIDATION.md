@@ -15,12 +15,12 @@ Record the date, machine, command output, and pass/fail result. Do not mark an i
 - [ ] Before any migration, record `hlds.exe`, `swds.dll`, `mp.dll`, `liblist.gam`, and Metamod DLL hashes and compare them with `docs/REGAMEDLL_MIGRATION.md`.
 - [ ] Use a separate cloned runtime. Confirm the verified `runtime\hlds-steam-legacy` GameDLL was not overwritten.
 - [ ] With the Valve GameDLL, run `mm_arcade_round_status`; confirm it reports unsupported and no fake `mp_round_infinite` cvar exists.
-- [ ] After an explicitly approved ReGameDLL trial, run `game version`; record the exact version/build URL and confirm `mm_arcade_round_status` detects the complete cvar set.
+- [ ] After an explicitly approved ReGameDLL trial, run `game version`; record the exact version/build URL and confirm `mm_arcade_round_status` detects all four required round-control cvars while reporting any unavailable optional presentation cvar as skipped.
 - [ ] In Classic, verify normal round timer, team elimination, bomb, hostage, scoring, and restart behavior.
 - [ ] In Deathmatch, Arms Race, and AWP Only, verify timer expiry, team elimination, bomb, hostage, VIP, and escape scenarios do not emit ordinary round-win/restart events.
 - [ ] Verify a bomb already carried, dropped, or planted at an arcade transition is removed, and no new C4 is assigned during arcade play.
 - [ ] Verify Deathmatch statistics/respawns, Arms Race weapon progression/win reset, AWP Only statistics/respawns/map switching, and YaPB behavior remain correct.
-- [ ] Switch Classic → Deathmatch → Arms Race → AWP Only → Classic; confirm the saved round/objective cvars are retained across arcade-to-arcade transitions and restored before Classic.
+- [ ] Switch Classic → Deathmatch → Arms Race → AWP Only → Classic; confirm the four required round/objective cvars and every available optional presentation cvar are retained across arcade-to-arcade transitions and restored before Classic.
 - [ ] Restart and change maps; confirm the controller reapplies policy without mode-change or AWP-map loops.
 - [ ] Perform the documented rollback in the trial runtime and confirm Valve `mp.dll` hash `1DE43E39DC9B085D5B0FE7920C520A319A8244532835C9EF7A4F5DA930BACE54` is restored.
 

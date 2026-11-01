@@ -156,12 +156,11 @@ mp_roundover
 mp_roundrespawn_time
 mp_give_player_c4
 mp_show_scenarioicon
-mp_show_bomb_timer
 ```
 
 Expected:
 
-1. The six values match the values captured before the first arcade activation. With the unmodified ReGameDLL defaults, `mp_round_infinite` returns to `0` and `mp_give_player_c4` to `1`.
+1. The four required round-control values and available `mp_show_scenarioicon` value match those captured before the first arcade activation. With the unmodified ReGameDLL defaults, `mp_round_infinite` returns to `0` and `mp_give_player_c4` to `1`. ReGameDLL_CS `5.30.0.814` does not define the optional `mp_show_bomb_timer` cvar.
 2. Classic ready-up, team limits, scoring, halftime, and pause behavior still work.
 3. A normal team elimination produces the appropriate T/CT win and ordinary next round.
 4. On `de_dust2`, Terrorists can receive/plant C4 and bomb explosion or defusal ends the round normally.

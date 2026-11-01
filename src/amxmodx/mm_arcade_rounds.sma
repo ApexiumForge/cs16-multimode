@@ -16,7 +16,8 @@ enum ArcadeCvar
     CVAR_ROUND_OVER,
     CVAR_ROUND_RESPAWN_TIME,
     CVAR_GIVE_PLAYER_C4,
-    CVAR_SHOW_SCENARIO_ICON,
+    CVAR_REQUIRED_COUNT,
+    CVAR_SHOW_SCENARIO_ICON = CVAR_REQUIRED_COUNT,
     CVAR_SHOW_BOMB_TIMER,
     CVAR_COUNT
 }
@@ -119,6 +120,21 @@ public command_round_status()
     if (!g_regamedll_supported)
     {
         server_print("[MM] No cvars were changed. Install and validate ReGameDLL_CS in a separate test runtime first.")
+        for (new ArcadeCvar:required_index = CVAR_ROUND_INFINITE; required_index < CVAR_REQUIRED_COUNT; required_index++)
+        {
+            if (!g_regamedll_cvars[required_index])
+            {
+                server_print("[MM] Missing required round-control cvar: %s", REGAMEDLL_CVAR_NAMES[required_index])
+            }
+        }
+    }
+
+    for (new ArcadeCvar:optional_index = CVAR_SHOW_SCENARIO_ICON; optional_index < CVAR_COUNT; optional_index++)
+    {
+        if (!g_regamedll_cvars[optional_index])
+        {
+            server_print("[MM] Optional presentation cvar unavailable (skipped): %s", REGAMEDLL_CVAR_NAMES[optional_index])
+        }
     }
     return PLUGIN_HANDLED
 }
@@ -132,8 +148,15 @@ bool:discover_regamedll_cvars()
         g_regamedll_cvars[index] = get_cvar_pointer(REGAMEDLL_CVAR_NAMES[index])
         if (!g_regamedll_cvars[index])
         {
-            available = false
-            log_amx("Required ReGameDLL cvar is unavailable: %s", REGAMEDLL_CVAR_NAMES[index])
+            if (index < CVAR_REQUIRED_COUNT)
+            {
+                available = false
+                log_amx("Required ReGameDLL round-control cvar is unavailable: %s", REGAMEDLL_CVAR_NAMES[index])
+            }
+            else
+            {
+                log_amx("Optional ReGameDLL presentation cvar is unavailable and will be skipped: %s", REGAMEDLL_CVAR_NAMES[index])
+            }
         }
     }
     return available
@@ -172,7 +195,10 @@ enable_arcade_round_policy()
 
     for (new ArcadeCvar:index = CVAR_ROUND_INFINITE; index < CVAR_COUNT; index++)
     {
-        set_pcvar_string(g_regamedll_cvars[index], ARCADE_CVAR_VALUES[index])
+        if (g_regamedll_cvars[index])
+        {
+            set_pcvar_string(g_regamedll_cvars[index], ARCADE_CVAR_VALUES[index])
+        }
     }
 
     if (get_pcvar_num(g_disable_objectives_cvar) != 0)
@@ -192,7 +218,10 @@ save_current_cvars()
 
     for (new ArcadeCvar:index = CVAR_ROUND_INFINITE; index < CVAR_COUNT; index++)
     {
-        get_pcvar_string(g_regamedll_cvars[index], g_saved_values[index], charsmax(g_saved_values[]))
+        if (g_regamedll_cvars[index])
+        {
+            get_pcvar_string(g_regamedll_cvars[index], g_saved_values[index], charsmax(g_saved_values[]))
+        }
     }
     g_values_saved = true
 }
@@ -206,7 +235,10 @@ restore_saved_cvars()
 
     for (new ArcadeCvar:index = CVAR_ROUND_INFINITE; index < CVAR_COUNT; index++)
     {
-        set_pcvar_string(g_regamedll_cvars[index], g_saved_values[index])
+        if (g_regamedll_cvars[index])
+        {
+            set_pcvar_string(g_regamedll_cvars[index], g_saved_values[index])
+        }
     }
 
     g_values_saved = false
