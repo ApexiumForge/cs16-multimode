@@ -1,6 +1,8 @@
 # ReGameDLL_CS compatibility and staged migration
 
-Phase 4.3.1 requires a GameDLL capability that Valve's stock CS 1.6 `mp.dll` does not provide. Phase 4.3.2 adds an isolated, clone-only preparation workflow; it does not authorize replacement of the production GameDLL or claim runtime compatibility. See [REGAMEDLL_TRIAL.md](REGAMEDLL_TRIAL.md) for the scripts, exact commands, manual gameplay matrix, and rollback procedure.
+Phase 4.3.1 requires a GameDLL capability that Valve's stock CS 1.6 `mp.dll` does not provide. Phase 4.3.2 added an isolated trial workflow. That trial confirmed ReGameDLL loading, required cvar detection, continuous Deathmatch behavior, arcade-to-arcade policy retention, AWP map reinitialization, and Classic cvar restoration. Arms Race final completion and the complete AWP map-change smoke path still require validation.
+
+Phase 4.3.3 prepares—but does not execute or certify—a guarded production migration. See [REGAMEDLL_PRODUCTION.md](REGAMEDLL_PRODUCTION.md) for the prerequisite audit, timestamped backup, manifest-bound install/rollback, exact commands, and production smoke-test matrix. The isolated workflow remains documented in [REGAMEDLL_TRIAL.md](REGAMEDLL_TRIAL.md).
 
 ## Inspected runtime
 
@@ -81,9 +83,17 @@ Review both resolved runtime paths before executing these commands. The trial ta
 
 The prepared installer performs the pinned download, hash checks, temporary extraction, expected-layout validation, and clone-only copy. Do not change `liblist.gam`: it must continue to load Metamod. Do not install ReAPI, ReHLDS, Metamod-R, or built-in zBot as part of this isolated trial. SteamCMD `validate` can restore Valve files, so do not run it inside the trial between installing ReGameDLL and testing unless the intention is to revert the replacement.
 
-## Required staged validation
+## Trial validation record
 
-These tests are not yet executed:
+The isolated runtime has passed these observed checks:
+
+- ReGameDLL_CS `5.30.0.814` loads and the controller detects all required round-control cvars.
+- Arcade activation applies `mp_round_infinite 1`; repeated Deathmatch eliminations produced no observed stock round-end event.
+- Arms Race retains shared infinite-round policy on transition.
+- AWP Only switches to `awp_india` and reapplies shared policy after map initialization.
+- Returning to Classic restores `mp_round_infinite 0` and `mp_give_player_c4 1`.
+
+The trial still requires the complete Arms Race final-win and AWP Only map-change/reinitialization paths. The following broader checks remain required on production after the operator performs the prepared migration:
 
 1. Start only the cloned trial runtime and run `game version`; require the expected stable ReGameDLL version and official build URL.
 2. Run `meta list` and `amxx plugins`; require Metamod-P, AMX Mod X, all project plugins, and optional YaPB to load without errors.

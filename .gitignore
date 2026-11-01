@@ -5,6 +5,7 @@
 /.tmp-deps/
 /.runtime/
 /.regamedll-trial/
+/.regamedll-production/
 
 # Compiled/generated AMX Mod X artifacts
 *.amxx

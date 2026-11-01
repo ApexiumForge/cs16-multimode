@@ -69,7 +69,9 @@ The source build now includes a central round controller. On the current stock V
 
 No GameDLL migration has been performed or approved. Do not replace `cstrike\dlls\mp.dll` in the verified runtime merely to make the new plugin report support.
 
-Phase 4.3.2 provides a separate clone-only workflow at [REGAMEDLL_TRIAL.md](REGAMEDLL_TRIAL.md). Its scripts default to `runtime\hlds-regamedll-trial`, `.regamedll-trial`, and port `27016`. They must not be pointed at the production runtime. The workflow is prepared but has not been executed or gameplay-validated.
+Phase 4.3.2 provides a separate clone-only workflow at [REGAMEDLL_TRIAL.md](REGAMEDLL_TRIAL.md). Its scripts default to `runtime\hlds-regamedll-trial`, `.regamedll-trial`, and port `27016`. They must not be pointed at the production runtime. Core GameDLL loading, round-control cvars, Deathmatch continuity, arcade transitions, AWP map reinitialization, and Classic restoration passed the isolated trial; Arms Race final completion and the complete AWP map-change path remain manual checks.
+
+Phase 4.3.3 adds a guarded production preparation workflow at [REGAMEDLL_PRODUCTION.md](REGAMEDLL_PRODUCTION.md). It validates the existing trial, creates a timestamped hash-verified backup, and binds install/rollback to one manifest. No production migration is performed by repository setup or build commands.
 
 ### Phase 2.2 administrator commands
 

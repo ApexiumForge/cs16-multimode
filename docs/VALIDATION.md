@@ -2,6 +2,8 @@
 
 Record the date, machine, command output, and pass/fail result. Do not mark an item passed unless it was actually observed.
 
+For the optional production ReGameDLL migration, follow [REGAMEDLL_PRODUCTION.md](REGAMEDLL_PRODUCTION.md). Preparation scripts are not runtime validation; record `game version`, `meta list`, `amxx plugins`, controller diagnostics, all four mode checks, transitions, and any rollback separately.
+
 ## Installation and static checks
 
 - [ ] `git status --short` does not show `runtime`, `downloads`, `.runtime`, compiled `.amxx`, logs, secrets, or local configuration.
