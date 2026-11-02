@@ -35,6 +35,7 @@ mp_round_infinite "1"
 mp_roundover "0"
 mp_roundrespawn_time "-1"
 mp_give_player_c4 "0"
+mp_freeforall "1"
 ```
 
 When present, these optional presentation cvars are also saved and applied:
@@ -46,7 +47,7 @@ mp_show_bomb_timer "0"
 
 ReGameDLL_CS `5.30.0.814` provides `mp_show_scenarioicon` but does not define `mp_show_bomb_timer`. Missing optional presentation cvars are logged and skipped; they do not disable continuous round control.
 
-`mp_round_infinite 1` blocks all documented scenario checks: round timer, insufficient players, VIP, escape, bomb, team extermination, and hostage rescue. Disabling C4 assignment and removing an already carried, dropped, or planted C4 prevents a bomb left over at the transition from continuing to affect arcade play. Hostage/VIP/escape entities are not deleted because those entities cannot be reconstructed safely when returning to Classic without reloading the map.
+`mp_round_infinite 1` blocks all documented scenario checks: round timer, insufficient players, VIP, escape, bomb, team extermination, and hostage rescue. `mp_freeforall 1` makes every other player an enemy regardless of nominal T/CT membership. Disabling C4 assignment and removing an already carried, dropped, or planted C4 prevents a bomb left over at the transition from continuing to affect arcade play. Hostage/VIP/escape entities are not deleted because those entities cannot be reconstructed safely when returning to Classic without reloading the map.
 
 Arcade-to-arcade transitions retain the saved pre-arcade baseline and reapply the policy. Before an arcade-to-Classic transition, all saved cvars are restored. The mode-specific plugins continue to own respawns, weapons, statistics, progression, map selection, and their existing cleanup. YaPB remains a Metamod bot plugin and receives the same normal player lifecycle; no bot quota or bot AI cvar is changed by the round controller.
 
@@ -100,7 +101,7 @@ The trial still requires the complete Arms Race final-win and AWP Only map-chang
 3. With Classic selected, verify normal timer, team elimination, bomb, hostage, and score behavior.
 4. Select each implemented arcade mode. Run `mm_arcade_round_status`; require support detected and verify no `CTs_Win`, `Terrorists_Win`, `Round_End`, or unintended `Round_Start` after timer expiry, team elimination, planting/defusing, or hostage rescue.
 5. Verify Deathmatch respawns/statistics, Arms Race progression/final knife win, AWP Only respawns/map switching, and YaPB add/remove behavior.
-6. Exercise Classic → arcade → arcade → Classic. Confirm all four required cvars and every available optional presentation cvar are restored to their pre-arcade values, and Classic objectives work again.
+6. Exercise Classic → arcade → arcade → Classic. Confirm all five required cvars, including `mp_freeforall`, and every available optional presentation cvar are restored to their pre-arcade values, and Classic objectives/team rules work again.
 7. Repeat a map change and server restart, including AWP Only's configured map restoration, and confirm no mode or map loop.
 
 Real human clients are still required to validate client HUD/menu presentation, weapon input, network connection, and subjective bot/gameplay behavior.

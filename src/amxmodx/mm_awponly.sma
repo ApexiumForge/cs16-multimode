@@ -125,7 +125,7 @@ public player_killed_post(victim, attacker, should_gib)
     remove_spawn_protection(victim)
     g_deaths[victim]++
 
-    if (is_valid_enemy_kill(victim, attacker))
+    if (is_valid_ffa_kill(victim, attacker))
     {
         g_kills[attacker]++
         replenish_awp_ammunition(attacker)
@@ -258,7 +258,7 @@ activate_awponly()
         }
     }
 
-    client_print(0, print_chat, "[%s] Team AWP Only active. AWP and Knife only.", PROJECT_NAME)
+    client_print(0, print_chat, "[%s] Free-for-all AWP Only active. AWP and Knife only.", PROJECT_NAME)
     log_amx("AWP Only activated; transient scores reset.")
 }
 
@@ -368,11 +368,11 @@ remove_spawn_protection(id)
     if (is_user_connected(id)) set_user_godmode(id, 0)
 }
 
-bool:is_valid_enemy_kill(victim, attacker)
+bool:is_valid_ffa_kill(victim, attacker)
 {
     if (attacker < 1 || attacker > MaxClients || attacker == victim || !is_user_connected(attacker)) return false
     if (!is_playing_team(victim) || !is_playing_team(attacker)) return false
-    return cs_get_user_team(victim) != cs_get_user_team(attacker)
+    return true
 }
 
 collect_sorted_players(output[32], &count)

@@ -9,9 +9,9 @@ The current release candidate is **v1.0.0-rc.1**. It contains four supported mod
 ## Features
 
 - **Classic:** nine balanced and unbalanced formats, team limits, warmup, ready-up, scoring, halftime, overtime and match administration.
-- **Deathmatch:** team-based combat, automatic respawns, weapon selection, spawn protection and session leaderboard.
-- **Arms Race:** team-based 15-level weapon progression, immediate loadouts, respawns, HUD and final knife-kill victory.
-- **AWP Only:** team-based AWP/Knife restriction, respawns, protection, standings and configurable `awp_` map selection.
+- **Deathmatch:** free-for-all targeting, automatic respawns, weapon selection, spawn protection and session leaderboard.
+- **Arms Race:** free-for-all 15-level weapon progression, immediate loadouts, respawns, HUD and final knife-kill victory.
+- **AWP Only:** free-for-all AWP/Knife restriction, respawns, protection, standings and configurable `awp_` map selection.
 - **Voting:** `/rtv`, `/votemode`, `/votemap` and `/nextmap` with installed-map validation and one authoritative next mode/map decision.
 - **Administration:** `/admin` and `/adminmenu` for confirmed mode, map, Classic, YaPB, player and server actions.
 - **Player customization:** persistent `/crosshair` styles plus separately deployed optional HD player/Butterfly cosmetics.
@@ -82,9 +82,9 @@ Production-only additions synchronized back into source control are documented i
 - **Phase 2.2 — real mode management (implemented):** authoritative mode/format state, administrator confirmation, configuration transitions, fallback, public Pawn natives/forwards, and `/mode` status.
 - **Phase 2.3 — voting design (superseded by Phase 5):** the initial voting placeholder was replaced by the centralized Phase 5 implementation.
 - **Phase 3 — Classic (implemented):** nine team formats, enforced capacities, warmup/ready/live/paused/halftime/finished lifecycle, MR3/MR5/MR12 rules, MR12 overtime, side switching, scoring, HUD, and admin controls. Unbalanced matches remain casual.
-- **Phase 4.1 — Deathmatch MVP (implemented):** team-based targeting, respawns, weapon selection, ammunition replenishment, spawn protection, and a transient leaderboard.
-- **Phase 4.2 — Arms Race MVP (implemented):** configurable 15-level team-based gun progression, respawns, HUD/leaderboard, and a final knife-kill victory.
-- **Phase 4.3 — AWP Only MVP (implemented):** team-based AWP/Knife restriction, respawns, protection, standings, and configurable dedicated-map selection.
+- **Phase 4.1 — Deathmatch MVP (implemented):** FFA targeting, respawns, weapon selection, ammunition replenishment, spawn protection, and a transient leaderboard.
+- **Phase 4.2 — Arms Race MVP (implemented):** configurable 15-level FFA gun progression, respawns, HUD/leaderboard, and a final knife-kill victory.
+- **Phase 4.3 — AWP Only MVP (implemented):** FFA AWP/Knife restriction, respawns, protection, standings, and configurable dedicated-map selection.
 - **Phase 4.3.1 — shared round fix (implemented in source):** centralized arcade round/objective policy with required-versus-optional ReGameDLL cvar detection.
 - **Phase 4.3.2 — isolated ReGameDLL trial (core validation passed):** clone-only setup/install/start/stop/status/rollback scripts, pinned official artifact verification, separate port/state, and observed Classic/arcade transition checks. Arms Race final completion and the complete AWP map-change path remain manual checks.
 - **Phase 4.3.3 — safe production migration (prepared, not executed):** read-only prerequisites, timestamped verified backup, manifest-bound install/status/rollback scripts, and a production smoke-test matrix. See [docs/REGAMEDLL_PRODUCTION.md](docs/REGAMEDLL_PRODUCTION.md).

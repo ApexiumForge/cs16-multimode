@@ -68,9 +68,10 @@ amxx plugins
 mm_arcade_round_status
 mp_round_infinite
 mp_give_player_c4
+mp_freeforall
 ```
 
-Require ReGameDLL_CS `5.30.0.814`; the existing Metamod-P, AMX Mod X, and YaPB chain; and all eight managed plugins without the two obsolete development plugins. In Classic, require `mp_round_infinite 0` and `mp_give_player_c4 1`. If startup, loading, or baseline cvars fail, stop and roll back before gameplay tests.
+Require ReGameDLL_CS `5.30.0.814`; the existing Metamod-P, AMX Mod X, and YaPB chain; and all eight managed plugins without the two obsolete development plugins. In Classic, require `mp_round_infinite 0`, `mp_freeforall 0`, and `mp_give_player_c4 1`. If startup, loading, or baseline cvars fail, stop and roll back before gameplay tests.
 
 ## Manual smoke-test matrix
 
@@ -81,11 +82,11 @@ YaPB can supplement population, but real clients are still required for menus/HU
 1. Select Classic and a small balanced format; verify ready-up, capacity, start/restart, and scoring.
 2. Verify normal timer and team-elimination round wins.
 3. On a bomb map, verify C4 assignment, plant, defuse/explosion, and normal results.
-4. Require `mp_round_infinite 0` and `mp_give_player_c4 1`.
+4. Require `mp_round_infinite 0`, `mp_freeforall 0`, and `mp_give_player_c4 1`.
 
 ### Deathmatch
 
-1. Select Deathmatch and run `mm_arcade_round_status`; require supported status, `mp_round_infinite 1`, and `mp_give_player_c4 0`.
+1. Select Deathmatch and run `mm_arcade_round_status`; require supported status, `mp_round_infinite 1`, `mp_freeforall 1`, and `mp_give_player_c4 0`.
 2. With a human and two YaPB bots, repeat cross-team kills beyond a normal transition.
 3. Verify respawns, `/dm`, ammunition, spawn protection, `/top`, and statistics.
 4. Verify no `CTs_Win`, `Terrorists_Win`, `Round_End`, or unintended restart after elimination/timer expiry.

@@ -14,9 +14,9 @@
 - Exactly one mode may own gameplay behavior. A mode transition must stop timers/tasks, remove temporary entities, clear per-player transient state, restore modified cvars, and only then activate the next mode.
 - `mm_mode_manager` is the sole owner of active mode, requested mode, transition state, and Classic format. Other plugins must use `include/mm_mode_api.inc`; never duplicate mode state.
 - `mm_classic` owns Phase 3 Classic team limits, match lifecycle, scoring, and Classic cvars. Arcade configuration files remain non-gameplay markers until their corresponding gameplay phases.
-- `mm_deathmatch` owns Phase 4.1 team-based respawn, loadouts, protection, and transient DM scores. It must remain inactive outside Deathmatch and must not introduce FFA behavior.
-- `mm_armsrace` owns Phase 4.2 weapon progression, Arms Race respawns, HUD, and transient standings. Its final level remains a knife kill, and it must not introduce FFA behavior.
-- `mm_awponly` owns Phase 4.3 AWP/Knife restriction, respawns, protection, transient standings, and optional dedicated-map selection. Its map restoration guard must prevent `changelevel` loops.
+- `mm_deathmatch` owns Phase 4.1 FFA respawn, loadouts, protection, and transient DM scores. It must remain inactive outside Deathmatch.
+- `mm_armsrace` owns Phase 4.2 FFA weapon progression, Arms Race respawns, HUD, and transient standings. Its final level remains a knife kill.
+- `mm_awponly` owns Phase 4.3 FFA AWP/Knife restriction, respawns, protection, transient standings, and optional dedicated-map selection. Its map restoration guard must prevent `changelevel` loops.
 - Persistent profile data and competitive rating are separate concerns. Unbalanced Classic matches are casual until requirements explicitly change.
 
 ## Pawn conventions

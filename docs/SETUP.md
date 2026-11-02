@@ -92,25 +92,25 @@ Ordinary mode changes update authoritative state, execute the corresponding conf
 
 Activate from the HLDS console with `mm_mode deathmatch` or from an authorized player console with `amx_mode deathmatch`. Players on normal T/CT teams respawn about one second after death. `/dm` selects a primary and secondary weapon; `/top` shows the current top five by kills, then fewest deaths. `mm_dm_respawn_delay` defaults to `1.0` seconds and `mm_dm_spawn_protection` to `2.0` seconds. Protection ends immediately when the player presses primary or secondary attack.
 
-Deathmatch is team-based with friendly fire disabled. It does not implement FFA. Scores are transient and reset on Deathmatch activation/exit or reconnect. Exiting Deathmatch cancels respawn/loadout/protection tasks, removes godmode, and executes the tracked server baseline before the next mode configuration applies.
+Deathmatch is free-for-all: players still join T or CT for engine compatibility, but every other active player is an enemy. ReGameDLL `mp_freeforall` is owned by the shared arcade controller. Scores are transient and reset on Deathmatch activation/exit or reconnect.
 
-Stock CS 1.6 can still declare a normal round result when an entire team is eliminated; no stock cvar disables that rule. The plugin respawns players and preserves its own leaderboard across those engine round boundaries, but a two-player 1v1 may visibly enter the normal round-end/restart sequence. Eliminating that sequence requires the separately evaluated shared round controller.
+Playable FFA Deathmatch requires the validated ReGameDLL cvars. `mm_arcade_rounds` applies `mp_freeforall 1`, continuous-round policy, and objective suppression only while an arcade mode owns gameplay, then restores the saved Classic values.
 
 ### Phase 4.2 Arms Race
 
-Activate from the HLDS console with `mm_mode armsrace` or from an authorized player console with `amx_mode armsrace`. Arms Race uses normal T/CT teams with friendly fire disabled. Players and YaPB bots respawn about one second after death, receive only their current progression weapon plus a knife, and cannot use normal purchasing commands.
+Activate from the HLDS console with `mm_mode armsrace` or from an authorized player console with `amx_mode armsrace`. Arms Race is free-for-all: T/CT membership supplies engine team state, while every other player is a valid progression target. Players and compatible bots respawn about one second after death, receive only their current progression weapon plus a knife, and cannot use normal purchasing commands.
 
 The default 15 levels are Glock, USP, Desert Eagle, TMP, MP5, P90, Galil, Famas, AK-47, M4A1, AUG, Scout, AWP, M249, and Knife. Levels 1–14 may be changed in `addons/amxmodx/configs/mm_modes/armsrace.cfg` using supported weapon names. Level 15 is validated as `knife`; an invalid name falls back to the documented default. A player advances only after killing a connected enemy on the opposing team with the weapon assigned to their current level.
 
 `/ar` reports personal level, assigned weapon, kills, and deaths. `/artop` shows the top five ordered by level, kills, then fewest deaths. The HUD shows the local player's level/weapon/kills and the current leader. A final knife kill announces the winner, pauses progression, and resets all players for a new match after five seconds.
 
-`mm_ar_respawn_delay` defaults to `1.0`. Exiting Arms Race cancels respawn/loadout/HUD/reset tasks, clears progression, and restores the tracked server baseline before the next mode configuration applies. No FFA behavior is enabled.
+`mm_ar_respawn_delay` defaults to `1.0`. Exiting Arms Race cancels respawn/loadout/HUD/reset tasks, clears progression, and restores the tracked server baseline before the next mode configuration applies. Suicides never progress; kills against either nominal team do.
 
 The stock CS 1.6 team-elimination rule remains: when the last living member of a team dies, the engine may announce a normal round result and run its round restart even though Arms Race progression and respawns remain active. There is no stock GoldSrc cvar that cleanly disables this. Phase 4.2 does not silently add ReGameDLL or another game DLL.
 
 ### Phase 4.3 AWP Only
 
-Activate with `mm_mode awponly` in the HLDS console or `amx_mode awponly` from an authorized player console. Players and YaPB bots receive only AWP and Knife, respawn after approximately one second, receive configurable spawn protection, and have AWP reserve ammunition replenished after enemy kills. Buying, rebuy/autobuy, ammunition purchases, drops, weapon boxes, and map armoury pickups are blocked while the mode is active.
+Activate with `mm_mode awponly` in the HLDS console or `amx_mode awponly` from an authorized player console. AWP Only is free-for-all; players and compatible bots receive only AWP and Knife, respawn after approximately one second, receive configurable spawn protection, and have AWP reserve ammunition replenished after any non-suicide player kill. Buying, rebuy/autobuy, ammunition purchases, drops, weapon boxes, and map armoury pickups are blocked while the mode is active.
 
 `/awp` shows personal kills/deaths and `/awptop` shows the top five. The HUD shows kills, deaths, and the current leader. Relevant settings are `mm_awp_respawn_delay`, `mm_awp_spawn_protection`, and `mm_awp_reserve_ammo`.
 
@@ -131,7 +131,7 @@ Test-Path '.\runtime\hlds-steam-legacy\cstrike\maps\awp_india.bsp'
 Test-Path '.\runtime\hlds-steam-legacy\cstrike\maps\awp_map.bsp'
 ```
 
-Stock CS 1.6 may still declare a round win when a team is eliminated. The AWP Only plugin retains its transient standings and schedules respawns; the shared round controller can suppress the engine's normal round-end presentation after a separately validated ReGameDLL migration.
+Playable FFA AWP Only requires the same validated ReGameDLL shared policy.
 
 ### Phase 3 Classic commands and rules
 

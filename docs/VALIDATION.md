@@ -45,12 +45,12 @@ Phase 5 voting is not validated by source review or compilation alone. Follow [M
 - [ ] Before any migration, record `hlds.exe`, `swds.dll`, `mp.dll`, `liblist.gam`, and Metamod DLL hashes and compare them with `docs/REGAMEDLL_MIGRATION.md`.
 - [ ] Use a separate cloned runtime. Confirm the verified `runtime\hlds-steam-legacy` GameDLL was not overwritten.
 - [ ] With the Valve GameDLL, run `mm_arcade_round_status`; confirm it reports unsupported and no fake `mp_round_infinite` cvar exists.
-- [ ] After an explicitly approved ReGameDLL trial, run `game version`; record the exact version/build URL and confirm `mm_arcade_round_status` detects all four required round-control cvars while reporting any unavailable optional presentation cvar as skipped.
+- [ ] After an explicitly approved ReGameDLL trial, run `game version`; record the exact version/build URL and confirm `mm_arcade_round_status` detects all five required arcade-policy cvars, including `mp_freeforall`, while reporting unavailable optional presentation cvars as skipped.
 - [ ] In Classic, verify normal round timer, team elimination, bomb, hostage, scoring, and restart behavior.
 - [ ] In Deathmatch, Arms Race, and AWP Only, verify timer expiry, team elimination, bomb, hostage, VIP, and escape scenarios do not emit ordinary round-win/restart events.
 - [ ] Verify a bomb already carried, dropped, or planted at an arcade transition is removed, and no new C4 is assigned during arcade play.
 - [ ] Verify Deathmatch statistics/respawns, Arms Race weapon progression/win reset, AWP Only statistics/respawns/map switching, and YaPB behavior remain correct.
-- [ ] Switch Classic → Deathmatch → Arms Race → AWP Only → Classic; confirm the four required round/objective cvars and every available optional presentation cvar are retained across arcade-to-arcade transitions and restored before Classic.
+- [ ] Switch Classic → Deathmatch → Arms Race → AWP Only → Classic; confirm the five required round/objective/FFA cvars and every available optional presentation cvar are retained across arcade-to-arcade transitions and restored before Classic.
 - [ ] Restart and change maps; confirm the controller reapplies policy without mode-change or AWP-map loops.
 - [ ] Perform the documented rollback in the trial runtime and confirm Valve `mp.dll` hash `1DE43E39DC9B085D5B0FE7920C520A319A8244532835C9EF7A4F5DA930BACE54` is restored.
 
@@ -163,7 +163,7 @@ Phase 3 is accepted only after the required formats and lifecycle paths are exer
 
 Automated runtime evidence may prove plugin compatibility and state transitions, but visual/client behavior and real-player acceptance items remain manual.
 
-## Phase 4.1 team Deathmatch checks
+## Phase 4.1 free-for-all Deathmatch checks
 
 - [ ] Run `./tests/phase4-1.ps1`; confirm all architecture, lifecycle, configuration, and scope checks pass.
 - [ ] Build and restart; confirm all eight production plugins run, with the updated project plugins reporting `0.4.4`.
@@ -173,7 +173,8 @@ Automated runtime evidence may prove plugin compatibility and state transitions,
 - [ ] Fire during the two-second protection window and confirm protection ends; also confirm it expires without firing.
 - [ ] Get kills until reserve ammunition is reduced, then get another kill and verify both selected weapons return to full reserve ammunition.
 - [ ] Use `/top`; verify humans and bots are ordered by kills, with fewer deaths breaking equal-kill ties.
-- [ ] Confirm teammates remain teammates, friendly fire is disabled, and no FFA behavior occurs.
+- [ ] Put two players on the same nominal team and one on the other team. Confirm every player can damage and kill every other player while self-kills do not add leaderboard kills.
+- [ ] Confirm `mp_freeforall` is `1`, while `mp_autoteambalance` and `mp_limitteams` are `0`.
 - [ ] Switch to Classic while a respawn and protection timer are pending. Confirm the pending respawn/loadout does not occur, damage is normal, Classic returns to Waiting, and normal Classic cvars/loadouts resume.
 - [ ] Switch repeatedly Classic → Deathmatch → Classic and inspect logs for native, Ham, invalid-player, or task errors.
 - [ ] With validated ReGameDLL, eliminate every living player repeatedly and confirm the shared infinite-round policy prevents ordinary round-end/restart events.
@@ -207,7 +208,7 @@ Then enter `mm_mode classic` in the HLDS console. Expected: Deathmatch logs clea
 
 YaPB remains disabled by default; do not leave the development registration enabled after testing.
 
-## Phase 4.2 team Arms Race checks
+## Phase 4.2 free-for-all Arms Race checks
 
 - [ ] Compile all plugins manually and confirm `mm_armsrace.sma` produces no errors or warnings.
 - [ ] Restart and confirm `amxx plugins` reports `mm_armsrace.amxx` running at `0.4.4` while the server still defaults to Classic.
@@ -215,7 +216,7 @@ YaPB remains disabled by default; do not leave the development registration enab
 - [ ] Confirm the configured order begins with Glock/USP/Deagle, moves through SMGs, rifles, and snipers, then ends with M249 and Knife.
 - [ ] As a human, kill an enemy with the assigned weapon; verify the level advances and the next weapon is equipped immediately with full reserve ammunition.
 - [ ] Kill an enemy with the knife or a picked-up weapon before its configured level; verify the victim respawns but progression does not advance.
-- [ ] Verify suicide and team-kill events do not advance progression. Confirm friendly fire remains disabled in the default configuration.
+- [ ] Verify a kill against a player on either nominal team advances progression with the assigned weapon. Verify suicide does not advance.
 - [ ] Die as both a human and YaPB bot; verify respawn occurs in approximately one second and the current progression weapon is restored.
 - [ ] Try `buy`, buy-menu equipment, rebuy, autobuy, and ammunition purchase commands; verify each is blocked while Arms Race is active.
 - [ ] Use `/ar`; verify level, assigned weapon, valid kills, and deaths. Use `/artop`; verify ordering by level, kills, then fewest deaths.
@@ -243,7 +244,7 @@ yb add 2 0 2 0 AR_Test_CT
 yb list
 ```
 
-Connect your client, join T/CT or spectate, and use `/ar` plus `/artop`. Expected: both bots begin with Glock, progress only on valid enemy kills with their assigned weapon, respawn near one second, and appear in the leaderboard/HUD leader calculation.
+Connect your client, join T/CT or spectate, and use `/ar` plus `/artop`. Expected: bots begin with Glock, treat every other player as an enemy, progress on assigned-weapon kills regardless of nominal team, respawn near one second, and appear in the leaderboard/HUD leader calculation.
 
 When finished, enter `mm_mode classic`, confirm Arms Race cleanup and Classic Waiting state, then stop and disable YaPB:
 
@@ -252,7 +253,7 @@ When finished, enter `mm_mode classic`, confirm Arms Race cleanup and Classic Wa
 .\scripts\disable-test-bots.ps1
 ```
 
-## Phase 4.3 team AWP Only checks
+## Phase 4.3 free-for-all AWP Only checks
 
 - [ ] Before startup, use `Test-Path` to record whether `awp_india.bsp` or `awp_map.bsp` is installed. Do not mark map switching passed when neither exists.
 - [ ] Compile manually and confirm `mm_awponly.sma` produces no errors or warnings; confirm `amxx plugins` later reports version `0.4.4`.
@@ -264,10 +265,11 @@ When finished, enter `mm_mode classic`, confirm Arms Race cleanup and Classic Wa
 - [ ] Attempt buy, equipment buy, autobuy, rebuy, both ammo buys, weapon drop, a map armoury pickup, and a dropped weapon-box pickup; verify all are blocked.
 - [ ] Die as both a human and bot; verify respawn occurs near one second and the AWP/Knife loadout returns.
 - [ ] Verify spawn protection defaults to two seconds, expires normally, is removed by AWP primary fire, is not removed merely by scoping, and is removed by either knife attack.
-- [ ] Reduce AWP reserve ammunition, make an enemy kill, and verify reserve ammunition replenishes. Verify suicide and non-enemy events do not add kills.
+- [ ] Reduce AWP reserve ammunition, kill a player from either nominal team, and verify reserve ammunition replenishes. Verify suicide does not add a kill.
 - [ ] Use `/awp` and `/awptop`; confirm personal kills/deaths and top-five ordering by kills then fewest deaths. Confirm the HUD shows kills, deaths, and the current leader.
 - [ ] Switch AWP Only → Arms Race → Deathmatch → Classic while AWP respawn/loadout/protection tasks are pending; verify no AWP task acts after the transition and normal damage/cvars return.
-- [ ] Confirm team-based play and friendly fire off. Confirm no FFA behavior was introduced.
+- [ ] Put two players on the same nominal team and confirm they can damage/kill one another as FFA enemies.
+- [ ] Return to Classic and confirm `mp_freeforall` returns to `0` and normal team rules return.
 - [ ] Eliminate every living player repeatedly and confirm continuous-round policy prevents ordinary round results/restarts while standings and respawns remain available.
 
 ### Manual two-YaPB AWP Only setup

@@ -142,7 +142,7 @@ public player_killed_post(victim, attacker, should_gib)
     if (!armsrace_active() || !is_user_connected(victim)) return HAM_IGNORED
 
     g_deaths[victim]++
-    if (!g_match_finished && is_valid_enemy_kill(victim, attacker))
+    if (!g_match_finished && is_valid_ffa_kill(victim, attacker))
     {
         process_progression_kill(attacker)
     }
@@ -253,7 +253,7 @@ activate_armsrace()
     begin_next_match()
     remove_task(TASK_HUD)
     set_task(1.0, "task_update_hud", TASK_HUD, _, _, "b")
-    client_print(0, print_chat, "[%s] Team Arms Race active. Reach level 15 and win with a knife kill.", PROJECT_NAME)
+    client_print(0, print_chat, "[%s] Free-for-all Arms Race active. Reach level 15 and win with a knife kill.", PROJECT_NAME)
     log_amx("Arms Race activated with a validated %d-level progression.", AR_LEVEL_COUNT)
 }
 
@@ -339,11 +339,11 @@ replenish_current_ammunition(id)
     if (weapon != WEAPON_KNIFE) cs_set_user_bpammo(id, WEAPON_IDS[weapon], WEAPON_AMMO[weapon])
 }
 
-bool:is_valid_enemy_kill(victim, attacker)
+bool:is_valid_ffa_kill(victim, attacker)
 {
     if (attacker < 1 || attacker > MaxClients || attacker == victim || !is_user_connected(attacker)) return false
     if (!is_playing_team(victim) || !is_playing_team(attacker)) return false
-    return cs_get_user_team(victim) != cs_get_user_team(attacker)
+    return true
 }
 
 register_progression_cvars()

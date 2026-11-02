@@ -274,7 +274,7 @@ activate_deathmatch()
             set_task(0.2, "task_respawn_player", TASK_RESPAWN_BASE + id)
         }
     }
-    client_print(0, print_chat, "[%s] Team Deathmatch active. Use /dm for weapons and /top for scores.", PROJECT_NAME)
+    client_print(0, print_chat, "[%s] Free-for-all Deathmatch active. Use /dm for weapons and /top for scores.", PROJECT_NAME)
     log_amx("Deathmatch activated; transient scores reset.")
 }
 

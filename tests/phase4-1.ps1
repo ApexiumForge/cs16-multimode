@@ -4,6 +4,7 @@ param()
 $ErrorActionPreference = 'Stop'
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $source = Get-Content -LiteralPath (Join-Path $repoRoot 'src\amxmodx\mm_deathmatch.sma') -Raw
+$roundController = Get-Content -LiteralPath (Join-Path $repoRoot 'src\amxmodx\mm_arcade_rounds.sma') -Raw
 $armsRace = Get-Content -LiteralPath (Join-Path $repoRoot 'src\amxmodx\mm_armsrace.sma') -Raw
 $awpOnly = Get-Content -LiteralPath (Join-Path $repoRoot 'src\amxmodx\mm_awponly.sma') -Raw
 $classic = Get-Content -LiteralPath (Join-Path $repoRoot 'src\amxmodx\mm_classic.sma') -Raw
@@ -36,11 +37,14 @@ Assert-Match $source 'cs_set_user_bpammo' 'Loadouts/kills must replenish reserve
 Assert-Match $source 'say /top' 'The leaderboard command must exist.'
 Assert-Match $source 'g_kills\[attacker\]\+\+' 'Kills must be tracked.'
 Assert-Match $source 'g_deaths\[victim\]\+\+' 'Deaths must be tracked.'
-Assert-Match $source 'Team Deathmatch active' 'Deathmatch must identify its team-based rules.'
-Assert-Match $armsRace 'cs_get_user_team\(victim\)\s*!=\s*cs_get_user_team\(attacker\)' 'Arms Race progression must require an opposing-team kill.'
-Assert-Match $awpOnly 'cs_get_user_team\(victim\)\s*!=\s*cs_get_user_team\(attacker\)' 'AWP Only scoring must require an opposing-team kill.'
-if ($armsRace -match 'is_valid_ffa_kill' -or $awpOnly -match 'is_valid_ffa_kill') {
-    throw 'Phase 4.1 check failed: an arcade kill path enables FFA behavior.'
+Assert-Match $source 'Free-for-all Deathmatch active' 'Deathmatch must identify its FFA rules.'
+Assert-Match $roundController '"mp_freeforall"' 'The shared arcade controller must discover the ReGameDLL FFA cvar.'
+Assert-Match $roundController 'CVAR_FREE_FOR_ALL' 'The FFA cvar must participate in shared save/apply/restore lifecycle handling.'
+Assert-Match $armsRace 'is_valid_ffa_kill' 'Arms Race must accept non-suicide kills regardless of nominal team.'
+Assert-Match $awpOnly 'is_valid_ffa_kill' 'AWP Only must accept non-suicide kills regardless of nominal team.'
+if ($armsRace -match 'cs_get_user_team\(victim\)\s*!=\s*cs_get_user_team\(attacker\)' -or
+    $awpOnly -match 'cs_get_user_team\(victim\)\s*!=\s*cs_get_user_team\(attacker\)') {
+    throw 'Phase 4.1 check failed: an arcade kill path still rejects same-team FFA kills.'
 }
 Assert-Match $classic 'mm_get_active_mode\(\) == MM_MODE_CLASSIC' 'Classic mechanics must remain mode-gated.'
 Assert-Match $classic 'public mm_mode_transition_started' 'Classic must shut down when Deathmatch is requested.'
@@ -50,16 +54,16 @@ Assert-Match $build "'mm_classic\.amxx', 'mm_deathmatch\.amxx'" 'Gameplay plugin
 foreach ($setting in @(
     'mm_active_config\s+"deathmatch"',
     'mp_friendlyfire\s+"0"',
-    'mp_autoteambalance\s+"1"',
-    'mp_limitteams\s+"1"',
+    'mp_autoteambalance\s+"0"',
+    'mp_limitteams\s+"0"',
     'mp_freezetime\s+"0"',
     'mm_dm_respawn_delay\s+"1\.0"',
     'mm_dm_spawn_protection\s+"2\.0"'
 )) { Assert-Match $config $setting "Missing Deathmatch setting: $setting" }
 
-if ($source -match 'free.?for.?all|\bffa\b|coins?|\bxp\b|skins?|database|sqlite' -or
+if ($source -match 'coins?|\bxp\b|skins?|database|sqlite' -or
     $config -match 'coins?|\bxp\b|skins?|database|sqlite|mp_friendlyfire\s+"1"') {
-    throw 'Phase 4.1 check failed: FFA or out-of-scope shared systems were introduced.'
+    throw 'Phase 4.1 check failed: out-of-scope shared systems were introduced.'
 }
 
 Write-Host 'All Phase 4.1 Deathmatch architecture and lifecycle checks passed.'

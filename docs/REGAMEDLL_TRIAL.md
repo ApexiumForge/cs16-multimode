@@ -72,6 +72,7 @@ amxx plugins
 mm_arcade_round_status
 mp_round_infinite
 mp_give_player_c4
+mp_freeforall
 ```
 
 Expected before selecting an arcade mode:
@@ -100,11 +101,12 @@ mm_mode deathmatch
 mm_arcade_round_status
 mp_round_infinite
 mp_give_player_c4
+mp_freeforall
 ```
 
 Expected:
 
-1. `mp_round_infinite` is `1`; `mp_give_player_c4` is `0`.
+1. `mp_round_infinite` and `mp_freeforall` are `1`; `mp_give_player_c4` is `0`.
 2. Kill the final living player on one team repeatedly. No normal team-win or round-restart event occurs.
 3. Humans and bots respawn in approximately one second.
 4. `/dm` still applies the selected weapons, ammunition replenishes after kills, `/top` retains kills/deaths, and spawn protection still ends on attack.
@@ -155,12 +157,13 @@ mp_round_infinite
 mp_roundover
 mp_roundrespawn_time
 mp_give_player_c4
+mp_freeforall
 mp_show_scenarioicon
 ```
 
 Expected:
 
-1. The four required round-control values and available `mp_show_scenarioicon` value match those captured before the first arcade activation. With the unmodified ReGameDLL defaults, `mp_round_infinite` returns to `0` and `mp_give_player_c4` to `1`. ReGameDLL_CS `5.30.0.814` does not define the optional `mp_show_bomb_timer` cvar.
+1. The five required arcade-policy values and available `mp_show_scenarioicon` value match those captured before the first arcade activation. With unmodified ReGameDLL defaults, `mp_round_infinite` and `mp_freeforall` return to `0`, and `mp_give_player_c4` returns to `1`. ReGameDLL_CS `5.30.0.814` does not define the optional `mp_show_bomb_timer` cvar.
 2. Classic ready-up, team limits, scoring, halftime, and pause behavior still work.
 3. A normal team elimination produces the appropriate T/CT win and ordinary next round.
 4. On `de_dust2`, Terrorists can receive/plant C4 and bomb explosion or defusal ends the round normally.

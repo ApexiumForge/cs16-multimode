@@ -16,6 +16,7 @@ enum ArcadeCvar
     CVAR_ROUND_OVER,
     CVAR_ROUND_RESPAWN_TIME,
     CVAR_GIVE_PLAYER_C4,
+    CVAR_FREE_FOR_ALL,
     CVAR_REQUIRED_COUNT,
     CVAR_SHOW_SCENARIO_ICON = CVAR_REQUIRED_COUNT,
     CVAR_SHOW_BOMB_TIMER,
@@ -28,6 +29,7 @@ new const REGAMEDLL_CVAR_NAMES[CVAR_COUNT][] =
     "mp_roundover",
     "mp_roundrespawn_time",
     "mp_give_player_c4",
+    "mp_freeforall",
     "mp_show_scenarioicon",
     "mp_show_bomb_timer"
 }
@@ -38,6 +40,7 @@ new const ARCADE_CVAR_VALUES[CVAR_COUNT][] =
     "0",
     "-1",
     "0",
+    "1",
     "0",
     "0"
 }
@@ -206,7 +209,7 @@ enable_arcade_round_policy()
         remove_active_bomb_objective()
     }
 
-    log_amx("Continuous arcade rounds enabled: timer, team elimination, and map-scenario round endings are blocked.")
+    log_amx("Continuous FFA arcade policy enabled: all players are enemies and ordinary round endings are blocked.")
 }
 
 save_current_cvars()
@@ -242,7 +245,7 @@ restore_saved_cvars()
     }
 
     g_values_saved = false
-    log_amx("Pre-arcade round and objective cvars restored for Classic gameplay.")
+    log_amx("Pre-arcade round, objective, and FFA cvars restored for Classic gameplay.")
 }
 
 remove_active_bomb_objective()
