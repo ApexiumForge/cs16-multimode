@@ -7,7 +7,7 @@
 #define MM_ESP_TASK 896810
 #define MM_MARKERS 4
 new const PLUGIN_NAME[] = "Multi-Mode Admin Fun"
-new const PLUGIN_VERSION[] = "1.0.0"
+new const PLUGIN_VERSION[] = "1.0.1"
 new const PLUGIN_AUTHOR[] = "ApexiumForge"
 new bool:g_recoil[33], bool:g_esp[33]
 new g_enabled
@@ -80,7 +80,6 @@ public mm_toggle_recoil(id)
     g_recoil[id] = !g_recoil[id]
     mm_clear_punch(id)
     client_print_color(id, print_team_default, "^4[WW1]^1 No recoil: %s", g_recoil[id] ? "ON" : "OFF")
-    log_amx("Admin #%d toggled personal no recoil: %d", get_user_userid(id), g_recoil[id])
     return PLUGIN_HANDLED
 }
 
@@ -89,7 +88,6 @@ public mm_toggle_esp(id)
     if (!mm_allowed(id)) return PLUGIN_HANDLED
     g_esp[id] = !g_esp[id]
     client_print_color(id, print_team_default, "^4[WW1]^1 ESP markers: %s", g_esp[id] ? "ON" : "OFF")
-    log_amx("Admin #%d toggled personal ESP: %d", get_user_userid(id), g_esp[id])
     return PLUGIN_HANDLED
 }
 

@@ -4,6 +4,8 @@
 
 Only human clients with `ADMIN_RCON` (flag `l`) may use `/ww1` or `mm_ww1`. Personal recoil/ESP switches start OFF and reset on connect/disconnect or lost authorization. Server cvar `mm_admin_fun 0` disables both features; restoring it does not restore personal switches. No cvars affecting other players are changed.
 
+Version 1.0.1 does not emit per-player toggle log messages. Private ON/OFF chat feedback and the startup initialization log remain. Existing logs are not removed; hosting console-command audit records are independent of this plugin.
+
 Client binds:
 
 ```cfg
