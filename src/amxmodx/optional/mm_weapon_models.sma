@@ -1,6 +1,6 @@
 #include <amxmodx>
 #include <fakemeta>
-#include <hamsandwich>
+#include <reapi>
 
 new const MM_MODELS[][] = {
     "models/multimode/csgo_inspect/v_ak47.mdl",
@@ -78,68 +78,33 @@ public plugin_precache()
 }
 public plugin_init()
 {
-    register_plugin("Multi-Mode Weapon Models", "1.0.1", "ApexiumForge")
+    register_plugin("Multi-Mode Weapon Models", "1.0.2", "ApexiumForge")
     register_srvcmd("mm_weapon_models_status", "mm_status")
     g_mm_enabled = register_cvar("mm_weapon_models", "1")
-    new const weapons[][] = {
-        "weapon_ak47",
-        "weapon_aug",
-        "weapon_awp",
-        "weapon_deagle",
-        "weapon_elite",
-        "weapon_famas",
-        "weapon_fiveseven",
-        "weapon_g3sg1",
-        "weapon_galil",
-        "weapon_glock18",
-        "weapon_m249",
-        "weapon_m3",
-        "weapon_m4a1",
-        "weapon_mac10",
-        "weapon_mp5navy",
-        "weapon_p228",
-        "weapon_p90",
-        "weapon_scout",
-        "weapon_sg550",
-        "weapon_sg552",
-        "weapon_tmp",
-        "weapon_ump45",
-        "weapon_usp",
-        "weapon_xm1014"
-    }
-    for (new i = 0; i < sizeof weapons; i++)
-        RegisterHam(Ham_Item_Deploy, weapons[i], "mm_deploy_post", 1)
+    RegisterHookChain(RG_CBasePlayerWeapon_DefaultDeploy, "mm_deploy_pre", false)
     log_amx("Optional weapon models initialized; knife remains independently managed.")
 }
-public mm_deploy_post(entity)
+public mm_deploy_pre(entity, const viewmodel[], const weaponmodel[], animation, const extension[], skiplocal)
 {
-    if (!get_pcvar_num(g_mm_enabled) || !pev_valid(entity)) return HAM_IGNORED
-    new id = pev(entity, pev_owner)
-    if (id < 1 || id > MaxClients || !is_user_alive(id)) return HAM_IGNORED
+    if (!get_pcvar_num(g_mm_enabled) || is_nullent(entity)) return HC_CONTINUE
     g_mm_deploys++
-    new classname[32], expected[32], basename[32]
-    pev(entity, pev_classname, classname, charsmax(classname))
     for (new i = 0; i < sizeof MM_MODELS; i++)
     {
-        copy(basename, charsmax(basename), MM_ORIGINALS[i][9])
-        replace(basename, charsmax(basename), ".mdl", "")
-        if (equal(basename, "mp5")) copy(basename, charsmax(basename), "mp5navy")
-        formatex(expected, charsmax(expected), "weapon_%s", basename)
-        if (equal(classname, expected) && g_mm_available[i])
+        if (equal(viewmodel, MM_ORIGINALS[i]) && g_mm_available[i])
         {
-            set_pev(id, pev_viewmodel2, MM_MODELS[i])
+            SetHookChainArg(2, ATYPE_STRING, MM_MODELS[i])
             g_mm_applied++
             break
         }
     }
-    return HAM_IGNORED
+    return HC_CONTINUE
 }
 
 public mm_status()
 {
     new count, viewmodel[96]
     for (new i = 0; i < sizeof MM_MODELS; i++) if (g_mm_available[i]) count++
-    server_print("[Weapon Models] version=1.0.1 enabled=%d precached=%d/24 deploys=%d applied=%d", get_pcvar_num(g_mm_enabled), count, g_mm_deploys, g_mm_applied)
+    server_print("[Weapon Models] version=1.0.2 enabled=%d precached=%d/24 deploys=%d applied=%d", get_pcvar_num(g_mm_enabled), count, g_mm_deploys, g_mm_applied)
     for (new id = 1; id <= MaxClients; id++)
     {
         if (!is_user_alive(id)) continue

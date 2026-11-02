@@ -2,7 +2,7 @@
 
 Optional weapon pack: verify all 24 firearms draw, reload, fire, scope and inspect correctly on a clean client. Confirm Butterfly remains unchanged, namespaced animation sounds download, missing-source sounds remain silent, and `mm_weapon_models 0` restores default viewmodels on subsequent deployments. Compilation does not verify animations in-game.
 
-For weapon model diagnostics, run `mm_weapon_models_status` after equipping a firearm: expect 24 precached models, increasing deploy/applied counters and a namespaced viewmodel path. Version 1.0.1 identifies the deployed weapon entity independently of other model overrides.
+For weapon model diagnostics, run `mm_weapon_models_status` after equipping a firearm: expect 24 precached models, increasing deploy/applied counters and a namespaced viewmodel path. Version 1.0.2 uses the ReAPI DefaultDeploy hook to replace the viewmodel argument before the GameDLL deploys it; ReAPI is required. The hosted Ham deploy callback showed zero invocations despite a live AK-47, so compilation alone did not establish hook compatibility.
 
 Record the date, machine, command output, and pass/fail result. Do not mark an item passed unless it was actually observed.
 
