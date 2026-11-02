@@ -6,6 +6,7 @@ $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $warmup = Get-Content -LiteralPath (Join-Path $repoRoot 'src\amxmodx\mm_warmup_money.sma') -Raw
 $crosshair = Get-Content -LiteralPath (Join-Path $repoRoot 'src\amxmodx\mm_crosshair.sma') -Raw
 $skins = Get-Content -LiteralPath (Join-Path $repoRoot 'src\amxmodx\optional\mm_skins.sma') -Raw
+$announcer = Get-Content -LiteralPath (Join-Path $repoRoot 'src\amxmodx\optional\mm_announcer.sma') -Raw
 $build = Get-Content -LiteralPath (Join-Path $repoRoot 'scripts\build-plugins.ps1') -Raw
 $spriteDir = Join-Path $repoRoot 'config\cstrike\sprites'
 
@@ -31,6 +32,12 @@ Assert-Match $skins 'models/player/mm_ct_hd/mm_ct_hd\.mdl' 'Optional CT model pa
 Assert-Match $skins 'models/player/mm_t_hd/mm_t_hd\.mdl' 'Optional T model path must stay namespaced.'
 Assert-Match $skins 'models/multimode/v_butterfly_lore\.mdl' 'Optional knife model path must stay namespaced.'
 if ($build -match "Name = 'mm_skins'") { throw 'Remote-sync check failed: resource-dependent skins must not enter the default production build.' }
+
+Assert-Match $announcer 'multimode/doublekill\.wav' 'Optional announcer sound path must stay namespaced.'
+Assert-Match $announcer 'mm_mode_transition_started' 'Optional announcer must clear transient sequences during mode transitions.'
+Assert-Match $announcer 'victim == attacker' 'Optional announcer must reject suicides.'
+Assert-Match $announcer 'MM_MODE_CLASSIC' 'Optional announcer must preserve Classic team-kill rules.'
+if ($build -match "Name = 'mm_announcer'") { throw 'Remote-sync check failed: the resource-dependent announcer must not enter the default production build.' }
 
 $expected = @()
 foreach ($shape in 0..3) {

@@ -26,6 +26,12 @@ The plugin preserves native sniper scopes and does not draw for Knife, C4, grena
 
 Register it exactly once through `plugins-mm-skins.ini` after installing its resources. Do not also add `mm_skins.amxx` to the main `plugins.ini`.
 
+## Optional Double Kill announcer
+
+`src/amxmodx/optional/mm_announcer.sma` preserves the source for the local Double Kill announcer. It counts two valid player kills by the same attacker inside the configured window, resets sequences on death, disconnect, and mode transition, and rejects suicides. Classic accepts only opposing-team kills; FFA arcade modes accept any non-suicide player kill.
+
+The module is intentionally excluded from the default production build because it requires the separately supplied `sound/multimode/doublekill.wav`, whose provenance must be verified before distribution. After installing that resource, compile the plugin manually, deploy `mm_announcer.cfg`, and register `mm_announcer.amxx` exactly once. A clean repository clone must remain launchable without this optional module.
+
 ## Validation
 
 ```powershell
@@ -33,4 +39,4 @@ Register it exactly once through `plugins-mm-skins.ini` after installing its res
 .\scripts\build-plugins.ps1 -ServerDir <isolated-server-directory>
 ```
 
-The automated checks require exactly 40 namespaced crosshair resources, reject generated `.ztmp` files, verify lifecycle/mode isolation, and ensure the abandoned announcer is absent from the production build.
+The automated checks require exactly 40 namespaced crosshair resources, reject generated `.ztmp` files, verify lifecycle/mode isolation, and ensure resource-dependent skins and announcer modules remain outside the default production build.
