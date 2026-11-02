@@ -19,7 +19,7 @@ foreach ($command in @('say /admin', 'say_team /admin', 'say /adminmenu', 'say_t
     Assert-Match $admin ([regex]::Escape($command)) "Missing admin command: $command"
 }
 
-foreach ($section in @('Game Mode Management', 'Map Management', 'Classic Match Management', 'Bot Management', 'Player Management', 'Server Controls', 'Server Information')) {
+foreach ($section in @('Game Mode Management', 'Map Management', 'Classic Match Management', 'Bot Management', 'Player Management', 'Server Controls', 'Live Server Dashboard')) {
     Assert-Match $admin ([regex]::Escape($section)) "Missing main menu section: $section"
 }
 
@@ -32,6 +32,11 @@ Assert-Match $admin 'g_target_userid' 'Targets must retain immutable session use
 Assert-Match $admin 'g_target_authid' 'Targets must retain observed auth IDs.'
 Assert-Match $admin 'equal\(authid, g_target_authid\[id\]\)' 'Target identity must be revalidated before execution.'
 Assert-Match $admin 'show_confirmation' 'Disruptive actions must require confirmation.'
+Assert-Match $admin 'mm_request_classic_format' 'Classic format changes must use the centralized mode manager.'
+Assert-Match $admin 'CLASSIC_FORMAT_NAMES' 'The panel must expose all supported Classic formats.'
+Assert-Match $admin 'mm_voting_admin_cancel' 'The panel must centrally cancel active votes and queued decisions.'
+Assert-Match $admin 'count_population' 'The live dashboard must distinguish humans and bots.'
+Assert-Match $admin 'format_transition_state' 'The live dashboard must present transition state safely.'
 
 Assert-Match $admin 'mm_request_mode' 'Mode changes must use the centralized mode manager.'
 Assert-Match $admin 'mm_voting_admin_cancel' 'Mode changes must cancel conflicting vote state centrally.'

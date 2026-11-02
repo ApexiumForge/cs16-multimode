@@ -6,7 +6,7 @@
 #include <mm_voting_api>
 
 #define PLUGIN_NAME "Apexium Forge Admin Panel"
-#define PLUGIN_VERSION "1.0.0"
+#define PLUGIN_VERSION "1.1.0"
 #define PLUGIN_AUTHOR "ApexiumForge"
 #define MAX_MAP_NAME 32
 #define SUPPORTED_MODE_COUNT 4
@@ -15,6 +15,7 @@ enum PendingAction
 {
     ACTION_NONE = 0,
     ACTION_MODE,
+    ACTION_CLASSIC_FORMAT,
     ACTION_MAP,
     ACTION_CLASSIC_WARMUP,
     ACTION_CLASSIC_RESTART,
@@ -24,10 +25,12 @@ enum PendingAction
     ACTION_AUTOBALANCE,
     ACTION_TEAM_LIMITS,
     ACTION_GRAVITY,
-    ACTION_RESTART_ROUND
+    ACTION_RESTART_ROUND,
+    ACTION_CANCEL_VOTE
 }
 
 new const MODE_NAMES[SUPPORTED_MODE_COUNT][] = { "Classic", "Deathmatch", "Arms Race", "AWP Only" }
+new const CLASSIC_FORMAT_NAMES[_:MM_FORMAT_COUNT][] = { "1v1", "2v2", "3v3", "4v4", "5v5", "1v2", "2v3", "3v4", "4v5" }
 new const CONTROL_LABELS[][] =
 {
     "toggle Friendly Fire",
@@ -46,6 +49,7 @@ new const MAP_POOL_FILES[SUPPORTED_MODE_COUNT][] =
 
 new PendingAction:g_pending_action[33]
 new MmMode:g_pending_mode[33]
+new MmClassicFormat:g_pending_format[33]
 new g_pending_map[33][MAX_MAP_NAME]
 new g_target_userid[33]
 new g_target_authid[33][35]
@@ -79,14 +83,18 @@ public command_admin_menu(id)
 show_main_menu(id)
 {
     if (!authorized_admin(id)) return
-    new menu = menu_create("APEXIUM FORGE - ADMIN PANEL", "handle_main_menu")
+    new mode[32], map_name[32], title[192]
+    mm_get_mode_name(mm_get_active_mode(), mode, charsmax(mode))
+    get_mapname(map_name, charsmax(map_name))
+    formatex(title, charsmax(title), "APEXIUM FORGE - ADMIN PANEL v%s^nMode: %s | Map: %s | Players: %d/%d", PLUGIN_VERSION, mode, map_name, get_playersnum(), get_maxplayers())
+    new menu = menu_create(title, "handle_main_menu")
     menu_additem(menu, "Game Mode Management", "0", ADMIN_CFG)
     menu_additem(menu, "Map Management", "1", ADMIN_CFG)
     menu_additem(menu, "Classic Match Management", "2", ADMIN_CFG)
     menu_additem(menu, "Bot Management", "3", ADMIN_CFG)
     menu_additem(menu, "Player Management", "4", ADMIN_KICK)
     menu_additem(menu, "Server Controls", "5", ADMIN_CFG)
-    menu_additem(menu, "Server Information", "6")
+    menu_additem(menu, "Live Server Dashboard", "6")
     menu_setprop(menu, MPROP_EXITNAME, "Exit")
     menu_display(id, menu)
 }
@@ -198,6 +206,7 @@ show_classic_menu(id)
     menu_additem(menu, "Restart Match", "3")
     menu_additem(menu, "Stop/Cancel Match", "4")
     menu_additem(menu, "Show Match Status", "5")
+    menu_additem(menu, "Select Classic Format", "6")
     set_back(menu)
     menu_display(id, menu)
 }
@@ -215,8 +224,44 @@ public handle_classic_menu(id, menu, item)
         case 3: { g_pending_action[id] = ACTION_CLASSIC_RESTART; show_confirmation(id, "restart the Classic match"); return PLUGIN_HANDLED; }
         case 4: { g_pending_action[id] = ACTION_CLASSIC_STOP; show_confirmation(id, "stop/cancel the Classic match"); return PLUGIN_HANDLED; }
         case 5: show_classic_status(id)
+        case 6: { show_classic_format_menu(id); return PLUGIN_HANDLED; }
     }
     show_classic_menu(id)
+    return PLUGIN_HANDLED
+}
+
+show_classic_format_menu(id)
+{
+    if (!require_flag(id, ADMIN_CFG)) return
+    new current[16], title[96], info[4], label[32]
+    mm_get_classic_format_name(mm_get_classic_format(), current, charsmax(current))
+    formatex(title, charsmax(title), "Classic Format^nCurrent: %s", current)
+    new menu = menu_create(title, "handle_classic_format_menu")
+    for (new format = 0; format < _:MM_FORMAT_COUNT; format++)
+    {
+        num_to_str(format, info, charsmax(info))
+        if (format == _:mm_get_classic_format()) formatex(label, charsmax(label), "%s [CURRENT]", CLASSIC_FORMAT_NAMES[format])
+        else copy(label, charsmax(label), CLASSIC_FORMAT_NAMES[format])
+        menu_additem(menu, label, info)
+    }
+    set_back(menu)
+    menu_display(id, menu)
+}
+
+public handle_classic_format_menu(id, menu, item)
+{
+    if (item == MENU_EXIT) { menu_destroy(menu); show_classic_menu(id); return PLUGIN_HANDLED; }
+    new access, info[8], label[32], callback
+    menu_item_getinfo(menu, item, access, info, charsmax(info), label, charsmax(label), callback)
+    menu_destroy(menu)
+    if (!require_flag(id, ADMIN_CFG)) return PLUGIN_HANDLED
+    new format = str_to_num(info)
+    if (format < 0 || format >= _:MM_FORMAT_COUNT) return PLUGIN_HANDLED
+    g_pending_action[id] = ACTION_CLASSIC_FORMAT
+    g_pending_format[id] = MmClassicFormat:format
+    new description[64]
+    formatex(description, charsmax(description), "change Classic format to %s", CLASSIC_FORMAT_NAMES[format])
+    show_confirmation(id, description)
     return PLUGIN_HANDLED
 }
 
@@ -381,6 +426,11 @@ show_server_controls(id)
     formatex(label, charsmax(label), "Gravity: %d", get_cvar_num("sv_gravity"))
     menu_additem(menu, label, "3")
     menu_additem(menu, "Restart Round", "4")
+    new vote_label[64]
+    if (mm_voting_is_active()) copy(vote_label, charsmax(vote_label), "Cancel Active Vote")
+    else if (mm_voting_has_decision()) copy(vote_label, charsmax(vote_label), "Cancel Queued Vote Decision")
+    else copy(vote_label, charsmax(vote_label), "Voting: no active or queued decision")
+    menu_additem(menu, vote_label, "5")
     set_back(menu)
     menu_display(id, menu)
 }
@@ -390,7 +440,7 @@ public handle_server_controls(id, menu, item)
     menu_destroy(menu)
     if (item == MENU_EXIT) { show_main_menu(id); return PLUGIN_HANDLED; }
     if (!require_flag(id, ADMIN_CFG)) return PLUGIN_HANDLED
-    if (item < 0 || item >= sizeof CONTROL_LABELS) return PLUGIN_HANDLED
+    if (item < 0 || item > 5) return PLUGIN_HANDLED
     switch (item)
     {
         case 0: g_pending_action[id] = ACTION_FRIENDLY_FIRE
@@ -398,25 +448,53 @@ public handle_server_controls(id, menu, item)
         case 2: g_pending_action[id] = ACTION_TEAM_LIMITS
         case 3: g_pending_action[id] = ACTION_GRAVITY
         case 4: g_pending_action[id] = ACTION_RESTART_ROUND
+        case 5:
+        {
+            if (!mm_voting_is_active() && !mm_voting_has_decision())
+            {
+                client_print(id, print_chat, "[Apexium] There is no active vote or queued decision to cancel.")
+                show_server_controls(id)
+                return PLUGIN_HANDLED
+            }
+            g_pending_action[id] = ACTION_CANCEL_VOTE
+        }
     }
-    show_confirmation(id, CONTROL_LABELS[item])
+    if (item == 5) show_confirmation(id, "cancel the active vote or queued decision")
+    else show_confirmation(id, CONTROL_LABELS[item])
     return PLUGIN_HANDLED
 }
 
 show_server_information(id)
 {
-    new mode[32], map_name[32]
+    new mode[32], map_name[32], classic_status[128], transition[16], title[384]
+    new humans, bots
+    count_population(humans, bots)
     mm_get_mode_name(mm_get_active_mode(), mode, charsmax(mode))
     get_mapname(map_name, charsmax(map_name))
-    client_print(id, print_chat, "[Apexium] Mode: %s | Map: %s | Players: %d/%d", mode, map_name, get_playersnum(), get_maxplayers())
-    client_print(id, print_chat, "[Apexium] Transition: %d | Vote active: %s | Decision pending: %s", _:mm_get_transition_state(), mm_voting_is_active() ? "yes" : "no", mm_voting_has_decision() ? "yes" : "no")
-    show_main_menu(id)
+    mm_classic_get_status(classic_status, charsmax(classic_status))
+    format_transition_state(_:mm_get_transition_state(), transition, charsmax(transition))
+    formatex(title, charsmax(title), "LIVE SERVER DASHBOARD^nMap: %s | Mode: %s^nHumans: %d | Bots: %d | Slots: %d/%d^nTransition: %s | Vote: %s | Queued: %s^nFF: %s | Gravity: %d^nClassic: %s",
+        map_name, mode, humans, bots, get_playersnum(), get_maxplayers(), transition,
+        mm_voting_is_active() ? "ACTIVE" : "idle", mm_voting_has_decision() ? "YES" : "no",
+        get_cvar_num("mp_friendlyfire") ? "ON" : "OFF", get_cvar_num("sv_gravity"), classic_status)
+    new menu = menu_create(title, "handle_server_information")
+    menu_additem(menu, "Refresh", "0")
+    set_back(menu)
+    menu_display(id, menu)
+}
+
+public handle_server_information(id, menu, item)
+{
+    menu_destroy(menu)
+    if (item == MENU_EXIT) show_main_menu(id)
+    else if (authorized_admin(id)) show_server_information(id)
+    return PLUGIN_HANDLED
 }
 
 show_confirmation(id, const description[])
 {
     new title[192]
-    if ((g_pending_action[id] == ACTION_MODE || g_pending_action[id] == ACTION_MAP) && mm_classic_change_blocked())
+    if ((g_pending_action[id] == ACTION_MODE || g_pending_action[id] == ACTION_CLASSIC_FORMAT || g_pending_action[id] == ACTION_MAP) && mm_classic_change_blocked())
         formatex(title, charsmax(title), "CONFIRM: %s?^nWARNING: A committed Classic match will be interrupted.", description)
     else formatex(title, charsmax(title), "CONFIRM: %s?", description)
     new menu = menu_create(title, "handle_confirmation")
@@ -449,6 +527,11 @@ execute_pending(id)
             new MmRequestResult:result = mm_request_mode(g_pending_mode[id], id)
             client_print(id, print_chat, "[Apexium] Mode request result: %d", _:result)
         }
+        case ACTION_CLASSIC_FORMAT:
+        {
+            new MmRequestResult:result = mm_request_classic_format(g_pending_format[id], id)
+            client_print(id, print_chat, "[Apexium] Classic format request result: %d", _:result)
+        }
         case ACTION_MAP:
         {
             if (mm_get_active_mode() != g_pending_mode[id])
@@ -477,6 +560,34 @@ execute_pending(id)
         case ACTION_TEAM_LIMITS: set_cvar_num("mp_limitteams", get_cvar_num("mp_limitteams") ? 0 : 1)
         case ACTION_GRAVITY: set_cvar_num("sv_gravity", get_cvar_num("sv_gravity") == 800 ? 600 : 800)
         case ACTION_RESTART_ROUND: server_cmd("sv_restart 3")
+        case ACTION_CANCEL_VOTE:
+        {
+            new MmVotingAdminResult:result = mm_voting_admin_cancel(id)
+            client_print(id, print_chat, "[Apexium] Vote cancellation result: %d", _:result)
+        }
+    }
+}
+
+count_population(&humans, &bots)
+{
+    humans = 0
+    bots = 0
+    for (new player = 1; player <= MaxClients; player++)
+    {
+        if (!is_user_connected(player) || is_user_hltv(player)) continue
+        if (is_user_bot(player)) bots++
+        else humans++
+    }
+}
+
+format_transition_state(transition_state, output[], output_length)
+{
+    switch (transition_state)
+    {
+        case MM_TRANSITION_IDLE: copy(output, output_length, "idle")
+        case MM_TRANSITION_RESETTING: copy(output, output_length, "resetting")
+        case MM_TRANSITION_APPLYING: copy(output, output_length, "applying")
+        default: copy(output, output_length, "FAILED")
     }
 }
 

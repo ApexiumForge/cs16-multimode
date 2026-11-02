@@ -1,6 +1,6 @@
 # Phase 6 custom admin menu
 
-`mm_admin` provides one native AMX Mod X administration panel for the four supported modes. Open it with `/admin` or `/adminmenu`. Every menu callback rechecks the caller's permissions; menu visibility is not treated as authorization.
+`mm_admin` provides one native AMX Mod X administration panel for the four supported modes. Open it with `/admin` or `/adminmenu`. Version 1.1 adds a live dashboard, all nine Classic format choices, and centralized vote/queued-decision cancellation. Every menu callback rechecks the caller's permissions; menu visibility is not treated as authorization.
 
 ## Prerequisites and load order
 
@@ -33,8 +33,11 @@ The panel never accepts a player-supplied map name or shell command. Player targ
 - Map changes list only installed entries from the active mode's Phase 5 map pool. The confirmed selection is sent back to `mm_voting`, which owns the one-use cross-map mode marker and `changelevel`.
 - A committed Classic match displays an explicit interruption warning before a mode/map action. Player team moves remain locked during a committed match.
 - Classic operations use `mm_classic` natives. Force Ready/Unready affects only connected human T/CT players. Spectators, HLTV and bots are untouched. Existing development-only `mm_test_bots_ready` behavior is unchanged.
+- Classic format selection lists all nine supported formats, marks the current choice, requires confirmation, and routes the request through `mm_mode_manager`. A committed match receives the same interruption warning as mode/map changes.
 - YaPB actions are refused unless `yb_version` exists. Bot addition uses the documented `yb add 2 0 <team> 0 <name>` form. Classic capacity is checked through the Classic API; removal revalidates that the selected client is still a bot.
 - Friendly Fire, Autobalance, Team Limits and Gravity show their current runtime value and require confirmation. A later mode transition may intentionally restore its owned cvars.
+- Server Controls can cancel an active Phase 5 vote or queued decision through `mm_voting`; it never edits voting state directly.
+- Live Server Dashboard shows map, active mode, human/bot population, slots, transition state, active/queued voting state, friendly fire, gravity, and Classic lifecycle status, with an in-menu refresh action.
 
 ## Safe OptikLink deployment
 
@@ -79,10 +82,12 @@ Add `mm_admin.amxx` after `mm_voting.amxx` in the hosted `plugins.ini`. Preserve
 4. During a committed Classic match, verify mode/map confirmation warns about interruption. Cancel once, then explicitly confirm in a disposable match.
 5. Exercise Force Ready/Unready with humans, a spectator, HLTV if available, and YaPB. Only human T/CT players must change readiness; team-size validation must still prevent an invalid start.
 6. Verify warmup, restart, stop and status in valid and invalid Classic states. No duplicate live transition should occur.
-7. With YaPB absent, verify bot actions are refused. With YaPB loaded, add T/CT/balanced bots, remove one selected bot, and remove all; confirm no human is kicked.
-8. Select a player, let that player disconnect, then confirm the pending action is refused. Verify immunity protection, kick confirmation, slay permissions, safe team moves and console player information.
-9. Confirm every server control shows its current value and requires confirmation. Switch modes afterward and verify the active mode restores its owned settings.
-10. Recheck Deathmatch respawns, Arms Race progression, AWP Only map handling, Classic lifecycle and `/rtv`, `/votemode`, `/votemap`, `/nextmap`.
+7. Select all nine Classic formats, cancel once, then confirm a format change. Verify the current marker updates and a committed match shows an interruption warning.
+8. With YaPB absent, verify bot actions are refused. With YaPB loaded, add T/CT/balanced bots, remove one selected bot, and remove all; confirm no human is kicked.
+9. Select a player, let that player disconnect, then confirm the pending action is refused. Verify immunity protection, kick confirmation, slay permissions, safe team moves and console player information.
+10. Confirm every server control shows its current value and requires confirmation. Start a vote and create a queued decision, then cancel each from the panel.
+11. Open and refresh Live Server Dashboard with humans and bots present; verify every displayed value matches the server.
+12. Switch modes afterward and verify the active mode restores its owned settings. Recheck Deathmatch respawns, Arms Race progression, AWP Only map handling, Classic lifecycle and voting commands.
 
 ## Rollback
 
