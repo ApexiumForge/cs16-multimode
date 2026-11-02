@@ -1,0 +1,3 @@
+2
+crosshair 320 mm_xh_v1_2_3 0 0 15 15
+crosshair 640 mm_xh_v1_2_3 0 0 15 15

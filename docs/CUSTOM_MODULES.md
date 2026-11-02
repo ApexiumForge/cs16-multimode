@@ -1,0 +1,36 @@
+# Synchronized custom modules
+
+These modules originated as production-only OptikLink additions and are now source-controlled and reproducible.
+
+## Classic practice money
+
+`mm_warmup_money` keeps active T/CT players at the configured practice balance only while Classic is Waiting, Warmup, or Ready. It stops during mode transitions and whenever a Classic match is committed, so it cannot refill money during live, halftime, paused, or finished match play.
+
+Configuration in `mm_classic.cfg`:
+
+```cfg
+mm_classic_practice_money "16000"
+```
+
+Set the value to `0` to disable refills. Values are clamped to CS 1.6's maximum `$16000` balance.
+
+## Crosshair menu
+
+`mm_crosshair` provides `/crosshair` and `/ch` for human players. Four shapes and five colors are available. Preferences are stored in the isolated `mm_crosshair` nVault only for stable Steam/Valve identities; LAN and pending identities remain session-only.
+
+The plugin preserves native sniper scopes and does not draw for Knife, C4, grenades, dead players, bots, spectators, hidden HUD states, or non-default FOV. Its 20 sprite/descriptor pairs live under `config/cstrike/sprites` and are copied into `cstrike/sprites` by the production build. The same resources must exist on FastDL.
+
+## Optional HD skins and Butterfly knife
+
+`src/amxmodx/optional/mm_skins.sma` preserves the source for the deployed cosmetic module. It is intentionally excluded from the default production build because it depends on separately licensed model and sound resources that are not distributed by this repository.
+
+Register it exactly once through `plugins-mm-skins.ini` after installing its resources. Do not also add `mm_skins.amxx` to the main `plugins.ini`.
+
+## Validation
+
+```powershell
+.\tests\remote-sync.ps1
+.\scripts\build-plugins.ps1 -ServerDir <isolated-server-directory>
+```
+
+The automated checks require exactly 40 namespaced crosshair resources, reject generated `.ztmp` files, verify lifecycle/mode isolation, and ensure the abandoned announcer is absent from the production build.

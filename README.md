@@ -14,6 +14,7 @@ The current release candidate is **v1.0.0-rc.1**. It contains four supported mod
 - **AWP Only:** free-for-all AWP/Knife restriction, respawns, protection, standings and configurable `awp_` map selection.
 - **Voting:** `/rtv`, `/votemode`, `/votemap` and `/nextmap` with installed-map validation and one authoritative next mode/map decision.
 - **Administration:** `/admin` and `/adminmenu` for confirmed mode, map, Classic, YaPB, player and server actions.
+- **Player customization:** persistent `/crosshair` styles plus separately deployed optional HD player/Butterfly cosmetics.
 - **Optional bots:** pinned YaPB integration for development and solo validation, disabled by default.
 - **Safe operations:** non-destructive installers, isolated ReGameDLL trial/rollback workflows, ignored runtimes and reproducible PowerShell tooling.
 
@@ -68,8 +69,11 @@ Keep passwords and private values in an ignored `*.local.cfg` or `*.secret.cfg` 
 | `/awp`, `/awptop` | AWP Only status and standings. |
 | `/rtv`, `/votemode`, `/votemap`, `/nextmap` | Player voting and planned-change status. |
 | `/admin`, `/adminmenu` | Apexium Forge administration panel for authorized administrators. |
+| `/crosshair`, `/ch` | Select a custom crosshair style and color. |
 
 The admin panel requires the standard AMX Mod X flags documented in [docs/ADMIN_MENU.md](docs/ADMIN_MENU.md). Phase 5 voting must be deployed before `mm_admin` because it owns map validation and cross-map mode persistence.
+
+Production-only additions synchronized back into source control are documented in [docs/CUSTOM_MODULES.md](docs/CUSTOM_MODULES.md).
 
 ## Roadmap
 

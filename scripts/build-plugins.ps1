@@ -19,6 +19,8 @@ $votingConfigSource = Join-Path $repoRoot 'config\cstrike\addons\amxmodx\configs
 $votingConfigDestination = Join-Path $ServerDir 'cstrike\addons\amxmodx\configs\mm_voting.cfg'
 $votingMapSource = Join-Path $repoRoot 'config\cstrike\addons\amxmodx\configs\mm_voting'
 $votingMapDestination = Join-Path $ServerDir 'cstrike\addons\amxmodx\configs\mm_voting'
+$crosshairResourceSource = Join-Path $repoRoot 'config\cstrike\sprites'
+$crosshairResourceDestination = Join-Path $ServerDir 'cstrike\sprites'
 $plugins = @(
     @{ Name = 'mm_core'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_core.sma') },
     @{ Name = 'mm_mode_manager'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_mode_manager.sma') },
@@ -30,16 +32,20 @@ $plugins = @(
     @{ Name = 'mm_awponly'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_awponly.sma') }
     @{ Name = 'mm_voting'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_voting.sma') }
     @{ Name = 'mm_admin'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_admin.sma') }
+    @{ Name = 'mm_warmup_money'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_warmup_money.sma') }
+    @{ Name = 'mm_crosshair'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_crosshair.sma') }
 )
 
 if (-not (Test-Path -LiteralPath $compiler)) { throw "AMX Mod X compiler not found: $compiler. Run install-addons.ps1 first." }
 New-Item -ItemType Directory -Path $pluginDir -Force | Out-Null
 New-Item -ItemType Directory -Path $modeConfigDestination -Force | Out-Null
 New-Item -ItemType Directory -Path $votingMapDestination -Force | Out-Null
+New-Item -ItemType Directory -Path $crosshairResourceDestination -Force | Out-Null
 Get-ChildItem -LiteralPath $modeConfigSource -Filter '*.cfg' -File | Copy-Item -Destination $modeConfigDestination -Force
 Get-ChildItem -LiteralPath $votingMapSource -Filter '*.ini' -File | Copy-Item -Destination $votingMapDestination -Force
 Copy-Item -LiteralPath $classicConfigSource -Destination $classicConfigDestination -Force
 Copy-Item -LiteralPath $votingConfigSource -Destination $votingConfigDestination -Force
+Get-ChildItem -LiteralPath $crosshairResourceSource -Filter 'mm_xh_v1_*' -File | Copy-Item -Destination $crosshairResourceDestination -Force
 
 foreach ($plugin in $plugins) {
     if (-not (Test-Path -LiteralPath $plugin.Source -PathType Leaf)) { throw "Pawn source not found: $($plugin.Source)" }
@@ -60,11 +66,11 @@ foreach ($plugin in $plugins) {
 }
 
 $existingConfig = Get-Content -LiteralPath $pluginsIni | Where-Object {
-    $_ -notmatch '^\s*mm_(?:core|mode_manager|arcade_rounds|modes|classic|deathmatch|armsrace|awponly|voting|admin)\.amxx(?:\s|$)' -and
+    $_ -notmatch '^\s*mm_(?:core|mode_manager|arcade_rounds|modes|classic|deathmatch|armsrace|awponly|voting|admin|warmup_money|crosshair)\.amxx(?:\s|$)' -and
     $_ -notmatch '^\s*;?\s*(?:mapchooser|nextmap|adminvote|mapsmenu)\.amxx(?:\s|$)' -and
     $_ -ne '; Multi-Mode Network' -and
     $_ -ne '; Stock voting disabled: mm_voting owns map and mode decisions'
 }
 Set-Content -LiteralPath $pluginsIni -Encoding ASCII -Value $existingConfig
-Add-Content -LiteralPath $pluginsIni -Encoding ASCII -Value @('', '; Stock voting disabled: mm_voting owns map and mode decisions', '; mapchooser.amxx', '; nextmap.amxx', '; adminvote.amxx', '; mapsmenu.amxx', '', '; Multi-Mode Network', 'mm_core.amxx', 'mm_mode_manager.amxx', 'mm_arcade_rounds.amxx', 'mm_modes.amxx', 'mm_classic.amxx', 'mm_deathmatch.amxx', 'mm_armsrace.amxx', 'mm_awponly.amxx', 'mm_voting.amxx', 'mm_admin.amxx')
+Add-Content -LiteralPath $pluginsIni -Encoding ASCII -Value @('', '; Stock voting disabled: mm_voting owns map and mode decisions', '; mapchooser.amxx', '; nextmap.amxx', '; adminvote.amxx', '; mapsmenu.amxx', '', '; Multi-Mode Network', 'mm_core.amxx', 'mm_mode_manager.amxx', 'mm_arcade_rounds.amxx', 'mm_modes.amxx', 'mm_classic.amxx', 'mm_deathmatch.amxx', 'mm_armsrace.amxx', 'mm_awponly.amxx', 'mm_voting.amxx', 'mm_admin.amxx', 'mm_warmup_money.amxx', 'mm_crosshair.amxx')
 
