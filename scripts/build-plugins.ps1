@@ -29,6 +29,7 @@ $plugins = @(
     @{ Name = 'mm_armsrace'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_armsrace.sma') },
     @{ Name = 'mm_awponly'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_awponly.sma') }
     @{ Name = 'mm_voting'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_voting.sma') }
+    @{ Name = 'mm_admin'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_admin.sma') }
 )
 
 if (-not (Test-Path -LiteralPath $compiler)) { throw "AMX Mod X compiler not found: $compiler. Run install-addons.ps1 first." }
@@ -59,11 +60,11 @@ foreach ($plugin in $plugins) {
 }
 
 $existingConfig = Get-Content -LiteralPath $pluginsIni | Where-Object {
-    $_ -notmatch '^\s*mm_(?:core|mode_manager|arcade_rounds|modes|classic|deathmatch|armsrace|awponly|voting)\.amxx(?:\s|$)' -and
+    $_ -notmatch '^\s*mm_(?:core|mode_manager|arcade_rounds|modes|classic|deathmatch|armsrace|awponly|voting|admin)\.amxx(?:\s|$)' -and
     $_ -notmatch '^\s*;?\s*(?:mapchooser|nextmap|adminvote|mapsmenu)\.amxx(?:\s|$)' -and
     $_ -ne '; Multi-Mode Network' -and
     $_ -ne '; Stock voting disabled: mm_voting owns map and mode decisions'
 }
 Set-Content -LiteralPath $pluginsIni -Encoding ASCII -Value $existingConfig
-Add-Content -LiteralPath $pluginsIni -Encoding ASCII -Value @('', '; Stock voting disabled: mm_voting owns map and mode decisions', '; mapchooser.amxx', '; nextmap.amxx', '; adminvote.amxx', '; mapsmenu.amxx', '', '; Multi-Mode Network', 'mm_core.amxx', 'mm_mode_manager.amxx', 'mm_arcade_rounds.amxx', 'mm_modes.amxx', 'mm_classic.amxx', 'mm_deathmatch.amxx', 'mm_armsrace.amxx', 'mm_awponly.amxx', 'mm_voting.amxx')
+Add-Content -LiteralPath $pluginsIni -Encoding ASCII -Value @('', '; Stock voting disabled: mm_voting owns map and mode decisions', '; mapchooser.amxx', '; nextmap.amxx', '; adminvote.amxx', '; mapsmenu.amxx', '', '; Multi-Mode Network', 'mm_core.amxx', 'mm_mode_manager.amxx', 'mm_arcade_rounds.amxx', 'mm_modes.amxx', 'mm_classic.amxx', 'mm_deathmatch.amxx', 'mm_armsrace.amxx', 'mm_awponly.amxx', 'mm_voting.amxx', 'mm_admin.amxx')
 

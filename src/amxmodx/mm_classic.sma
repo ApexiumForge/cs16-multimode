@@ -59,11 +59,102 @@ public plugin_natives()
 {
     register_library("mm_classic")
     register_native("mm_classic_change_blocked", "native_classic_change_blocked")
+    register_native("mm_classic_get_state", "native_classic_get_state")
+    register_native("mm_classic_get_status", "native_classic_get_status")
+    register_native("mm_classic_get_ready_count", "native_classic_get_ready_count")
+    register_native("mm_classic_get_required_count", "native_classic_get_required_count")
+    register_native("mm_classic_team_has_capacity", "native_classic_team_has_capacity")
+    register_native("mm_classic_force_ready_humans", "native_classic_force_ready_humans")
+    register_native("mm_classic_force_unready_humans", "native_classic_force_unready_humans")
+    register_native("mm_classic_admin_warmup", "native_classic_admin_warmup")
+    register_native("mm_classic_admin_restart", "native_classic_admin_restart")
+    register_native("mm_classic_admin_stop", "native_classic_admin_stop")
 }
 
 public native_classic_change_blocked()
 {
     return g_match_committed
+}
+
+public native_classic_get_state() { return _:g_match_state; }
+public native_classic_get_ready_count() { return ready_count(); }
+public native_classic_get_required_count() { return required_players(); }
+
+public native_classic_get_status(plugin_id, parameter_count)
+{
+    new status[128], format_name[16]
+    mm_get_classic_format_name(mm_get_classic_format(), format_name, charsmax(format_name))
+    formatex(status, charsmax(status), "%s | %s | MR%d | Ready %d/%d | Score %d-%d", format_name,
+        MATCH_STATE_NAMES[_:g_match_state], _:g_match_rules, ready_count(), required_players(),
+        g_team_a_score, g_team_b_score)
+    set_string(1, status, get_param(2))
+}
+
+public native_classic_team_has_capacity(plugin_id, parameter_count)
+{
+    new CsTeams:team = CsTeams:get_param(1)
+    if (team == CS_TEAM_T) return team_count(team) < t_capacity()
+    if (team == CS_TEAM_CT) return team_count(team) < ct_capacity()
+    return false
+}
+
+public native_classic_force_ready_humans(plugin_id, parameter_count)
+{
+    new requester = get_param(1)
+    if (!classic_admin_authorized(requester)) return _:MM_CLASSIC_ADMIN_UNAUTHORIZED
+    if (!classic_active()) return _:MM_CLASSIC_ADMIN_INACTIVE
+    if (g_match_state != MATCH_WARMUP && g_match_state != MATCH_READY) return _:MM_CLASSIC_ADMIN_INVALID_STATE
+
+    for (new id = 1; id <= MaxClients; id++)
+    {
+        if (is_match_player(id) && !is_user_bot(id) && !is_user_hltv(id)) g_ready[id] = true
+    }
+    try_start_match()
+    return _:MM_CLASSIC_ADMIN_OK
+}
+
+public native_classic_force_unready_humans(plugin_id, parameter_count)
+{
+    new requester = get_param(1)
+    if (!classic_admin_authorized(requester)) return _:MM_CLASSIC_ADMIN_UNAUTHORIZED
+    if (!classic_active()) return _:MM_CLASSIC_ADMIN_INACTIVE
+    if (g_match_state != MATCH_WARMUP && g_match_state != MATCH_READY) return _:MM_CLASSIC_ADMIN_INVALID_STATE
+
+    for (new id = 1; id <= MaxClients; id++)
+    {
+        if (is_match_player(id) && !is_user_bot(id) && !is_user_hltv(id)) g_ready[id] = false
+    }
+    return _:MM_CLASSIC_ADMIN_OK
+}
+
+public native_classic_admin_warmup(plugin_id, parameter_count)
+{
+    new requester = get_param(1)
+    if (!classic_admin_authorized(requester)) return _:MM_CLASSIC_ADMIN_UNAUTHORIZED
+    if (!classic_active()) return _:MM_CLASSIC_ADMIN_INACTIVE
+    if (!teams_full()) return _:MM_CLASSIC_ADMIN_TEAMS_INCOMPLETE
+    if (g_match_state == MATCH_LIVE || g_match_state == MATCH_HALFTIME || g_match_state == MATCH_PAUSED) return _:MM_CLASSIC_ADMIN_INVALID_STATE
+    start_warmup()
+    return _:MM_CLASSIC_ADMIN_OK
+}
+
+public native_classic_admin_restart(plugin_id, parameter_count)
+{
+    new requester = get_param(1)
+    if (!classic_admin_authorized(requester)) return _:MM_CLASSIC_ADMIN_UNAUTHORIZED
+    if (!classic_active()) return _:MM_CLASSIC_ADMIN_INACTIVE
+    if (!teams_full()) return _:MM_CLASSIC_ADMIN_TEAMS_INCOMPLETE
+    start_live_match()
+    return _:MM_CLASSIC_ADMIN_OK
+}
+
+public native_classic_admin_stop(plugin_id, parameter_count)
+{
+    new requester = get_param(1)
+    if (!classic_admin_authorized(requester)) return _:MM_CLASSIC_ADMIN_UNAUTHORIZED
+    if (!classic_active()) return _:MM_CLASSIC_ADMIN_INACTIVE
+    enter_waiting_state()
+    return _:MM_CLASSIC_ADMIN_OK
 }
 
 public plugin_init()
@@ -622,6 +713,10 @@ set_mm_match_phase(MatchState:phase)
 }
 
 bool:classic_active() { return mm_get_active_mode() == MM_MODE_CLASSIC; }
+bool:classic_admin_authorized(requester)
+{
+    return requester == 0 || (requester >= 1 && requester <= MaxClients && is_user_connected(requester) && (get_user_flags(requester) & ADMIN_CFG))
+}
 bool:is_match_player(id)
 {
     if (!is_user_connected(id)) return false

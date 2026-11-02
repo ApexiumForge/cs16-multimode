@@ -2,6 +2,7 @@
 #include <amxmisc>
 #include <mm_mode_api>
 #include <mm_classic_api>
+#include <mm_voting_api>
 
 #define PLUGIN_NAME "Multi-Mode Network Voting"
 #define PLUGIN_VERSION "0.5.0"
@@ -71,6 +72,7 @@ new g_planned_map[MAX_MAP_NAME]
 new bool:g_has_decision
 new bool:g_change_queued
 new bool:g_defer_announced
+new bool:g_admin_override_classic
 
 new MmMode:g_restore_mode = MM_MODE_CLASSIC
 new g_restore_attempts
@@ -84,6 +86,54 @@ new g_automatic_cvar
 new g_auto_delay_cvar
 new g_map_choices_cvar
 new g_mode_enabled_cvar[SUPPORTED_MODE_COUNT]
+
+public plugin_natives()
+{
+    register_library("mm_voting")
+    register_native("mm_voting_is_active", "native_voting_is_active")
+    register_native("mm_voting_has_decision", "native_voting_has_decision")
+    register_native("mm_voting_admin_cancel", "native_voting_admin_cancel")
+    register_native("mm_voting_admin_change", "native_voting_admin_change")
+}
+
+public native_voting_is_active() { return g_vote_phase != VOTE_NONE; }
+public native_voting_has_decision() { return g_has_decision; }
+
+public native_voting_admin_cancel(plugin_id, parameter_count)
+{
+    new requester = get_param(1)
+    if (!voting_admin_authorized(requester)) return _:MM_VOTING_ADMIN_UNAUTHORIZED
+
+    if (g_vote_phase != VOTE_NONE) cancel_active_vote("Active vote cancelled by an administrator.")
+    clear_decision()
+    clear_rtv_requests()
+    return _:MM_VOTING_ADMIN_OK
+}
+
+public native_voting_admin_change(plugin_id, parameter_count)
+{
+    new MmMode:mode = MmMode:get_param(1)
+    new map_name[MAX_MAP_NAME]
+    get_string(2, map_name, charsmax(map_name))
+    new requester = get_param(3)
+
+    if (!voting_admin_authorized(requester)) return _:MM_VOTING_ADMIN_UNAUTHORIZED
+    if (!is_supported_mode(mode)) return _:MM_VOTING_ADMIN_INVALID_MODE
+    if (!is_map_name_safe(map_name) || !map_matches_mode(mode, map_name) || !is_map_valid(map_name)) return _:MM_VOTING_ADMIN_INVALID_MAP
+
+    if (g_vote_phase != VOTE_NONE) cancel_active_vote("Active vote cancelled by an administrator.")
+    clear_decision()
+    clear_rtv_requests()
+
+    g_planned_mode = mode
+    copy(g_planned_map, charsmax(g_planned_map), map_name)
+    g_has_decision = true
+    g_change_queued = true
+    g_admin_override_classic = true
+    log_amx("Administrator #%d selected %s (%s); applying through the voting controller.", requester, map_name, MODE_NAMES[_:mode])
+    task_apply_decision()
+    return _:MM_VOTING_ADMIN_OK
+}
 
 public plugin_init()
 {
@@ -600,7 +650,7 @@ public task_apply_decision()
         set_task(DEFER_RETRY_SECONDS, "task_apply_decision", TASK_APPLY_DECISION)
         return
     }
-    if (mm_get_active_mode() == MM_MODE_CLASSIC && mm_classic_change_blocked())
+    if (!g_admin_override_classic && mm_get_active_mode() == MM_MODE_CLASSIC && mm_classic_change_blocked())
     {
         if (!g_defer_announced)
         {
@@ -938,6 +988,7 @@ clear_decision()
     g_has_decision = false
     g_change_queued = false
     g_defer_announced = false
+    g_admin_override_classic = false
     g_planned_map[0] = 0
 }
 
@@ -969,6 +1020,11 @@ bool:is_eligible_voter(id)
 bool:is_supported_mode(MmMode:mode)
 {
     return _:mode >= _:MM_MODE_CLASSIC && _:mode <= _:MM_MODE_AWP_ONLY
+}
+
+bool:voting_admin_authorized(requester)
+{
+    return requester == 0 || (requester >= 1 && requester <= MaxClients && is_user_connected(requester) && (get_user_flags(requester) & ADMIN_CFG))
 }
 
 MmMode:find_supported_mode(const key[])
