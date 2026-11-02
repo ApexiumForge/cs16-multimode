@@ -4,6 +4,32 @@ Record the date, machine, command output, and pass/fail result. Do not mark an i
 
 For the optional production ReGameDLL migration, follow [REGAMEDLL_PRODUCTION.md](REGAMEDLL_PRODUCTION.md). Preparation scripts are not runtime validation; record `game version`, `meta list`, `amxx plugins`, controller diagnostics, all four mode checks, transitions, and any rollback separately.
 
+Phase 5 voting is not validated by source review or compilation alone. Follow [MAP_VOTING.md](MAP_VOTING.md), disable the four stock vote owners, and record each manual observation below.
+
+## Phase 5 map and mode voting checks (manual; not yet executed)
+
+- [ ] Back up the hosted `plugins.ini` and `mm_classic.amxx` while the server is stopped.
+- [ ] Build manually; confirm `mm_classic.sma` and `mm_voting.sma` compile without warnings or errors.
+- [ ] Confirm `mapchooser.amxx`, `nextmap.amxx`, `adminvote.amxx`, and `mapsmenu.amxx` are disabled, and `mm_voting.amxx` loads after `mm_classic.amxx`.
+- [ ] Run `amxx plugins`; confirm both `mm_classic` and `mm_voting` report `running` without native errors.
+- [ ] With two humans, submit one `/rtv`; confirm the displayed count uses the configured 60% threshold. Submit the second request if required and confirm the mode menu opens.
+- [ ] Vote each of Classic, Deathmatch, Arms Race, and AWP Only; confirm only the corresponding installed maps are offered and no missing BSP is offered.
+- [ ] Confirm Classic rejects non-`de_`/`cs_` entries and AWP Only rejects non-`awp_` entries in the AMX Mod X log.
+- [ ] Use `/votemode` and `/votemap` during an active vote; confirm they reopen the correct menu rather than starting a duplicate vote.
+- [ ] Change a ballot before vote end; confirm only the final selection counts. Disconnect a voter and confirm that ballot and RTV request are removed.
+- [ ] Join Spectators as a human and confirm voting works. Add YaPB bots and confirm they neither increase the threshold nor receive a vote menu.
+- [ ] Force a tie; confirm the announcement says it was resolved randomly among tied choices.
+- [ ] Attempt repeated vote commands within five seconds and another vote during the configured cooldown; confirm both are refused.
+- [ ] Complete a vote on an arcade mode; confirm one map change occurs, the selected mode is restored on the new map, and ReGameDLL continuous-round policy remains active.
+- [ ] Select `awp_map` while `awp_india` is also installed; confirm AWP Only accepts the voted map and does not issue a second preferred-map change.
+- [ ] Complete a same-map mode vote; confirm the mode manager transitions without a recursive `changelevel`.
+- [ ] Start a Classic match, complete a vote while Live, and confirm `/nextmap` reports it queued with no interruption. Finish or administratively stop the match and confirm the queued decision then applies.
+- [ ] Change Classic through Halftime and Paused states; confirm the queued decision remains deferred.
+- [ ] Empty the server during a vote; reconnect and confirm the old vote is gone and a new vote can start after cooldown.
+- [ ] Leave automatic voting enabled; confirm it begins after 900 seconds when the minimum human count exists, including in an arcade mode with `mp_timelimit 0`.
+- [ ] Disable `mm_vote_enabled`; confirm all four player commands refuse voting and no automatic vote starts after the next map load.
+- [ ] Perform the documented rollback and confirm the old Classic plugin and previous stock voting configuration load normally.
+
 ## Installation and static checks
 
 - [ ] `git status --short` does not show `runtime`, `downloads`, `.runtime`, compiled `.amxx`, logs, secrets, or local configuration.

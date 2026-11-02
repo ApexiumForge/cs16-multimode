@@ -2,7 +2,7 @@
 
 A LAN-first Counter-Strike 1.6 dedicated server project, provisionally named **Multi-Mode Network**. Phase 1 establishes a clean vanilla HLDS baseline on Windows, then layers pinned Metamod-P and AMX Mod X on top. Phase 2 adds modular menus and authoritative mode state. Phase 3 adds the isolated Classic match system.
 
-Version **0.4.3** implements the server foundation, native menus, administrator-controlled mode selection, playable Classic matches, team-based Deathmatch, team-based Arms Race, and an AWP Only MVP with optional dedicated-map selection. The isolated ReGameDLL_CS trial validated the required round-control capability and core transitions. Phase 4.3.3 prepares a guarded, reversible production migration; it does not execute or certify that migration. HE Battle is removed from V1 scope. Voting, shared progression, persistence, cosmetics, and advanced administration remain roadmap items.
+Version **0.5.0** adds a single-authority native Map & Mode Voting system to the server foundation, menus, centralized mode manager, Classic lifecycle, and the Deathmatch, Arms Race, and AWP Only modes. ReGameDLL_CS continues to own continuous arcade rounds; voting does not alter GameDLL policy. HE Battle remains outside V1 scope. Shared progression, persistence, cosmetics, and advanced administration remain roadmap items.
 
 ## Phase 1 contents
 
@@ -57,8 +57,9 @@ To change the provisional hostname, edit `runtime\hlds\cstrike\server.cfg` after
 - **Phase 4.3.1 — shared round fix (implemented in source):** centralized arcade round/objective policy with required-versus-optional ReGameDLL cvar detection.
 - **Phase 4.3.2 — isolated ReGameDLL trial (core validation passed):** clone-only setup/install/start/stop/status/rollback scripts, pinned official artifact verification, separate port/state, and observed Classic/arcade transition checks. Arms Race final completion and the complete AWP map-change path remain manual checks.
 - **Phase 4.3.3 — safe production migration (prepared, not executed):** read-only prerequisites, timestamped verified backup, manifest-bound install/status/rollback scripts, and a production smoke-test matrix. See [docs/REGAMEDLL_PRODUCTION.md](docs/REGAMEDLL_PRODUCTION.md).
+- **Phase 5 — Map & Mode Voting (implemented in source):** `/rtv`, `/votemode`, `/votemap`, `/nextmap`, installed-map validation, mode-specific pools, Classic-safe deferral, and single-use cross-map mode restoration. See [docs/MAP_VOTING.md](docs/MAP_VOTING.md).
 - **Later Phase 4 — remaining arcade:** isolated HE Battle module. FFA behavior is a separate future decision.
-- **Phase 5 — shared systems:** SQLite profiles, global XP/levels/coins, separate competitive rating, mastery, achievements, HUD, menus, audio, cosmetics, leaderboards, missions, events, and administration.
+- **Later shared systems:** SQLite profiles, global XP/levels/coins, separate competitive rating, mastery, achievements, HUD, menus, audio, cosmetics, leaderboards, missions, events, and administration.
 - **Optional later:** Next.js/TypeScript management dashboard and public-hosting hardening.
 
 Each later phase must remain independently testable. Gameplay modes must not directly own persistence or shared progression, and only the selected mode may control gameplay state.

@@ -2,6 +2,7 @@
 #include <amxmisc>
 #include <cstrike>
 #include <mm_mode_api>
+#include <mm_classic_api>
 
 #define PLUGIN_NAME    "Multi-Mode Network Classic"
 #define PLUGIN_VERSION "0.4.3"
@@ -49,9 +50,21 @@ new g_warmup_remaining
 new bool:g_second_half
 new bool:g_overtime
 new g_overtime_rounds
+new bool:g_match_committed
 new g_hud_sync
 new g_warmup_cvar
 new g_overtime_cvar
+
+public plugin_natives()
+{
+    register_library("mm_classic")
+    register_native("mm_classic_change_blocked", "native_classic_change_blocked")
+}
+
+public native_classic_change_blocked()
+{
+    return g_match_committed
+}
 
 public plugin_init()
 {
@@ -388,6 +401,7 @@ start_live_match()
     reset_match_scores()
     capture_rosters()
     apply_live_rules()
+    g_match_committed = true
     set_mm_match_phase(MATCH_READY)
     server_cmd("sv_restart 3")
     remove_task(TASK_LIVE)
@@ -486,6 +500,7 @@ switch_player_sides()
 
 finish_match(winner)
 {
+    g_match_committed = false
     set_mm_match_phase(MATCH_FINISHED)
     if (winner == 0) client_print(0, print_chat, "[%s] Match finished as a draw: %d-%d.", PROJECT_NAME, g_team_a_score, g_team_b_score)
     else client_print(0, print_chat, "[%s] Team %s wins %d-%d!", PROJECT_NAME, winner == 1 ? "A" : "B", g_team_a_score, g_team_b_score)
@@ -515,6 +530,7 @@ enter_waiting_state()
     remove_task(TASK_FINISH)
     clear_ready_state()
     reset_match_scores()
+    g_match_committed = false
     apply_waiting_rules()
     set_mm_match_phase(MATCH_WAITING)
 }
@@ -526,6 +542,7 @@ disable_classic_match()
     remove_task(TASK_FINISH)
     clear_ready_state()
     reset_match_scores()
+    g_match_committed = false
     set_mm_match_phase(MATCH_WAITING)
 }
 

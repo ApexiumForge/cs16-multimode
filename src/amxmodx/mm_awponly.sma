@@ -290,6 +290,9 @@ bool:queue_preferred_map_change()
     get_pcvar_string(g_fallback_map_cvar, fallback_map, charsmax(fallback_map))
     get_mapname(current_map, charsmax(current_map))
 
+    // Respect an installed AWP map selected by the authoritative vote controller.
+    if (equali(current_map, "awp_", 4) && is_installed_map(current_map)) return false
+
     if (is_installed_map(preferred_map)) copy(target_map, charsmax(target_map), preferred_map)
     else if (is_installed_map(fallback_map)) copy(target_map, charsmax(target_map), fallback_map)
     else
