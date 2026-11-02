@@ -22,9 +22,11 @@ The plugin preserves native sniper scopes and does not draw for Knife, C4, grena
 
 ## Hosted arcade additions
 
-- `mm_he_battle` supplies HE-only free-for-all respawns and blocks purchases, pickups and map equipment.
+- `mm_he_battle` supplies HE-only respawns, enemy-kill standings, a configurable kill limit, and blocks purchases, pickups and map equipment.
+- `mm_arcade_protection` provides attack-cancelled spawn protection for Arms Race and HE Battle.
+- `mm_knife` provides team-based 35 HP knife rounds and routes only to installed maps from its voting pool.
 - `mm_armsrace_restrictions` preserves progression grants while blocking engine purchases and world weapons.
-- `mm_random_spawns` distributes Deathmatch and Arms Race spawns across validated grounded points.
+- `mm_random_spawns` distributes Deathmatch, Arms Race, and HE Battle spawns across validated grounded points.
 - `mm_weapon_tuning` adjusts grounded, stationary spread/recoil through ReAPI. Disable it with `mm_weapon_tuning 0` to restore native weapon behavior.
 
 The ReAPI-backed modules require the pinned official dependency installed by `scripts/install-reapi.ps1` before compilation or startup.

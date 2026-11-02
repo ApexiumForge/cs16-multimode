@@ -10,7 +10,7 @@
 #define MM_MIN_PLAYER_DISTANCE 384.0
 
 new const PLUGIN_NAME[] = "Torbeshi Distributed Spawns"
-new const PLUGIN_VERSION[] = "1.0"
+new const PLUGIN_VERSION[] = "1.1"
 new const PLUGIN_AUTHOR[] = "Torbeshi"
 new Float:g_points[MM_MAX_POINTS][3], Float:g_angles[MM_MAX_POINTS][3]
 new g_count, g_next, g_enabled, g_moves, g_rejected, g_hazards[128], g_hazard_count, g_seeds
@@ -70,7 +70,7 @@ public mm_expand_points()
     {
         remove_task(MM_BUILD_TASK)
         g_ready = g_count > 0
-        log_amx("Distributed spawn scan complete: %d grounded points. DM/Arms Race only.", g_count)
+        log_amx("Distributed spawn scan complete: %d grounded points. DM/Arms Race/HE Battle only.", g_count)
     }
 }
 
@@ -159,7 +159,7 @@ bool:mm_target_mode()
 {
     if (!get_pcvar_num(g_enabled) || mm_get_transition_state() != MM_TRANSITION_IDLE) return false
     new MmMode:mode = mm_get_active_mode()
-    return mode == MM_MODE_DEATHMATCH || mode == MM_MODE_ARMS_RACE
+    return mode == MM_MODE_DEATHMATCH || mode == MM_MODE_ARMS_RACE || mode == MM_MODE_HE_BATTLE
 }
 
 public mm_spawn_post(id)

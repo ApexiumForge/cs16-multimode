@@ -1,12 +1,13 @@
 #include <amxmodx>
 #include <cstrike>
+#include <nvault>
 #include <fakemeta>
 #include <fun>
 #include <hamsandwich>
 #include <mm_mode_api>
 
 #define PLUGIN_NAME    "Multi-Mode Network Deathmatch"
-#define PLUGIN_VERSION "0.4.5-colors"
+#define PLUGIN_VERSION "0.5.0"
 #define PLUGIN_AUTHOR  "Multi-Mode Network"
 #define PROJECT_NAME   "Multi-Mode Network"
 
@@ -23,6 +24,7 @@ enum PrimaryWeapon
     PRIMARY_M249,
     PRIMARY_COUNT
 }
+
 enum SecondaryWeapon
 {
     SECONDARY_DEAGLE = 0,
@@ -47,6 +49,8 @@ new g_kills[33]
 new g_deaths[33]
 new bool:g_protected[33]
 new g_spawn_protection_cvar
+new g_vault = INVALID_HANDLE
+new bool:g_preferences_loaded[33]
 new g_respawn_delay_cvar
 
 public plugin_init()
@@ -64,6 +68,8 @@ public plugin_init()
     g_spawn_protection_cvar = register_cvar("mm_dm_spawn_protection", "2.0")
     g_respawn_delay_cvar = register_cvar("mm_dm_respawn_delay", "1.0")
 
+    g_vault = nvault_open("mm_dm_loadouts")
+    if (g_vault == INVALID_HANDLE) log_amx("Could not open loadout preferences vault.")
     for (new id = 1; id <= MaxClients; id++) reset_player(id)
     if (deathmatch_active()) activate_deathmatch()
     log_amx("%s Deathmatch v%s initialized.", PROJECT_NAME, PLUGIN_VERSION)
@@ -72,6 +78,8 @@ public plugin_init()
 public client_putinserver(id)
 {
     reset_player(id)
+    g_preferences_loaded[id] = false
+    mm_load_preferences(id)
 }
 
 public client_disconnected(id)
@@ -218,6 +226,7 @@ public secondary_menu_handler(id, menu, item)
     g_secondary[id] = SecondaryWeapon:str_to_num(item_info)
     menu_destroy(menu)
 
+    mm_save_preferences(id)
     client_print_color(id, print_team_default, "^x04[%s]^x01 Loadout selected: %s + %s.", PROJECT_NAME, PRIMARY_NAMES[g_primary[id]], SECONDARY_NAMES[g_secondary[id]])
     if (is_user_alive(id)) apply_loadout(id)
     return PLUGIN_HANDLED
@@ -225,6 +234,7 @@ public secondary_menu_handler(id, menu, item)
 
 public command_top(id)
 {
+    if (mm_get_active_mode() == MM_MODE_HE_BATTLE) return PLUGIN_CONTINUE
     if (!deathmatch_active())
     {
         client_print_color(id, print_team_default, "^x04[%s]^x01 /top is available only in Deathmatch mode.", PROJECT_NAME)
@@ -366,4 +376,45 @@ bool:is_playing_team(id)
 bool:deathmatch_active()
 {
     return mm_get_active_mode() == MM_MODE_DEATHMATCH
+}
+
+public client_authorized(id, const authid[])
+{
+    mm_load_preferences(id)
+}
+
+bool:mm_preference_key(id, key[], length)
+{
+    get_user_authid(id, key, length)
+    return (contain(key, "STEAM_") == 0 || contain(key, "VALVE_") == 0)
+        && contain(key, "LAN") == -1 && contain(key, "PENDING") == -1
+        && !equal(key, "STEAM_ID_STOP_IGNORING_RETVALS") && !is_user_bot(id)
+}
+
+mm_load_preferences(id)
+{
+    if (g_vault == INVALID_HANDLE || g_preferences_loaded[id]) return
+    new key[40], value[32], primary[8], secondary[8]
+    if (!mm_preference_key(id, key, charsmax(key))) return
+    g_preferences_loaded[id] = true
+    if (!nvault_get(g_vault, key, value, charsmax(value))) return
+    if (parse(value, primary, charsmax(primary), secondary, charsmax(secondary)) != 2) return
+    g_primary[id] = PrimaryWeapon:clamp(str_to_num(primary), 0, _:PRIMARY_COUNT - 1)
+    g_secondary[id] = SecondaryWeapon:clamp(str_to_num(secondary), 0, _:SECONDARY_COUNT - 1)
+}
+
+mm_save_preferences(id)
+{
+    if (g_vault == INVALID_HANDLE) return
+    new key[40], value[32]
+    if (!mm_preference_key(id, key, charsmax(key))) return
+    formatex(value, charsmax(value), "%d %d", g_primary[id], g_secondary[id])
+    nvault_set(g_vault, key, value)
+}
+
+public plugin_end()
+{
+    for (new id = 1; id <= MaxClients; id++)
+        if (g_protected[id]) remove_spawn_protection(id)
+    if (g_vault != INVALID_HANDLE) nvault_close(g_vault)
 }

@@ -5,11 +5,11 @@
 #include <mm_voting_api>
 
 #define PLUGIN_NAME "Multi-Mode Network Voting"
-#define PLUGIN_VERSION "0.5.0"
+#define PLUGIN_VERSION "0.6.0"
 #define PLUGIN_AUTHOR "Multi-Mode Network"
 #define PROJECT_NAME "Multi-Mode Network"
 
-#define SUPPORTED_MODE_COUNT 4
+#define SUPPORTED_MODE_COUNT _:MM_MODE_COUNT
 #define MAX_MAPS_PER_MODE 64
 #define MAX_MAP_NAME 32
 #define MAX_VOTE_CHOICES 8
@@ -35,7 +35,9 @@ new const MODE_NAMES[SUPPORTED_MODE_COUNT][] =
     "Classic",
     "Deathmatch",
     "Arms Race",
-    "AWP Only"
+    "AWP Only",
+    "HE Battle",
+    "Knife 35HP"
 }
 
 new const MODE_KEYS[SUPPORTED_MODE_COUNT][] =
@@ -43,7 +45,9 @@ new const MODE_KEYS[SUPPORTED_MODE_COUNT][] =
     "classic",
     "deathmatch",
     "armsrace",
-    "awponly"
+    "awponly",
+    "hebattle",
+    "knife"
 }
 
 new const MAP_POOL_FILES[SUPPORTED_MODE_COUNT][] =
@@ -51,7 +55,9 @@ new const MAP_POOL_FILES[SUPPORTED_MODE_COUNT][] =
     "addons/amxmodx/configs/mm_voting/maps_classic.ini",
     "addons/amxmodx/configs/mm_voting/maps_deathmatch.ini",
     "addons/amxmodx/configs/mm_voting/maps_armsrace.ini",
-    "addons/amxmodx/configs/mm_voting/maps_awponly.ini"
+    "addons/amxmodx/configs/mm_voting/maps_awponly.ini",
+    "addons/amxmodx/configs/mm_voting/maps_hebattle.ini",
+    "addons/amxmodx/configs/mm_voting/maps_knife.ini"
 }
 
 new g_map_pool[SUPPORTED_MODE_COUNT][MAX_MAPS_PER_MODE][MAX_MAP_NAME]
@@ -119,7 +125,7 @@ public native_voting_admin_change(plugin_id, parameter_count)
 
     if (!voting_admin_authorized(requester)) return _:MM_VOTING_ADMIN_UNAUTHORIZED
     if (!is_supported_mode(mode)) return _:MM_VOTING_ADMIN_INVALID_MODE
-    if (!is_map_name_safe(map_name) || !map_matches_mode(_:mode, map_name) || !is_map_valid(map_name)) return _:MM_VOTING_ADMIN_INVALID_MAP
+    if (!is_map_name_safe(map_name) || !map_matches_mode(_:mode, map_name) || !is_map_valid(map_name) || !map_already_loaded(_:mode, map_name)) return _:MM_VOTING_ADMIN_INVALID_MAP
 
     if (g_vote_phase != VOTE_NONE) cancel_active_vote("Active vote cancelled by an administrator.")
     clear_decision()
@@ -139,6 +145,7 @@ public plugin_init()
 {
     register_plugin(PLUGIN_NAME, PLUGIN_VERSION, PLUGIN_AUTHOR)
 
+    register_clcmd("amx_votemapmenu", "mm_admin_map_vote", ADMIN_MAP)
     register_clcmd("say /rtv", "command_rtv")
     register_clcmd("say_team /rtv", "command_rtv")
     register_clcmd("say /votemode", "command_vote_mode")
@@ -161,6 +168,8 @@ public plugin_init()
     g_mode_enabled_cvar[_:MM_MODE_ARMS_RACE] = register_cvar("mm_vote_mode_armsrace", "1")
     g_mode_enabled_cvar[_:MM_MODE_AWP_ONLY] = register_cvar("mm_vote_mode_awponly", "1")
 
+    g_mode_enabled_cvar[_:MM_MODE_HE_BATTLE] = register_cvar("mm_vote_mode_hebattle", "1")
+    g_mode_enabled_cvar[_:MM_MODE_KNIFE] = register_cvar("mm_vote_mode_knife", "1")
     reset_player_ballots()
     log_amx("%s voting system v%s initialized.", PROJECT_NAME, PLUGIN_VERSION)
 }
@@ -226,12 +235,12 @@ public command_rtv(id)
     new remaining = vote_cooldown_remaining()
     if (remaining > 0)
     {
-        client_print(id, print_chat, "[%s] Vote cooldown: %d second(s) remaining.", PROJECT_NAME, remaining)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 Vote cooldown: %d second(s) remaining.", PROJECT_NAME, remaining)
         return PLUGIN_HANDLED
     }
     if (g_rtv_requested[id])
     {
-        client_print(id, print_chat, "[%s] Your RTV request is already counted.", PROJECT_NAME)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 Your RTV request is already counted.", PROJECT_NAME)
         return PLUGIN_HANDLED
     }
 
@@ -239,7 +248,7 @@ public command_rtv(id)
     g_rtv_count++
 
     new required = required_rtv_count()
-    client_print(0, print_chat, "[%s] %n requested RTV (%d/%d).", PROJECT_NAME, id, g_rtv_count, required)
+    client_print_color(0, print_team_default, "^x04[%s]^x01 ^x04%n^x01 requested RTV (%d/%d).", PROJECT_NAME, id, g_rtv_count, required)
     if (g_rtv_count >= required)
     {
         start_mode_vote()
@@ -260,7 +269,7 @@ public command_vote_mode(id)
     }
     if (g_vote_phase == VOTE_MAP)
     {
-        client_print(id, print_chat, "[%s] A map vote is already active.", PROJECT_NAME)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 A map vote is already active.", PROJECT_NAME)
         return PLUGIN_HANDLED
     }
     if (!can_start_new_vote(id))
@@ -285,7 +294,7 @@ public command_vote_map(id)
     }
     if (g_vote_phase == VOTE_MODE)
     {
-        client_print(id, print_chat, "[%s] Finish the active mode vote first.", PROJECT_NAME)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 Finish the active mode vote first.", PROJECT_NAME)
         return PLUGIN_HANDLED
     }
     if (!can_start_new_vote(id))
@@ -312,19 +321,19 @@ bool:can_use_vote_command(id)
 {
     if (!get_pcvar_num(g_enabled_cvar))
     {
-        client_print(id, print_chat, "[%s] Player voting is disabled.", PROJECT_NAME)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 Player voting is disabled.", PROJECT_NAME)
         return false
     }
     if (!is_eligible_voter(id))
     {
-        client_print(id, print_chat, "[%s] Only connected human players may vote.", PROJECT_NAME)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 Only connected human players may vote.", PROJECT_NAME)
         return false
     }
 
     new now = get_systime()
     if (now - g_last_command[id] < COMMAND_SPAM_SECONDS)
     {
-        client_print(id, print_chat, "[%s] Please wait before using another vote command.", PROJECT_NAME)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 Please wait before using another vote command.", PROJECT_NAME)
         return false
     }
     g_last_command[id] = now
@@ -346,7 +355,7 @@ bool:can_start_new_vote(id)
     new remaining = vote_cooldown_remaining()
     if (remaining > 0)
     {
-        client_print(id, print_chat, "[%s] Vote cooldown: %d second(s) remaining.", PROJECT_NAME, remaining)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 Vote cooldown: %d second(s) remaining.", PROJECT_NAME, remaining)
         return false
     }
     return true
@@ -358,7 +367,7 @@ bool:server_meets_minimum(id)
     new minimum = clamp(get_pcvar_num(g_min_players_cvar), 1, 12)
     if (players < minimum)
     {
-        client_print(id, print_chat, "[%s] At least %d human player(s) are required; currently %d.", PROJECT_NAME, minimum, players)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 At least %d human player(s) are required; currently %d.", PROJECT_NAME, minimum, players)
         return false
     }
     return true
@@ -386,7 +395,7 @@ start_mode_vote()
         return
     }
 
-    client_print(0, print_chat, "[%s] Mode vote started. Use /votemode to open the menu.", PROJECT_NAME)
+    client_print_color(0, print_team_default, "^x04[%s]^x01 Mode vote started. Use /votemode to open the menu.", PROJECT_NAME)
     show_vote_to_all()
     schedule_vote_end()
 }
@@ -434,7 +443,7 @@ start_map_vote()
         return
     }
 
-    client_print(0, print_chat, "[%s] %s map vote started. Use /votemap to open the menu.", PROJECT_NAME, MODE_NAMES[_:g_planned_mode])
+    client_print_color(0, print_team_default, "^x04[%s]^x01 %s map vote started. Use /votemap to open the menu.", PROJECT_NAME, MODE_NAMES[_:g_planned_mode])
     show_vote_to_all()
     schedule_vote_end()
 }
@@ -543,7 +552,7 @@ record_vote(id, candidate, VotePhase:expected_phase)
 {
     if (g_vote_phase != expected_phase || !is_eligible_voter(id) || candidate < 0 || candidate >= g_vote_candidate_count)
     {
-        client_print(id, print_chat, "[%s] That vote is no longer active.", PROJECT_NAME)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 That vote is no longer active.", PROJECT_NAME)
         return
     }
 
@@ -553,12 +562,12 @@ record_vote(id, candidate, VotePhase:expected_phase)
 
     if (expected_phase == VOTE_MODE)
     {
-        client_print(id, print_chat, "[%s] Your vote: %s.", PROJECT_NAME, MODE_NAMES[g_vote_candidates[candidate]])
+        client_print_color(id, print_team_default, "^x04[%s]^x01 Your vote: %s.", PROJECT_NAME, MODE_NAMES[g_vote_candidates[candidate]])
     }
     else
     {
         new pool_index = g_vote_candidates[candidate]
-        client_print(id, print_chat, "[%s] Your vote: %s.", PROJECT_NAME, g_map_pool[_:g_planned_mode][pool_index])
+        client_print_color(id, print_team_default, "^x04[%s]^x01 Your vote: %s.", PROJECT_NAME, g_map_pool[_:g_planned_mode][pool_index])
     }
 }
 
@@ -588,13 +597,13 @@ public task_finish_vote()
 
     if (tie)
     {
-        client_print(0, print_chat, "[%s] The vote tied; one of the tied choices was selected randomly.", PROJECT_NAME)
+        client_print_color(0, print_team_default, "^x04[%s]^x01 The vote tied; one of the tied choices was selected randomly.", PROJECT_NAME)
     }
 
     if (finished_phase == VOTE_MODE)
     {
         g_planned_mode = MmMode:g_vote_candidates[winner]
-        client_print(0, print_chat, "[%s] Next mode selected: %s.", PROJECT_NAME, MODE_NAMES[_:g_planned_mode])
+        client_print_color(0, print_team_default, "^x04[%s]^x01 Next mode selected: %s.", PROJECT_NAME, MODE_NAMES[_:g_planned_mode])
         start_map_vote()
         return
     }
@@ -606,7 +615,7 @@ public task_finish_vote()
     g_defer_announced = false
     g_last_vote_finished = get_systime()
     clear_rtv_requests()
-    client_print(0, print_chat, "[%s] Next: %s on %s. Change begins in %d seconds when safe.", PROJECT_NAME, MODE_NAMES[_:g_planned_mode], g_planned_map, APPLY_DELAY_DISPLAY)
+    client_print_color(0, print_team_default, "^x04[%s]^x01 Next: %s on %s. Change begins in %d seconds when safe.", PROJECT_NAME, MODE_NAMES[_:g_planned_mode], g_planned_map, APPLY_DELAY_DISPLAY)
     remove_task(TASK_APPLY_DECISION)
     set_task(APPLY_DELAY_SECONDS, "task_apply_decision", TASK_APPLY_DECISION)
 }
@@ -654,7 +663,7 @@ public task_apply_decision()
     {
         if (!g_defer_announced)
         {
-            client_print(0, print_chat, "[%s] Map/mode change queued until the live Classic match is finished.", PROJECT_NAME)
+            client_print_color(0, print_team_default, "^x04[%s]^x01 Map/mode change queued until the live Classic match is finished.", PROJECT_NAME)
             g_defer_announced = true
         }
         set_task(DEFER_RETRY_SECONDS, "task_apply_decision", TASK_APPLY_DECISION)
@@ -667,7 +676,7 @@ public task_apply_decision()
     {
         if (mm_get_active_mode() == g_planned_mode)
         {
-            client_print(0, print_chat, "[%s] Selected mode and map are already active; no change was needed.", PROJECT_NAME)
+            client_print_color(0, print_team_default, "^x04[%s]^x01 Selected mode and map are already active; no change was needed.", PROJECT_NAME)
             clear_decision()
             return
         }
@@ -687,7 +696,7 @@ public task_apply_decision()
     if (!is_map_valid(g_planned_map))
     {
         log_amx("Refusing map change because the selected BSP is no longer installed: %s", g_planned_map)
-        client_print(0, print_chat, "[%s] Planned map is no longer installed; change cancelled.", PROJECT_NAME)
+        client_print_color(0, print_team_default, "^x04[%s]^x01 Planned map is no longer installed; change cancelled.", PROJECT_NAME)
         clear_decision()
         return
     }
@@ -695,13 +704,13 @@ public task_apply_decision()
     if (!write_pending_decision(g_planned_mode, g_planned_map))
     {
         log_amx("Could not persist pending mode %s for map %s; refusing unsafe changelevel.", MODE_KEYS[_:g_planned_mode], g_planned_map)
-        client_print(0, print_chat, "[%s] Could not save the next mode safely; change cancelled.", PROJECT_NAME)
+        client_print_color(0, print_team_default, "^x04[%s]^x01 Could not save the next mode safely; change cancelled.", PROJECT_NAME)
         clear_decision()
         return
     }
 
     g_change_queued = false
-    client_print(0, print_chat, "[%s] Changing to %s (%s).", PROJECT_NAME, g_planned_map, MODE_NAMES[_:g_planned_mode])
+    client_print_color(0, print_team_default, "^x04[%s]^x01 Changing to %s (%s).", PROJECT_NAME, g_planned_map, MODE_NAMES[_:g_planned_mode])
     server_cmd("changelevel %s", g_planned_map)
 }
 
@@ -839,6 +848,7 @@ load_map_pool(mode)
 
 bool:map_matches_mode(mode, const map_name[])
 {
+    if (mode == _:MM_MODE_KNIFE) return bool:(equali(map_name, "35hp", 4) || equali(map_name, "ka_", 3))
     if (mode == _:MM_MODE_CLASSIC)
     {
         return bool:(equali(map_name, "de_", 3) || equali(map_name, "cs_", 3))
@@ -920,7 +930,7 @@ show_next_decision(id)
 {
     if (!g_has_decision)
     {
-        client_print(id, print_chat, "[%s] No next mode/map has been decided yet.", PROJECT_NAME)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 No next mode/map has been decided yet.", PROJECT_NAME)
         return
     }
 
@@ -929,7 +939,7 @@ show_next_decision(id)
     {
         copy(suffix, charsmax(suffix), " (queued after Classic)")
     }
-    client_print(id, print_chat, "[%s] Next: %s on %s%s.", PROJECT_NAME, MODE_NAMES[_:g_planned_mode], g_planned_map, suffix)
+    client_print_color(id, print_team_default, "^x04[%s]^x01 Next: %s on %s%s.", PROJECT_NAME, MODE_NAMES[_:g_planned_mode], g_planned_map, suffix)
 }
 
 remove_player_ballot(id)
@@ -968,7 +978,7 @@ cancel_active_vote(const reason[])
     g_last_vote_finished = get_systime()
     if (reason[0])
     {
-        client_print(0, print_chat, "[%s] %s", PROJECT_NAME, reason)
+        client_print_color(0, print_team_default, "^x04[%s]^x01 %s", PROJECT_NAME, reason)
         log_amx("%s", reason)
     }
 }
@@ -1019,7 +1029,7 @@ bool:is_eligible_voter(id)
 
 bool:is_supported_mode(MmMode:mode)
 {
-    return _:mode >= _:MM_MODE_CLASSIC && _:mode <= _:MM_MODE_AWP_ONLY
+    return _:mode >= _:MM_MODE_CLASSIC && _:mode < _:MM_MODE_COUNT
 }
 
 bool:voting_admin_authorized(requester)
@@ -1037,4 +1047,17 @@ MmMode:find_supported_mode(const key[])
         }
     }
     return MmMode:-1
+}
+
+public mm_admin_map_vote(id)
+{
+    if (!is_user_connected(id) || !(get_user_flags(id) & ADMIN_MAP)) return PLUGIN_HANDLED
+    if (g_vote_phase != VOTE_NONE || g_has_decision)
+    {
+        client_print_color(id, print_team_default, "^4[%s]^1 Finish or cancel the pending vote first.", PROJECT_NAME)
+        return PLUGIN_HANDLED
+    }
+    g_planned_mode = mm_get_active_mode()
+    if (is_supported_mode(g_planned_mode)) start_map_vote()
+    return PLUGIN_HANDLED
 }

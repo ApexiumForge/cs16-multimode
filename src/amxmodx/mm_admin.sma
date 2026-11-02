@@ -6,10 +6,10 @@
 #include <mm_voting_api>
 
 #define PLUGIN_NAME "Apexium Forge Admin Panel"
-#define PLUGIN_VERSION "1.1.0"
+#define PLUGIN_VERSION "1.2.0"
 #define PLUGIN_AUTHOR "ApexiumForge"
 #define MAX_MAP_NAME 32
-#define SUPPORTED_MODE_COUNT 4
+#define SUPPORTED_MODE_COUNT _:MM_MODE_COUNT
 
 enum PendingAction
 {
@@ -29,7 +29,7 @@ enum PendingAction
     ACTION_CANCEL_VOTE
 }
 
-new const MODE_NAMES[SUPPORTED_MODE_COUNT][] = { "Classic", "Deathmatch", "Arms Race", "AWP Only" }
+new const MODE_NAMES[SUPPORTED_MODE_COUNT][] = { "Classic", "Deathmatch", "Arms Race", "AWP Only", "HE Battle", "Knife 35HP" }
 new const CLASSIC_FORMAT_NAMES[_:MM_FORMAT_COUNT][] = { "1v1", "2v2", "3v3", "4v4", "5v5", "1v2", "2v3", "3v4", "4v5" }
 new const CONTROL_LABELS[][] =
 {
@@ -44,7 +44,9 @@ new const MAP_POOL_FILES[SUPPORTED_MODE_COUNT][] =
     "addons/amxmodx/configs/mm_voting/maps_classic.ini",
     "addons/amxmodx/configs/mm_voting/maps_deathmatch.ini",
     "addons/amxmodx/configs/mm_voting/maps_armsrace.ini",
-    "addons/amxmodx/configs/mm_voting/maps_awponly.ini"
+    "addons/amxmodx/configs/mm_voting/maps_awponly.ini",
+    "addons/amxmodx/configs/mm_voting/maps_hebattle.ini",
+    "addons/amxmodx/configs/mm_voting/maps_knife.ini"
 }
 
 new PendingAction:g_pending_action[33]
@@ -57,6 +59,7 @@ new g_target_authid[33][35]
 public plugin_init()
 {
     register_plugin(PLUGIN_NAME, PLUGIN_VERSION, PLUGIN_AUTHOR)
+    register_clcmd("amx_mapmenu", "mm_mapmenu_alias", ADMIN_MAP)
     register_clcmd("say /admin", "command_admin_menu")
     register_clcmd("say_team /admin", "command_admin_menu")
     register_clcmd("say /adminmenu", "command_admin_menu")
@@ -73,7 +76,7 @@ public command_admin_menu(id)
 {
     if (!authorized_admin(id))
     {
-        client_print(id, print_chat, "[Apexium] You are not authorized to use the admin panel.")
+        client_print_color(id, print_team_default, "^4[Apexium]^1 You are not authorized to use the admin panel.")
         return PLUGIN_HANDLED
     }
     show_main_menu(id)
@@ -149,11 +152,11 @@ public handle_mode_menu(id, menu, item)
 
 show_map_menu(id)
 {
-    if (!require_flag(id, ADMIN_CFG)) return
+    if (!require_flag(id, ADMIN_MAP)) return
     new MmMode:mode = mm_get_active_mode()
     if (_:mode < 0 || _:mode >= SUPPORTED_MODE_COUNT)
     {
-        client_print(id, print_chat, "[Apexium] The active mode has no supported map pool.")
+        client_print_color(id, print_team_default, "^4[Apexium]^1 The active mode has no supported map pool.")
         return
     }
 
@@ -185,7 +188,7 @@ public handle_map_menu(id, menu, item)
     new access, map_name[MAX_MAP_NAME], label[MAX_MAP_NAME], callback
     menu_item_getinfo(menu, item, access, map_name, charsmax(map_name), label, charsmax(label), callback)
     menu_destroy(menu)
-    if (!require_flag(id, ADMIN_CFG) || !safe_map_name(map_name) || !is_map_valid(map_name)) return PLUGIN_HANDLED
+    if (!require_flag(id, ADMIN_MAP) || !safe_map_name(map_name) || !is_map_valid(map_name)) return PLUGIN_HANDLED
     g_pending_action[id] = ACTION_MAP
     g_pending_mode[id] = mm_get_active_mode()
     copy(g_pending_map[id], MAX_MAP_NAME - 1, map_name)
@@ -293,15 +296,15 @@ public handle_bot_menu(id, menu, item)
             {
                 server_cmd("yb add 2 0 1 0 AF_Admin_T")
                 server_cmd("yb add 2 0 2 0 AF_Admin_CT")
-                client_print(id, print_chat, "[Apexium] Requested one YaPB bot for each team.")
+                client_print_color(id, print_team_default, "^4[Apexium]^1 Requested one YaPB bot for each team.")
             }
-            else client_print(id, print_chat, "[Apexium] Both teams need an available slot.")
+            else client_print_color(id, print_team_default, "^4[Apexium]^1 Both teams need an available slot.")
         }
         case 3: show_bot_remove_menu(id)
         case 4:
         {
             server_cmd("yb kickall instant")
-            client_print(id, print_chat, "[Apexium] Requested removal of all YaPB bots.")
+            client_print_color(id, print_team_default, "^4[Apexium]^1 Requested removal of all YaPB bots.")
         }
     }
     return PLUGIN_HANDLED
@@ -337,7 +340,7 @@ public handle_bot_remove(id, menu, item)
         server_cmd("kick #%d", get_user_userid(target))
         server_exec()
     }
-    else client_print(id, print_chat, "[Apexium] That bot is no longer connected.")
+    else client_print_color(id, print_team_default, "^4[Apexium]^1 That bot is no longer connected.")
     return PLUGIN_HANDLED
 }
 
@@ -452,7 +455,7 @@ public handle_server_controls(id, menu, item)
         {
             if (!mm_voting_is_active() && !mm_voting_has_decision())
             {
-                client_print(id, print_chat, "[Apexium] There is no active vote or queued decision to cancel.")
+                client_print_color(id, print_team_default, "^4[Apexium]^1 There is no active vote or queued decision to cancel.")
                 show_server_controls(id)
                 return PLUGIN_HANDLED
             }
@@ -525,22 +528,22 @@ execute_pending(id)
         {
             mm_voting_admin_cancel(id)
             new MmRequestResult:result = mm_request_mode(g_pending_mode[id], id)
-            client_print(id, print_chat, "[Apexium] Mode request result: %d", _:result)
+            client_print_color(id, print_team_default, "^4[Apexium]^1 Mode request result: %d", _:result)
         }
         case ACTION_CLASSIC_FORMAT:
         {
             new MmRequestResult:result = mm_request_classic_format(g_pending_format[id], id)
-            client_print(id, print_chat, "[Apexium] Classic format request result: %d", _:result)
+            client_print_color(id, print_team_default, "^4[Apexium]^1 Classic format request result: %d", _:result)
         }
         case ACTION_MAP:
         {
             if (mm_get_active_mode() != g_pending_mode[id])
             {
-                client_print(id, print_chat, "[Apexium] Active mode changed while the menu was open; map action cancelled.")
+                client_print_color(id, print_team_default, "^4[Apexium]^1 Active mode changed while the menu was open; map action cancelled.")
                 return
             }
             new MmVotingAdminResult:result = mm_voting_admin_change(g_pending_mode[id], g_pending_map[id], id)
-            client_print(id, print_chat, "[Apexium] Map request result: %d", _:result)
+            client_print_color(id, print_team_default, "^4[Apexium]^1 Map request result: %d", _:result)
         }
         case ACTION_CLASSIC_WARMUP: print_classic_result(id, mm_classic_admin_warmup(id))
         case ACTION_CLASSIC_RESTART: print_classic_result(id, mm_classic_admin_restart(id))
@@ -563,7 +566,7 @@ execute_pending(id)
         case ACTION_CANCEL_VOTE:
         {
             new MmVotingAdminResult:result = mm_voting_admin_cancel(id)
-            client_print(id, print_chat, "[Apexium] Vote cancellation result: %d", _:result)
+            client_print_color(id, print_team_default, "^4[Apexium]^1 Vote cancellation result: %d", _:result)
         }
     }
 }
@@ -595,11 +598,11 @@ add_bot(id, CsTeams:team)
 {
     if (!bot_team_has_capacity(team))
     {
-        client_print(id, print_chat, "[Apexium] That team has no available Classic slot.")
+        client_print_color(id, print_team_default, "^4[Apexium]^1 That team has no available Classic slot.")
         return
     }
     server_cmd("yb add 2 0 %d 0 AF_Admin_Bot", team == CS_TEAM_T ? 1 : 2)
-    client_print(id, print_chat, "[Apexium] YaPB bot requested.")
+    client_print_color(id, print_team_default, "^4[Apexium]^1 YaPB bot requested.")
 }
 
 bool:bot_team_has_capacity(CsTeams:team)
@@ -611,7 +614,7 @@ bool:bot_team_has_capacity(CsTeams:team)
 bool:yapb_available(id)
 {
     if (cvar_exists("yb_version")) return true
-    client_print(id, print_chat, "[Apexium] YaPB is not loaded; no bot command was executed.")
+    client_print_color(id, print_team_default, "^4[Apexium]^1 YaPB is not loaded; no bot command was executed.")
     return false
 }
 
@@ -620,12 +623,12 @@ move_player(id, target, CsTeams:team)
     if (!require_flag(id, ADMIN_CFG)) return
     if (mm_get_active_mode() == MM_MODE_CLASSIC && mm_classic_change_blocked())
     {
-        client_print(id, print_chat, "[Apexium] Player moves are locked during a committed Classic match.")
+        client_print_color(id, print_team_default, "^4[Apexium]^1 Player moves are locked during a committed Classic match.")
         return
     }
     if ((team == CS_TEAM_T || team == CS_TEAM_CT) && mm_get_active_mode() == MM_MODE_CLASSIC && !mm_classic_team_has_capacity(_:team))
     {
-        client_print(id, print_chat, "[Apexium] The selected Classic team is full.")
+        client_print_color(id, print_team_default, "^4[Apexium]^1 The selected Classic team is full.")
         return
     }
     if (team == CS_TEAM_SPECTATOR && is_user_alive(target)) user_silentkill(target)
@@ -639,7 +642,7 @@ show_player_information(id, target)
     get_user_authid(target, authid, charsmax(authid))
     get_user_ip(target, ip, charsmax(ip), 1)
     console_print(id, "[Apexium] #%d %s | %s | %s | Team %d | Bot %s", get_user_userid(target), name, authid, ip, _:cs_get_user_team(target), is_user_bot(target) ? "yes" : "no")
-    client_print(id, print_chat, "[Apexium] Player information was printed to your console.")
+    client_print_color(id, print_team_default, "^4[Apexium]^1 Player information was printed to your console.")
 }
 
 remember_target(id, target)
@@ -661,12 +664,12 @@ bool:valid_target(id, target)
 {
     if (!target || !is_user_connected(target) || is_user_hltv(target))
     {
-        client_print(id, print_chat, "[Apexium] That player is no longer available.")
+        client_print_color(id, print_team_default, "^4[Apexium]^1 That player is no longer available.")
         return false
     }
     if (target != id && (get_user_flags(target) & ADMIN_IMMUNITY) && !(get_user_flags(id) & ADMIN_RCON))
     {
-        client_print(id, print_chat, "[Apexium] That administrator is protected by immunity.")
+        client_print_color(id, print_team_default, "^4[Apexium]^1 That administrator is protected by immunity.")
         return false
     }
     return true
@@ -676,18 +679,18 @@ show_classic_status(id)
 {
     new status[128]
     mm_classic_get_status(status, charsmax(status))
-    client_print(id, print_chat, "[Apexium] Classic: %s", status)
+    client_print_color(id, print_team_default, "^4[Apexium]^1 Classic: %s", status)
 }
 
 print_classic_result(id, MmClassicAdminResult:result)
 {
     switch (result)
     {
-        case MM_CLASSIC_ADMIN_OK: client_print(id, print_chat, "[Apexium] Classic action completed.")
-        case MM_CLASSIC_ADMIN_INACTIVE: client_print(id, print_chat, "[Apexium] Classic mode is not active.")
-        case MM_CLASSIC_ADMIN_INVALID_STATE: client_print(id, print_chat, "[Apexium] The Classic action is invalid in the current state.")
-        case MM_CLASSIC_ADMIN_TEAMS_INCOMPLETE: client_print(id, print_chat, "[Apexium] Both teams must exactly match the selected format.")
-        default: client_print(id, print_chat, "[Apexium] Classic action was refused.")
+        case MM_CLASSIC_ADMIN_OK: client_print_color(id, print_team_default, "^4[Apexium]^1 Classic action completed.")
+        case MM_CLASSIC_ADMIN_INACTIVE: client_print_color(id, print_team_default, "^4[Apexium]^1 Classic mode is not active.")
+        case MM_CLASSIC_ADMIN_INVALID_STATE: client_print_color(id, print_team_default, "^4[Apexium]^1 The Classic action is invalid in the current state.")
+        case MM_CLASSIC_ADMIN_TEAMS_INCOMPLETE: client_print_color(id, print_team_default, "^4[Apexium]^1 Both teams must exactly match the selected format.")
+        default: client_print_color(id, print_team_default, "^4[Apexium]^1 Classic action was refused.")
     }
 }
 
@@ -699,7 +702,7 @@ bool:authorized_admin(id)
 bool:require_flag(id, flag)
 {
     if (is_user_connected(id) && (get_user_flags(id) & flag)) return true
-    client_print(id, print_chat, "[Apexium] You do not have permission for that action.")
+    client_print_color(id, print_team_default, "^4[Apexium]^1 You do not have permission for that action.")
     return false
 }
 
@@ -725,4 +728,11 @@ clear_pending(id)
     g_pending_map[id][0] = 0
     g_target_userid[id] = 0
     g_target_authid[id][0] = 0
+}
+
+public mm_mapmenu_alias(id)
+{
+    if (!(get_user_flags(id) & ADMIN_MAP)) return PLUGIN_HANDLED
+    show_map_menu(id)
+    return PLUGIN_HANDLED
 }

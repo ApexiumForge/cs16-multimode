@@ -2,25 +2,36 @@
 #include <hamsandwich>
 #include <cstrike>
 #include <fun>
+#include <fakemeta>
 #include <reapi>
 #include <mm_mode_api>
 
 new const PLUGIN_NAME[] = "Multi-Mode HE Battle"
-new const PLUGIN_VERSION[] = "1.0.0"
+new const PLUGIN_VERSION[] = "1.2.0"
 new const PLUGIN_AUTHOR[] = "Torbeshi"
 new Float:g_next_notice[33]
 new g_pickups, g_purchases
 #define MM_HE_TICK 891000
 #define MM_HE_RESPAWN 891100
 #define MM_HE_LOADOUT 891200
+#define MM_HE_RESET 891300
+#define MM_HE_HUD 891400
+new g_kills[33], g_deaths[33], g_kill_limit, g_hud
+new bool:g_finished
 new bool:g_enabled
 new g_map_grants
 
 public plugin_init()
 {
     register_plugin(PLUGIN_NAME, PLUGIN_VERSION, PLUGIN_AUTHOR)
+    RegisterHam(Ham_TakeDamage, "player", "mm_damage_pre")
     RegisterHam(Ham_Spawn, "player", "mm_spawn_post", 1)
     RegisterHam(Ham_Killed, "player", "mm_killed_post", 1)
+    register_clcmd("say /top", "mm_top")
+    register_clcmd("say_team /top", "mm_top")
+    register_clcmd("say /hetop", "mm_top")
+    g_kill_limit = register_cvar("mm_he_kill_limit", "30")
+    g_hud = CreateHudSyncObj()
     register_clcmd("drop", "mm_buy_command")
     // Block map weapon containers; our explicit grenade grants are preserved.
     RegisterHam(Ham_Touch, "armoury_entity", "mm_world_touch")
@@ -43,6 +54,8 @@ public plugin_init()
 public client_disconnected(id)
 {
     g_next_notice[id] = 0.0
+    g_kills[id] = 0
+    g_deaths[id] = 0
     remove_task(MM_HE_RESPAWN + id)
     remove_task(MM_HE_LOADOUT + id)
 }
@@ -146,11 +159,20 @@ mm_activate()
 {
     mm_shutdown()
     g_enabled = true
+    g_finished = false
+    arrayset(g_kills, 0, sizeof g_kills)
+    arrayset(g_deaths, 0, sizeof g_deaths)
+    set_task(1.0, "mm_hud", MM_HE_HUD, "", 0, "b")
     set_task(0.2, "mm_supply", MM_HE_TICK, "", 0, "b")
     for (new id = 1; id <= MaxClients; id++)
     {
         if (!mm_playing(id)) continue
-        if (is_user_alive(id)) mm_loadout(id)
+        if (is_user_alive(id))
+        {
+            set_user_health(id, 100)
+            cs_set_user_armor(id, 0, CS_ARMOR_NONE)
+            mm_loadout(id)
+        }
         else set_task(1.0, "mm_respawn", MM_HE_RESPAWN + id)
     }
     client_print_color(0, print_team_default, "^4[HE Battle]^1 HE grenades only! Your grenades replenish automatically.")
@@ -159,6 +181,9 @@ mm_activate()
 mm_shutdown()
 {
     remove_task(MM_HE_TICK)
+    remove_task(MM_HE_RESET)
+    remove_task(MM_HE_HUD)
+    if (g_enabled) mm_clear_grenades()
     for (new id = 1; id <= MaxClients; id++)
     {
         remove_task(MM_HE_RESPAWN + id)
@@ -170,6 +195,7 @@ mm_shutdown()
         }
     }
     g_enabled = false
+    g_finished = false
 }
 
 bool:mm_playing(id)
@@ -181,7 +207,7 @@ bool:mm_playing(id)
 
 public mm_spawn_post(id)
 {
-    if (!g_enabled || !mm_restricted() || !is_user_alive(id)) return HAM_IGNORED
+    if (!g_enabled || g_finished || !mm_restricted() || !is_user_alive(id)) return HAM_IGNORED
     remove_task(MM_HE_RESPAWN + id)
     remove_task(MM_HE_LOADOUT + id)
     set_task(0.1, "mm_spawn_loadout", MM_HE_LOADOUT + id)
@@ -191,7 +217,7 @@ public mm_spawn_post(id)
 public mm_spawn_loadout(task)
 {
     new id = task - MM_HE_LOADOUT
-    if (g_enabled && mm_restricted() && is_user_alive(id) && mm_playing(id)) mm_loadout(id)
+    if (g_enabled && !g_finished && mm_restricted() && is_user_alive(id) && mm_playing(id)) mm_loadout(id)
 }
 
 mm_loadout(id)
@@ -204,7 +230,7 @@ mm_loadout(id)
 
 public mm_supply()
 {
-    if (!g_enabled || !mm_restricted() || mm_get_transition_state() != MM_TRANSITION_IDLE) return
+    if (!g_enabled || g_finished || !mm_restricted() || mm_get_transition_state() != MM_TRANSITION_IDLE) return
     for (new id = 1; id <= MaxClients; id++)
     {
         if (!is_user_alive(id) || !mm_playing(id)) continue
@@ -220,6 +246,25 @@ public mm_supply()
 public mm_killed_post(victim, attacker, gib)
 {
     if (!g_enabled || !mm_restricted() || !mm_playing(victim)) return HAM_IGNORED
+    if (g_finished) return HAM_IGNORED
+    g_deaths[victim]++
+    if (attacker != victim && attacker >= 1 && attacker <= MaxClients && mm_playing(attacker)
+        && cs_get_user_team(attacker) != cs_get_user_team(victim))
+    {
+        g_kills[attacker]++
+        if (g_kills[attacker] >= clamp(get_pcvar_num(g_kill_limit), 1, 200))
+        {
+            g_finished = true
+            for (new id = 1; id <= MaxClients; id++)
+            {
+                remove_task(MM_HE_RESPAWN + id)
+                remove_task(MM_HE_LOADOUT + id)
+            }
+            client_print_color(0, print_team_default, "^4[HE Battle]^1 ^4%n^1 wins with ^4%d^1 enemy kills! New match in 5 seconds.", attacker, g_kills[attacker])
+            set_task(5.0, "mm_reset_match", MM_HE_RESET)
+            return HAM_IGNORED
+        }
+    }
     remove_task(MM_HE_LOADOUT + victim)
     remove_task(MM_HE_RESPAWN + victim)
     set_task(1.0, "mm_respawn", MM_HE_RESPAWN + victim)
@@ -229,8 +274,80 @@ public mm_killed_post(victim, attacker, gib)
 public mm_respawn(task)
 {
     new id = task - MM_HE_RESPAWN
-    if (g_enabled && mm_restricted() && mm_get_transition_state() == MM_TRANSITION_IDLE && mm_playing(id) && !is_user_alive(id))
+    if (g_enabled && !g_finished && mm_restricted() && mm_get_transition_state() == MM_TRANSITION_IDLE && mm_playing(id) && !is_user_alive(id))
         ExecuteHamB(Ham_CS_RoundRespawn, id)
 }
 
 public plugin_end() mm_shutdown()
+
+// Enforce ally protection even when shared arcade policy enables mp_freeforall.
+public mm_damage_pre(victim, inflictor, attacker, Float:damage, damage_bits)
+{
+    if (g_enabled && mm_restricted() && g_finished) return HAM_SUPERCEDE
+    if (!g_enabled || !mm_restricted() || attacker == victim) return HAM_IGNORED
+    if (attacker < 1 || attacker > MaxClients || !is_user_connected(attacker) || !is_user_connected(victim)) return HAM_IGNORED
+    if (cs_get_user_team(attacker) == cs_get_user_team(victim)) return HAM_SUPERCEDE
+    return HAM_IGNORED
+}
+
+public client_putinserver(id)
+{
+    g_kills[id] = 0
+    g_deaths[id] = 0
+}
+
+public mm_reset_match()
+{
+    if (g_enabled && mm_restricted()) mm_activate()
+}
+
+mm_standings(players[32], &count)
+{
+    count = 0
+    for (new id = 1; id <= MaxClients; id++)
+        if (mm_playing(id)) players[count++] = id
+    for (new i = 0; i < count; i++)
+        for (new j = i + 1; j < count; j++)
+            if (g_kills[players[j]] > g_kills[players[i]] || (g_kills[players[j]] == g_kills[players[i]] && g_deaths[players[j]] < g_deaths[players[i]]))
+            {
+                new temp = players[i]
+                players[i] = players[j]
+                players[j] = temp
+            }
+}
+
+public mm_top(id)
+{
+    if (!mm_restricted()) return PLUGIN_CONTINUE
+    new players[32], count
+    mm_standings(players, count)
+    client_print_color(id, print_team_default, "^4[HE Battle]^1 First to ^4%d^1 enemy kills wins:", clamp(get_pcvar_num(g_kill_limit), 1, 200))
+    for (new i = 0; i < min(count, 5); i++)
+        client_print_color(id, print_team_default, "^4[HE Battle]^1 #%d ^4%n^1 - %d kills / %d deaths", i + 1, players[i], g_kills[players[i]], g_deaths[players[i]])
+    return PLUGIN_HANDLED
+}
+
+public mm_hud()
+{
+    if (!g_enabled || !mm_restricted()) return
+    new players[32], count, limit = clamp(get_pcvar_num(g_kill_limit), 1, 200)
+    mm_standings(players, count)
+    for (new id = 1; id <= MaxClients; id++)
+    {
+        if (!is_user_connected(id) || is_user_bot(id)) continue
+        set_hudmessage(0, 220, 80, 0.02, 0.18, 0, 0.0, 1.1, 0.0, 0.0)
+        if (g_finished) ShowSyncHudMsg(id, g_hud, "HE Battle | Match finished!^nNew match starts shortly")
+        else if (count) ShowSyncHudMsg(id, g_hud, "HE Battle | %d/%d enemy kills^nLeader: %n (%d) | /top", g_kills[id], limit, players[0], g_kills[players[0]])
+        else ShowSyncHudMsg(id, g_hud, "HE Battle | First to %d enemy kills | /top", limit)
+    }
+}
+
+mm_clear_grenades()
+{
+    new entity, model[64]
+    while ((entity = engfunc(EngFunc_FindEntityByString, entity, "classname", "grenade")) > 0)
+    {
+        pev(entity, pev_model, model, charsmax(model))
+        if (equal(model, "models/w_hegrenade.mdl")) engfunc(EngFunc_RemoveEntity, entity)
+    }
+}

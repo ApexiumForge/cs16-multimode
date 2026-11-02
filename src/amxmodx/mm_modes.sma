@@ -3,7 +3,7 @@
 #include <mm_mode_api>
 
 #define PLUGIN_NAME    "Multi-Mode Network Menus"
-#define PLUGIN_VERSION "0.4.5-colors"
+#define PLUGIN_VERSION "0.6.0"
 #define PLUGIN_AUTHOR  "Multi-Mode Network"
 #define PROJECT_NAME   "Multi-Mode Network"
 
@@ -17,8 +17,11 @@ public plugin_init()
     register_clcmd("say_team /menu", "handle_main_menu_command")
     register_clcmd("say /modes", "handle_modes_menu_command")
     register_clcmd("say_team /modes", "handle_modes_menu_command")
+    register_clcmd("say /rules", "mm_rules")
+    register_clcmd("say_team /rules", "mm_rules")
     log_amx("%s menu module v%s initialized successfully.", PROJECT_NAME, PLUGIN_VERSION)
 }
+
 public client_connect(id)
 {
     clear_pending_selection(id)
@@ -47,6 +50,7 @@ show_main_menu(id)
     menu_additem(menu, "Game Modes", "1")
     menu_additem(menu, "Classic Match Formats", "2")
     menu_additem(menu, "Server Information", "3")
+    menu_additem(menu, "Mode Rules / How to Play", "4")
     menu_setprop(menu, MPROP_EXITNAME, "Close")
     menu_display(id, menu)
 }
@@ -63,6 +67,7 @@ public handle_main_menu_selection(id, menu, item)
     menu_destroy(menu)
     switch (str_to_num(info))
     {
+        case 4: mm_rules(id)
         case 1: show_modes_menu(id)
         case 2: show_classic_formats_menu(id)
         case 3: client_print_color(id, print_team_default, "^x04[%s]^x01 Server Foundation %s", PROJECT_NAME, PLUGIN_VERSION)
@@ -86,10 +91,12 @@ show_modes_menu(id)
 
 add_mode_item(menu, MmMode:mode)
 {
-    new item_name[48], info[4], mode_name[32]
+    new item_name[160], info[4], mode_name[32]
     mm_get_mode_name(mode, mode_name, charsmax(mode_name))
     if (mode == mm_get_active_mode()) formatex(item_name, charsmax(item_name), "%s \y[ACTIVE]", mode_name)
     else copy(item_name, charsmax(item_name), mode_name)
+    new const descriptions[][] = {"Team rounds and objectives", "FFA | /dm weapons, /top scores", "FFA | 2 gun kills or 1 knife kill to advance", "FFA | AWP and knife", "Teams | unlimited HE, first to 30 kills", "Teams | knives only, 35 HP, round-based"}
+    format(item_name, charsmax(item_name), "%s \d- %s", item_name, descriptions[_:mode])
     num_to_str(_:mode, info, charsmax(info))
     menu_additem(menu, item_name, info)
 }
@@ -250,4 +257,11 @@ print_request_result(id, MmRequestResult:result)
         case MM_REQUEST_UNAUTHORIZED: client_print_color(id, print_team_default, "^x04[%s]^x01 You are not authorized to change mode state.", PROJECT_NAME)
         default: client_print_color(id, print_team_default, "^x04[%s]^x01 Request failed; Classic fallback was attempted.", PROJECT_NAME)
     }
+}
+
+public mm_rules(id)
+{
+    if (!is_user_connected(id)) return PLUGIN_HANDLED
+    show_motd(id, "addons/amxmodx/configs/mm_rules.html", "Torbeshi | Mode Rules")
+    return PLUGIN_HANDLED
 }

@@ -97,8 +97,8 @@ Phase 5 voting is not validated by source review or compilation alone. Follow [M
 - [ ] Restart the server and run `amxx plugins`; confirm `mm_core.amxx`, `mm_mode_manager.amxx`, and `mm_modes.amxx` are running.
 - [ ] Send `/serverinfo`; confirm `[Multi-Mode Network] Server Foundation 0.4.4` appears.
 - [ ] Send `/menu`; confirm the native main menu offers **Game Modes** and **Server Information**.
-- [ ] Select **Game Modes**; confirm Classic, Deathmatch, Arms Race, AWP Only, and HE Battle appear.
-- [ ] Send `/modes`; confirm it opens the same five-mode menu directly.
+- [ ] Select **Game Modes**; confirm Classic, Deathmatch, Arms Race, AWP Only, HE Battle, and Knife 35HP appear.
+- [ ] Send `/modes`; confirm it opens the same six-mode menu directly, and `/rules` opens the rules MOTD.
 - [ ] Select **Classic**; confirm 1v1, 2v2, 3v3, 4v4, 5v5, 1v2, 2v3, 3v4, and 4v5 appear.
 - [ ] Select every mode and at least one Classic format; confirm an informational chat message appears and gameplay does not restart or change.
 - [ ] Repeat `/menu` and `/modes` in team chat.
@@ -126,9 +126,10 @@ Phase 1 remains verified by its foundation and LAN checks. Phase 2 remains verif
 
 - [ ] Run `scripts\install-reapi.ps1`; confirm version `5.29.0.358` and both pinned SHA-256 checks succeed.
 - [ ] Run `tests\hosted-features.ps1` and `tests\remote-sync.ps1`; confirm both pass.
-- [ ] Build all plugins with zero warnings; confirm `mm_he_battle`, `mm_armsrace_restrictions`, `mm_random_spawns`, and `mm_weapon_tuning` are generated and registered once.
+- [ ] Build all plugins with zero warnings; confirm `mm_he_battle`, `mm_arcade_protection`, `mm_knife`, `mm_armsrace_restrictions`, `mm_random_spawns`, and `mm_weapon_tuning` are generated and registered once.
 - [ ] Start the isolated/local server and confirm ReAPI plus every managed plugin reports running without missing-native errors.
-- [ ] Activate HE Battle; verify HE-only inventory, grenade replenishment, blocked buying/pickups, one-second respawns, FFA damage, and continuous rounds.
+- [ ] Activate HE Battle; verify HE-only inventory, grenade replenishment, blocked buying/pickups, one-second respawns, ally protection, enemy-kill standings, and continuous rounds.
+- [ ] Activate Knife 35HP on an installed map from `maps_knife.ini`; verify Knife only, 35 HP, no armor/buying/fall or team damage, and normal team round endings.
 - [ ] Switch HE Battle to Classic while supply/respawn tasks are pending; verify no delayed HE action and normal Classic inventory/round cvars return.
 - [ ] In Arms Race, verify two assigned-weapon kills advance one level, a knife kill advances immediately, and the knifed victim loses no more than one level without underflow.
 - [ ] In Deathmatch and Arms Race, run `mm_spawn_status`; verify grounded points exist and repeated spawns avoid walls, hazards, and occupied hulls on every installed map.

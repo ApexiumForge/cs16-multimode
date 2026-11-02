@@ -13,7 +13,7 @@ function Assert-Contains {
 
 Assert-Contains 'register_clcmd\("say /menu"' '/menu must be registered.'
 Assert-Contains 'register_clcmd\("say /modes"' '/modes must be registered.'
-foreach ($mode in @('Classic', 'Deathmatch', 'Arms Race', 'AWP Only', 'HE Battle')) {
+foreach ($mode in @('Classic', 'Deathmatch', 'Arms Race', 'AWP Only', 'HE Battle', 'Knife 35HP')) {
     Assert-Contains ([regex]::Escape('"' + $mode + '"')) "Mode is missing: $mode"
 }
 foreach ($format in @('1v1', '2v2', '3v3', '4v4', '5v5', '1v2', '2v3', '3v4', '4v5')) {

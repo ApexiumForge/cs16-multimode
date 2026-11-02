@@ -2,7 +2,7 @@
 
 A modular Counter-Strike 1.6 / GoldSrc server built for private LAN play and Linux hosting. The project uses SteamCMD HLDS, Metamod-P, AMX Mod X and Pawn. ReGameDLL_CS supplies the continuous-round controls required by the respawn-based arcade modes.
 
-The current development baseline contains five playable modes, centralized mode ownership, four-mode map/mode voting, and a permission-checked in-game administration panel. XP, coins, rankings, persistent profiles and the website are not implemented.
+The current development baseline contains six playable modes, centralized mode ownership, six-mode map/mode voting, and a permission-checked in-game administration panel. XP, coins, rankings, persistent profiles and the website are not implemented.
 
 > **Release status:** source compilation and automated regression checks pass without warnings. Final hosted gameplay validation of the V1 admin workflows is still required before publishing `v1.0.0` as stable.
 
@@ -12,7 +12,8 @@ The current development baseline contains five playable modes, centralized mode 
 - **Deathmatch:** free-for-all targeting, automatic respawns, weapon selection, spawn protection and session leaderboard.
 - **Arms Race:** free-for-all 15-level weapon progression, immediate loadouts, respawns, HUD and final knife-kill victory.
 - **AWP Only:** free-for-all AWP/Knife restriction, respawns, protection, standings and configurable `awp_` map selection.
-- **HE Battle:** free-for-all HE-only loadouts, automatic grenade replenishment, purchase/pickup restrictions and respawns.
+- **HE Battle:** team-aware HE-only loadouts, automatic grenade replenishment, enemy-kill standings, purchase/pickup restrictions and respawns.
+- **Knife 35HP:** team-based knife-only rounds with 35 HP, no armor/buying, and routing to installed `35hp`/`ka_` maps.
 - **Arcade refinements:** distributed Deathmatch/Arms Race spawns, stricter Arms Race pickup controls, two-kill gun levels with knife demotion, and optional grounded/stationary weapon tuning.
 - **Voting:** `/rtv`, `/votemode`, `/votemap` and `/nextmap` with installed-map validation and one authoritative next mode/map decision.
 - **Administration:** `/admin` and `/adminmenu` for confirmed mode, map, Classic, YaPB, player and server actions.
@@ -82,7 +83,7 @@ Production-only additions synchronized back into source control are documented i
 ## Roadmap
 
 - **Phase 1 — foundation (implemented):** HLDS provisioning, baseline configuration, Metamod-P, AMX Mod X, lifecycle scripts, `mm_core`, and LAN validation.
-- **Phase 2.1 — main game-mode menu (implemented):** native `/menu` and `/modes` menus, five informational mode choices, and nine informational Classic formats.
+- **Phase 2.1 — main game-mode menu (implemented):** native `/menu` and `/modes` menus, six mode choices, `/rules`, and nine informational Classic formats.
 - **Phase 2.2 — real mode management (implemented):** authoritative mode/format state, administrator confirmation, configuration transitions, fallback, public Pawn natives/forwards, and `/mode` status.
 - **Phase 2.3 — voting design (superseded by Phase 5):** the initial voting placeholder was replaced by the centralized Phase 5 implementation.
 - **Phase 3 — Classic (implemented):** nine team formats, enforced capacities, warmup/ready/live/paused/halftime/finished lifecycle, MR3/MR5/MR12 rules, MR12 overtime, side switching, scoring, HUD, and admin controls. Unbalanced matches remain casual.
@@ -93,6 +94,7 @@ Production-only additions synchronized back into source control are documented i
 - **Phase 4.3.2 — isolated ReGameDLL trial (core validation passed):** clone-only setup/install/start/stop/status/rollback scripts, pinned official artifact verification, separate port/state, and observed Classic/arcade transition checks. Arms Race final completion and the complete AWP map-change path remain manual checks.
 - **Phase 4.3.3 — safe production migration (prepared, not executed):** read-only prerequisites, timestamped verified backup, manifest-bound install/status/rollback scripts, and a production smoke-test matrix. See [docs/REGAMEDLL_PRODUCTION.md](docs/REGAMEDLL_PRODUCTION.md).
 - **Phase 4.4 — HE Battle and hosted arcade refinements (implemented):** HE-only respawn gameplay, Arms Race purchase/pickup enforcement and two-kill progression, distributed DM/AR spawns, v3 crosshairs, and pinned ReAPI-backed weapon tuning.
+- **Phase 4.5 — hosted rules and Knife 35HP (implemented):** team-based Knife 35HP, mode-specific map routing, HE standings/kill limit, shared AR/HE spawn protection, and persisted Deathmatch loadouts.
 - **Phase 5 — Map & Mode Voting (implemented in source):** `/rtv`, `/votemode`, `/votemap`, `/nextmap`, installed-map validation, mode-specific pools, Classic-safe deferral, and single-use cross-map mode restoration. See [docs/MAP_VOTING.md](docs/MAP_VOTING.md).
 - **Phase 6 — Custom Admin Menu V1 (implemented and compile-tested):** permission-checked native menus for modes, maps, Classic lifecycle, YaPB, player actions and safe server controls. Hosted gameplay validation remains pending. See [docs/ADMIN_MENU.md](docs/ADMIN_MENU.md).
 - **Later shared systems:** SQLite profiles, global XP/levels/coins, separate competitive rating, mastery, achievements, enhanced HUD, cosmetics, leaderboards, missions and events.

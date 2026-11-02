@@ -18,7 +18,9 @@
 - `mm_armsrace` owns Phase 4.2 FFA weapon progression, Arms Race respawns, HUD, and transient standings. Its final level remains a knife kill.
 - `mm_awponly` owns Phase 4.3 FFA AWP/Knife restriction, respawns, protection, transient standings, and optional dedicated-map selection. Its map restoration guard must prevent `changelevel` loops.
 - `mm_he_battle` owns HE-only loadouts, grenade replenishment, purchase/pickup restrictions, and respawns. It must remain inactive outside HE Battle and use the shared arcade round controller.
-- `mm_random_spawns` may relocate players only in Deathmatch and Arms Race. It must reject blocked hulls, hazards, and active transitions.
+- `mm_knife` owns team-based Knife 35HP rounds, loadouts, damage rules, and safe routing to installed knife maps.
+- `mm_arcade_protection` owns spawn protection for Arms Race and HE Battle only; attacking must cancel protection.
+- `mm_random_spawns` may relocate players only in Deathmatch, Arms Race, and HE Battle. It must reject blocked hulls, hazards, and active transitions.
 - ReAPI is a pinned explicit dependency only for documented server-side weapon hooks and engine-level purchase/default-item restrictions. Do not add other ReAPI dependencies casually.
 - Persistent profile data and competitive rating are separate concerns. Unbalanced Classic matches are casual until requirements explicitly change.
 

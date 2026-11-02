@@ -10,6 +10,7 @@ enum MmMode
     MM_MODE_ARMS_RACE,
     MM_MODE_AWP_ONLY,
     MM_MODE_HE_BATTLE,
+    MM_MODE_KNIFE,
     MM_MODE_COUNT
 }
 
@@ -58,4 +59,3 @@ native MmRequestResult:mm_request_classic_format(MmClassicFormat:format, request
 // mm_mode_transition_started(old_mode, requested_mode)
 // mm_mode_changed(old_mode, new_mode)
 // mm_classic_format_changed(old_format, new_format)
-

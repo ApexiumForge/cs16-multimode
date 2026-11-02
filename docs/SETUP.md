@@ -86,7 +86,9 @@ Valid mode names are `classic`, `deathmatch`, `armsrace`, `awponly`, and `hebatt
 
 AMX Mod X reserves the server cvar `amx_mode` for its admin-authentication policy, so the requested `amx_mode` interface is deliberately a player/admin client-console command. For direct HLDS server-console automation, use the equivalent `mm_mode <mode>` command. Do not repurpose the protected AMX Mod X cvar.
 
-Ordinary mode changes update authoritative state, execute the corresponding configuration under `addons/amxmodx/configs/mm_modes`, and announce success. AWP Only may intentionally change to a configured installed AWP map; other implemented modes do not reload the map. Classic, Deathmatch, Arms Race, AWP Only, and HE Battle have isolated gameplay modules.
+Ordinary mode changes update authoritative state, execute the corresponding configuration under `addons/amxmodx/configs/mm_modes`, and announce success. AWP Only and Knife 35HP may intentionally route to compatible installed maps. Classic, Deathmatch, Arms Race, AWP Only, HE Battle, and Knife 35HP have isolated gameplay modules.
+
+Knife 35HP can be selected with `mm_mode knife` or the native mode menu. It gives Knife only, fixes health at 35 HP, removes armor, blocks buying/drops/map equipment, suppresses fall and team damage, and keeps stock team-round elimination. Only installed maps listed in `configs/mm_voting/maps_knife.ini` are eligible; the repository does not redistribute third-party BSP files.
 
 Install the pinned official ReAPI module before building the hosted arcade additions:
 
