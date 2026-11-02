@@ -86,7 +86,16 @@ Valid mode names are `classic`, `deathmatch`, `armsrace`, `awponly`, and `hebatt
 
 AMX Mod X reserves the server cvar `amx_mode` for its admin-authentication policy, so the requested `amx_mode` interface is deliberately a player/admin client-console command. For direct HLDS server-console automation, use the equivalent `mm_mode <mode>` command. Do not repurpose the protected AMX Mod X cvar.
 
-Ordinary mode changes update authoritative state, execute the corresponding configuration under `addons/amxmodx/configs/mm_modes`, and announce success. AWP Only may intentionally change to a configured installed AWP map; other implemented modes do not reload the map. Classic, Deathmatch, Arms Race, and AWP Only have isolated gameplay modules; HE Battle remains a marker.
+Ordinary mode changes update authoritative state, execute the corresponding configuration under `addons/amxmodx/configs/mm_modes`, and announce success. AWP Only may intentionally change to a configured installed AWP map; other implemented modes do not reload the map. Classic, Deathmatch, Arms Race, AWP Only, and HE Battle have isolated gameplay modules.
+
+Install the pinned official ReAPI module before building the hosted arcade additions:
+
+```powershell
+.\scripts\install-reapi.ps1
+.\scripts\build-plugins.ps1
+```
+
+ReAPI `5.29.0.358` is checksum-pinned and supplies the ReGameDLL hooks used by weapon tuning and engine-level purchase/default-item restrictions. Its downloaded archive and installed binaries remain outside Git.
 
 ### Phase 4.1 Deathmatch
 

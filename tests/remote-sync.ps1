@@ -40,20 +40,23 @@ Assert-Match $announcer 'MM_MODE_CLASSIC' 'Optional announcer must preserve Clas
 if ($build -match "Name = 'mm_announcer'") { throw 'Remote-sync check failed: the resource-dependent announcer must not enter the default production build.' }
 
 $expected = @()
-foreach ($shape in 0..3) {
-    foreach ($color in 0..4) {
-        $expected += "mm_xh_v1_${shape}_${color}.spr"
-        $expected += "mm_xh_v1_${shape}_${color}.txt"
+foreach ($version in @('v1', 'v3')) {
+    $lastShape = if ($version -eq 'v1') { 3 } else { 4 }
+    foreach ($shape in 0..$lastShape) {
+        foreach ($color in 0..4) {
+            $expected += "mm_xh_${version}_${shape}_${color}.spr"
+            $expected += "mm_xh_${version}_${shape}_${color}.txt"
+        }
     }
 }
-$actual = @(Get-ChildItem -LiteralPath $spriteDir -Filter 'mm_xh_v1_*' -File | Select-Object -ExpandProperty Name | Sort-Object)
+$actual = @(Get-ChildItem -LiteralPath $spriteDir -Filter 'mm_xh_v*' -File | Select-Object -ExpandProperty Name | Sort-Object)
 if (Compare-Object ($expected | Sort-Object) $actual) {
     throw 'Remote-sync check failed: the tracked crosshair resource set is incomplete or contains unexpected files.'
 }
 if ($actual | Where-Object { $_ -like '*.ztmp' }) {
     throw 'Remote-sync check failed: generated .ztmp cache files must not be tracked.'
 }
-foreach ($descriptor in Get-ChildItem -LiteralPath $spriteDir -Filter 'mm_xh_v1_*.txt' -File) {
+foreach ($descriptor in Get-ChildItem -LiteralPath $spriteDir -Filter 'mm_xh_v*.txt' -File) {
     $stem = [IO.Path]::GetFileNameWithoutExtension($descriptor.Name)
     $text = Get-Content -LiteralPath $descriptor.FullName -Raw
     if ($text -notmatch [regex]::Escape($stem)) {
@@ -63,7 +66,7 @@ foreach ($descriptor in Get-ChildItem -LiteralPath $spriteDir -Filter 'mm_xh_v1_
 
 Assert-Match $build "Name = 'mm_warmup_money'" 'The practice-money plugin must be built.'
 Assert-Match $build "Name = 'mm_crosshair'" 'The crosshair plugin must be built.'
-Assert-Match $build "Get-ChildItem[^\r\n]+mm_xh_v1_" 'Crosshair resources must be copied by the build.'
-Assert-Match $build "'mm_admin\.amxx', 'mm_warmup_money\.amxx', 'mm_crosshair\.amxx'" 'Generated plugin order must include the synchronized modules.'
+Assert-Match $build "Get-ChildItem[^\r\n]+mm_xh_v\*" 'Versioned crosshair resources must be copied by the build.'
+Assert-Match $build "'mm_admin\.amxx', 'mm_warmup_money\.amxx', 'mm_random_spawns\.amxx', 'mm_weapon_tuning\.amxx', 'mm_crosshair\.amxx'" 'Generated plugin order must include the synchronized modules.'
 
 Write-Host 'All remote-only module synchronization checks passed.'

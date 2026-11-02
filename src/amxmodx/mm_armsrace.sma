@@ -5,9 +5,9 @@
 #include <mm_mode_api>
 
 #define PLUGIN_NAME    "Multi-Mode Network Arms Race"
-#define PLUGIN_VERSION "0.4.4"
+#define PLUGIN_VERSION "0.5.1"
 #define PLUGIN_AUTHOR  "Multi-Mode Network"
-#define PROJECT_NAME   "Multi-Mode Network"
+#define PROJECT_NAME   "Arms Race"
 
 #define AR_LEVEL_COUNT 15
 #define TASK_RESPAWN_BASE 51000
@@ -35,7 +35,6 @@ enum WeaponCatalog
     WEAPON_KNIFE,
     WEAPON_CATALOG_COUNT
 }
-
 new const WEAPON_NAMES[WEAPON_CATALOG_COUNT][] =
 {
     "glock18", "usp", "deagle", "tmp", "mp5navy", "p90", "galil", "famas",
@@ -77,6 +76,8 @@ new g_level_cvars[AR_LEVEL_COUNT]
 new WeaponCatalog:g_progression[AR_LEVEL_COUNT]
 new g_level[33]
 new g_kills[33]
+new g_level_kills[33]
+new Float:g_next_action_notice[33]
 new g_deaths[33]
 new bool:g_match_finished
 new bool:g_gameplay_enabled
@@ -121,6 +122,7 @@ public client_putinserver(id)
 public client_disconnected(id)
 {
     clear_player_tasks(id)
+    g_next_action_notice[id] = 0.0
     reset_player(id)
 }
 
@@ -144,7 +146,7 @@ public player_killed_post(victim, attacker, should_gib)
     g_deaths[victim]++
     if (!g_match_finished && is_valid_ffa_kill(victim, attacker))
     {
-        process_progression_kill(attacker)
+        process_progression_kill(attacker, victim)
     }
 
     if (!g_match_finished)
@@ -180,14 +182,14 @@ public task_apply_loadout(task_id)
 public command_block_purchase(id)
 {
     if (!armsrace_active()) return PLUGIN_CONTINUE
-    client_print(id, print_center, "Purchasing is disabled in Arms Race")
+    mm_action_notice(id, "Buying is disabled. Earn your next weapon with kills.")
     return PLUGIN_HANDLED
 }
 
 public command_block_drop(id)
 {
     if (!armsrace_active()) return PLUGIN_CONTINUE
-    client_print(id, print_center, "Weapon dropping is disabled in Arms Race")
+    mm_action_notice(id, "Weapon dropping is disabled.")
     return PLUGIN_HANDLED
 }
 
@@ -197,7 +199,7 @@ public command_progression(id)
     if (!is_user_connected(id)) return PLUGIN_HANDLED
 
     new WeaponCatalog:weapon = g_progression[g_level[id]]
-    client_print(id, print_chat, "[%s] Arms Race level %d/%d: %s | Kills %d | Deaths %d", PROJECT_NAME, g_level[id] + 1, AR_LEVEL_COUNT, WEAPON_DISPLAY_NAMES[weapon], g_kills[id], g_deaths[id])
+    client_print_color(id, print_team_default, "^x04[%s]^x01 Arms Race level %d/%d: %s | Kills %d | Deaths %d", PROJECT_NAME, g_level[id] + 1, AR_LEVEL_COUNT, WEAPON_DISPLAY_NAMES[weapon], g_kills[id], g_deaths[id])
     return PLUGIN_HANDLED
 }
 
@@ -207,13 +209,13 @@ public command_leaderboard(id)
 
     new leaders[32], count
     collect_sorted_players(leaders, count)
-    client_print(id, print_chat, "[%s] Arms Race leaderboard:", PROJECT_NAME)
+    client_print_color(id, print_team_default, "^x04[%s]^x01 Arms Race leaderboard:", PROJECT_NAME)
 
     new limit = min(count, 5)
     for (new rank = 0; rank < limit; rank++)
     {
         new player = leaders[rank]
-        client_print(id, print_chat, "#%d %n - Level %d/%d, %d kills", rank + 1, player, g_level[player] + 1, AR_LEVEL_COUNT, g_kills[player])
+        client_print_color(id, print_team_default, "^x04[Arms Race]^x01 #%d ^x04%n^x01 - Level %d/%d, %d kills", rank + 1, player, g_level[player] + 1, AR_LEVEL_COUNT, g_kills[player])
     }
     return PLUGIN_HANDLED
 }
@@ -231,11 +233,11 @@ public task_update_hud()
         set_hudmessage(255, 190, 40, 0.02, 0.18, 0, 0.0, 1.1, 0.0, 0.0)
         if (leader)
         {
-            ShowSyncHudMsg(id, g_hud_sync, "Arms Race | Level %d/%d: %s^nKills: %d | Leader: %n (Level %d)", g_level[id] + 1, AR_LEVEL_COUNT, WEAPON_DISPLAY_NAMES[weapon], g_kills[id], leader, g_level[leader] + 1)
+            ShowSyncHudMsg(id, g_hud_sync, "Arms Race | Level %d/%d: %s^nProgress: %d/%d | Kills: %d | Leader: %n (Level %d)", g_level[id] + 1, AR_LEVEL_COUNT, WEAPON_DISPLAY_NAMES[weapon], g_level_kills[id], g_level[id] == AR_LEVEL_COUNT - 1 ? 1 : 2, g_kills[id], leader, g_level[leader] + 1)
         }
         else
         {
-            ShowSyncHudMsg(id, g_hud_sync, "Arms Race | Level %d/%d: %s^nKills: %d | Waiting for players", g_level[id] + 1, AR_LEVEL_COUNT, WEAPON_DISPLAY_NAMES[weapon], g_kills[id])
+            ShowSyncHudMsg(id, g_hud_sync, "Arms Race | Level %d/%d: %s^nProgress: %d/%d | Kills: %d | Waiting for players", g_level[id] + 1, AR_LEVEL_COUNT, WEAPON_DISPLAY_NAMES[weapon], g_level_kills[id], g_level[id] == AR_LEVEL_COUNT - 1 ? 1 : 2, g_kills[id])
         }
     }
 }
@@ -253,7 +255,7 @@ activate_armsrace()
     begin_next_match()
     remove_task(TASK_HUD)
     set_task(1.0, "task_update_hud", TASK_HUD, _, _, "b")
-    client_print(0, print_chat, "[%s] Free-for-all Arms Race active. Reach level 15 and win with a knife kill.", PROJECT_NAME)
+    client_print_color(0, print_team_default, "^x04[%s]^x01 Free-for-all Arms Race: two gun kills or one knife kill to advance. Being knifed loses a level.", PROJECT_NAME)
     log_amx("Arms Race activated with a validated %d-level progression.", AR_LEVEL_COUNT)
 }
 
@@ -286,35 +288,51 @@ begin_next_match()
             set_task(0.2, "task_respawn_player", TASK_RESPAWN_BASE + id)
         }
     }
-    client_print(0, print_chat, "[%s] A new Arms Race match has started.", PROJECT_NAME)
+    client_print_color(0, print_team_default, "^x04[%s]^x01 A new Arms Race match has started.", PROJECT_NAME)
 }
 
-process_progression_kill(attacker)
+process_progression_kill(attacker, victim)
 {
     new WeaponCatalog:required_weapon = g_progression[g_level[attacker]]
-    if (get_user_weapon(attacker) != WEAPON_IDS[required_weapon])
+    new weapon = get_user_weapon(attacker)
+    new bool:knife_kill = weapon == CSW_KNIFE
+    if (!knife_kill && weapon != WEAPON_IDS[required_weapon])
     {
         replenish_current_ammunition(attacker)
         return
     }
 
+    if (knife_kill)
+    {
+        if (g_level[victim] > 0) g_level[victim]--
+        g_level_kills[victim] = 0
+        client_print_color(0, print_team_default, "^4[%s]^1 ^4%n^1 knifed ^4%n^1! Victim now at level %d.", PROJECT_NAME, attacker, victim, g_level[victim] + 1)
+    }
     g_kills[attacker]++
     if (g_level[attacker] == AR_LEVEL_COUNT - 1)
     {
-        finish_match(attacker)
+        if (knife_kill) finish_match(attacker)
         return
     }
 
+    g_level_kills[attacker]++
+    if (!knife_kill && g_level_kills[attacker] < 2)
+    {
+        replenish_current_ammunition(attacker)
+        client_print_color(attacker, print_team_default, "^4[%s]^1 Level progress: ^41/2^1 kills.", PROJECT_NAME)
+        return
+    }
+    g_level_kills[attacker] = 0
     g_level[attacker]++
     apply_current_weapon(attacker)
-    client_print(0, print_chat, "[%s] %n advanced to level %d: %s.", PROJECT_NAME, attacker, g_level[attacker] + 1, WEAPON_DISPLAY_NAMES[g_progression[g_level[attacker]]])
+    client_print_color(0, print_team_default, "^4[%s]^1 ^4%n^1 advanced to level %d: %s.", PROJECT_NAME, attacker, g_level[attacker] + 1, WEAPON_DISPLAY_NAMES[g_progression[g_level[attacker]]])
 }
 
 finish_match(winner)
 {
     g_match_finished = true
     for (new id = 1; id <= MaxClients; id++) clear_player_tasks(id)
-    client_print(0, print_chat, "[%s] %n wins Arms Race with the final knife kill!", PROJECT_NAME, winner)
+    client_print_color(0, print_team_default, "^x04[%s]^x01 ^x04%n^x01 wins Arms Race with the final knife kill!", PROJECT_NAME, winner)
     set_hudmessage(0, 255, 80, -1.0, 0.30, 0, 1.0, 5.0)
     ShowSyncHudMsg(0, g_hud_sync, "%n WINS ARMS RACE!^nFinal knife kill completed", winner)
     log_amx("%n won Arms Race with %d valid progression kills.", winner, g_kills[winner])
@@ -430,6 +448,7 @@ clear_player_tasks(id)
 reset_player(id)
 {
     g_level[id] = 0
+    g_level_kills[id] = 0
     g_kills[id] = 0
     g_deaths[id] = 0
 }
@@ -441,7 +460,7 @@ reset_all_progression()
 
 armsrace_inactive_message(id)
 {
-    client_print(id, print_chat, "[%s] Arms Race commands are disabled while another mode is active.", PROJECT_NAME)
+    client_print_color(id, print_team_default, "^x04[%s]^x01 Arms Race commands are disabled while another mode is active.", PROJECT_NAME)
     return PLUGIN_HANDLED
 }
 
@@ -455,4 +474,13 @@ bool:is_playing_team(id)
 bool:armsrace_active()
 {
     return g_gameplay_enabled && mm_get_active_mode() == MM_MODE_ARMS_RACE
+}
+
+mm_action_notice(id, const text[])
+{
+    if (!is_user_connected(id)) return
+    new Float:now = get_gametime()
+    if (now < g_next_action_notice[id]) return
+    g_next_action_notice[id] = now + 2.0
+    client_print_color(id, print_team_default, "^4[Arms Race]^1 %s", text)
 }

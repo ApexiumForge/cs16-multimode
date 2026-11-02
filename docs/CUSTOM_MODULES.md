@@ -18,7 +18,16 @@ Set the value to `0` to disable refills. Values are clamped to CS 1.6's maximum 
 
 `mm_crosshair` provides `/crosshair` and `/ch` for human players. Four shapes and five colors are available. Preferences are stored in the isolated `mm_crosshair` nVault only for stable Steam/Valve identities; LAN and pending identities remain session-only.
 
-The plugin preserves native sniper scopes and does not draw for Knife, C4, grenades, dead players, bots, spectators, hidden HUD states, or non-default FOV. Its 20 sprite/descriptor pairs live under `config/cstrike/sprites` and are copied into `cstrike/sprites` by the production build. The same resources must exist on FastDL.
+The plugin preserves native sniper scopes and does not draw for Knife, C4, grenades, dead players, bots, spectators, hidden HUD states, or non-default FOV. Version 1.3 uses 25 v3 sprite/descriptor pairs. The earlier 20 v1 pairs remain for rollback compatibility. Resources live under `config/cstrike/sprites`, are copied by the production build, and must match FastDL.
+
+## Hosted arcade additions
+
+- `mm_he_battle` supplies HE-only free-for-all respawns and blocks purchases, pickups and map equipment.
+- `mm_armsrace_restrictions` preserves progression grants while blocking engine purchases and world weapons.
+- `mm_random_spawns` distributes Deathmatch and Arms Race spawns across validated grounded points.
+- `mm_weapon_tuning` adjusts grounded, stationary spread/recoil through ReAPI. Disable it with `mm_weapon_tuning 0` to restore native weapon behavior.
+
+The ReAPI-backed modules require the pinned official dependency installed by `scripts/install-reapi.ps1` before compilation or startup.
 
 ## Optional HD skins and Butterfly knife
 

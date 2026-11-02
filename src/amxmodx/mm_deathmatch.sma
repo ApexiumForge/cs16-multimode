@@ -6,7 +6,7 @@
 #include <mm_mode_api>
 
 #define PLUGIN_NAME    "Multi-Mode Network Deathmatch"
-#define PLUGIN_VERSION "0.4.4"
+#define PLUGIN_VERSION "0.4.5-colors"
 #define PLUGIN_AUTHOR  "Multi-Mode Network"
 #define PROJECT_NAME   "Multi-Mode Network"
 
@@ -23,7 +23,6 @@ enum PrimaryWeapon
     PRIMARY_M249,
     PRIMARY_COUNT
 }
-
 enum SecondaryWeapon
 {
     SECONDARY_DEAGLE = 0,
@@ -157,7 +156,7 @@ public command_weapon_menu(id)
 {
     if (!deathmatch_active())
     {
-        client_print(id, print_chat, "[%s] /dm is available only in Deathmatch mode.", PROJECT_NAME)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 /dm is available only in Deathmatch mode.", PROJECT_NAME)
         return PLUGIN_HANDLED
     }
     if (!is_user_connected(id) || is_user_bot(id)) return PLUGIN_HANDLED
@@ -219,7 +218,7 @@ public secondary_menu_handler(id, menu, item)
     g_secondary[id] = SecondaryWeapon:str_to_num(item_info)
     menu_destroy(menu)
 
-    client_print(id, print_chat, "[%s] Loadout selected: %s + %s.", PROJECT_NAME, PRIMARY_NAMES[g_primary[id]], SECONDARY_NAMES[g_secondary[id]])
+    client_print_color(id, print_team_default, "^x04[%s]^x01 Loadout selected: %s + %s.", PROJECT_NAME, PRIMARY_NAMES[g_primary[id]], SECONDARY_NAMES[g_secondary[id]])
     if (is_user_alive(id)) apply_loadout(id)
     return PLUGIN_HANDLED
 }
@@ -228,7 +227,7 @@ public command_top(id)
 {
     if (!deathmatch_active())
     {
-        client_print(id, print_chat, "[%s] /top is available only in Deathmatch mode.", PROJECT_NAME)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 /top is available only in Deathmatch mode.", PROJECT_NAME)
         return PLUGIN_HANDLED
     }
 
@@ -251,12 +250,12 @@ public command_top(id)
         }
     }
 
-    client_print(id, print_chat, "[%s] Deathmatch leaderboard:", PROJECT_NAME)
+    client_print_color(id, print_team_default, "^x04[%s]^x01 Deathmatch leaderboard:", PROJECT_NAME)
     new limit = min(count, 5)
     for (new rank = 0; rank < limit; rank++)
     {
         new player = leaders[rank]
-        client_print(id, print_chat, "#%d %n - %d kills / %d deaths", rank + 1, player, g_kills[player], g_deaths[player])
+        client_print_color(id, print_team_default, "^x04[AMXX]^x01 #%d ^x04%n^x01 - %d kills / %d deaths", rank + 1, player, g_kills[player], g_deaths[player])
     }
     return PLUGIN_HANDLED
 }
@@ -274,7 +273,7 @@ activate_deathmatch()
             set_task(0.2, "task_respawn_player", TASK_RESPAWN_BASE + id)
         }
     }
-    client_print(0, print_chat, "[%s] Free-for-all Deathmatch active. Use /dm for weapons and /top for scores.", PROJECT_NAME)
+    client_print_color(0, print_team_default, "^x04[%s]^x01 Free-for-all Deathmatch active. Use /dm for weapons and /top for scores.", PROJECT_NAME)
     log_amx("Deathmatch activated; transient scores reset.")
 }
 

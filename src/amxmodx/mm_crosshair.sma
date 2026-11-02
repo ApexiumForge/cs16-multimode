@@ -4,18 +4,20 @@
 
 #define MM_FAKE_WEAPON 2
 #define MM_HIDE_CROSSHAIR (1<<6)
-#define MM_STYLE_COUNT 4
+#define MM_STYLE_COUNT 5
 #define MM_COLOR_COUNT 5
 #define MM_NO_VAULT -1
 
 new const PLUGIN_NAME[] = "Torbeshi Crosshair Menu"
-new const PLUGIN_VERSION[] = "1.0"
+new const PLUGIN_VERSION[] = "1.3"
 new const PLUGIN_AUTHOR[] = "Torbeshi"
-new const STYLE_NAMES[][] = {"Tiny cross", "Small cross", "Dot", "Cross + dot"}
+new const STYLE_NAMES[][] = {"Tiny cross", "Small cross", "Dot", "Cross + dot", "Medium cross"}
 new const COLOR_NAMES[][] = {"Green", "Cyan", "White", "Red", "Yellow"}
 new g_style[33], g_color[33], g_weapon[33], g_clip[33], g_fov[33], g_hide[33]
 new bool:g_custom[33], bool:g_sending
 new g_data[31][8], bool:g_known[31]
+new const MM_AMMO_ID[] = {-1,9,-1,2,12,5,14,6,4,13,10,7,6,4,4,6,10,10,1,10,3,5,4,10,2,11,8,4,2,-1,7}
+new const MM_AMMO_MAX[] = {-1,52,-1,90,1,32,1,100,90,1,120,100,100,90,90,100,120,120,30,120,200,32,90,120,90,2,35,90,90,-1,100}
 new g_msgWeaponList, g_msgCurWeapon, g_msgHide, g_msgFov, g_vault = MM_NO_VAULT
 
 public plugin_precache()
@@ -25,14 +27,13 @@ public plugin_precache()
     {
         for (new color = 0; color < MM_COLOR_COUNT; color++)
         {
-            formatex(path, charsmax(path), "sprites/mm_xh_v1_%d_%d.spr", shape, color)
+            formatex(path, charsmax(path), "sprites/mm_xh_v3_%d_%d.spr", shape, color)
             precache_generic(path)
-            formatex(path, charsmax(path), "sprites/mm_xh_v1_%d_%d.txt", shape, color)
+            formatex(path, charsmax(path), "sprites/mm_xh_v3_%d_%d.txt", shape, color)
             precache_generic(path)
         }
     }
 }
-
 public plugin_init()
 {
     register_plugin(PLUGIN_NAME, PLUGIN_VERSION, PLUGIN_AUTHOR)
@@ -45,14 +46,15 @@ public plugin_init()
     g_msgHide = get_user_msgid("HideWeapon")
     g_msgFov = get_user_msgid("SetFOV")
     register_message(g_msgWeaponList, "mm_weapon_list")
-    register_message(g_msgCurWeapon, "mm_current_weapon")
+    register_event("CurWeapon", "mm_current_weapon_event", "be", "1=1", "2!2")
+    register_srvcmd("mm_crosshair_status", "mm_crosshair_status")
     register_message(g_msgHide, "mm_hide_weapon")
     register_message(g_msgFov, "mm_set_fov")
     new command[48]
     for (new shape = 0; shape < MM_STYLE_COUNT; shape++)
         for (new color = 0; color < MM_COLOR_COUNT; color++)
         {
-            formatex(command, charsmax(command), "mm_xh_v1_%d_%d", shape, color)
+            formatex(command, charsmax(command), "mm_xh_v3_%d_%d", shape, color)
             register_clcmd(command, "mm_select_current_weapon")
         }
     g_vault = nvault_open("mm_crosshair")
@@ -141,24 +143,19 @@ public mm_weapon_list(msg, destination, id)
     return PLUGIN_CONTINUE
 }
 
-public mm_current_weapon(msg, destination, id)
+public mm_current_weapon_event(id)
 {
-    if (g_sending || id < 1 || id > 32 || !is_user_connected(id)) return PLUGIN_CONTINUE
-    if (get_msg_arg_int(1) != 1)
-    {
-        if (!is_user_alive(id) && g_custom[id]) mm_restore(id)
-        return PLUGIN_CONTINUE
-    }
-    g_weapon[id] = get_msg_arg_int(2)
-    g_clip[id] = get_msg_arg_int(3)
-    if (mm_can_draw(id))
-    {
-        mm_draw(id)
-        return PLUGIN_HANDLED
-    }
-    mm_restore_hide(id)
-    g_custom[id] = false
-    return PLUGIN_CONTINUE
+    if (g_sending || !is_user_connected(id)) return
+    g_weapon[id] = read_data(2)
+    g_clip[id] = read_data(3)
+    mm_refresh(id)
+}
+
+public mm_crosshair_status()
+{
+    for (new id = 1; id <= MaxClients; id++)
+        if (is_user_connected(id) && !is_user_bot(id))
+            server_print("[Crosshair] client=%d style=%d color=%d weapon=%d fov=%d hide=%d custom=%d alive=%d", id, g_style[id], g_color[id], g_weapon[id], g_fov[id], g_hide[id], g_custom[id], is_user_alive(id))
 }
 
 public mm_set_fov(msg, destination, id)
@@ -184,16 +181,16 @@ bool:mm_can_draw(id)
     if (!g_style[id] || !is_user_alive(id) || g_fov[id] != 90) return false
     if (g_hide[id] & (1 | 4 | MM_HIDE_CROSSHAIR)) return false
     new weapon = g_weapon[id]
-    if (weapon <= 0 || weapon > 30 || !g_known[weapon]) return false
-    // Preserve native sniper scopes, knife/grenade/C4 behavior and spectators.
+    if (weapon <= 0 || weapon > 30 || weapon == MM_FAKE_WEAPON) return false
+    // Preserve native sniper scopes and spectators.
     return weapon != CSW_AWP && weapon != CSW_SCOUT && weapon != CSW_G3SG1
-        && weapon != CSW_SG550 && weapon != CSW_KNIFE && weapon != CSW_C4
-        && weapon != CSW_HEGRENADE && weapon != CSW_FLASHBANG && weapon != CSW_SMOKEGRENADE
+        && weapon != CSW_SG550
 }
 
 mm_refresh(id)
 {
     if (!is_user_connected(id)) return
+    if (is_user_alive(id)) g_weapon[id] = get_user_weapon(id, g_clip[id])
     if (mm_can_draw(id)) mm_draw(id)
     else if (g_custom[id]) mm_restore(id)
 }
@@ -201,15 +198,18 @@ mm_refresh(id)
 mm_draw(id)
 {
     new name[48], weapon = g_weapon[id]
-    formatex(name, charsmax(name), "mm_xh_v1_%d_%d", g_style[id] - 1, g_color[id])
+    formatex(name, charsmax(name), "mm_xh_v3_%d_%d", g_style[id] - 1, g_color[id])
     g_sending = true
     message_begin(MSG_ONE, g_msgWeaponList, _, id)
     write_string(name)
-    for (new i = 0; i < 4; i++) write_byte(g_data[weapon][i])
-    write_byte(6)
+    write_byte(g_known[weapon] ? g_data[weapon][0] : MM_AMMO_ID[weapon])
+    write_byte(g_known[weapon] ? g_data[weapon][1] : MM_AMMO_MAX[weapon])
+    write_byte(-1)
+    write_byte(-1)
     write_byte(0)
+    write_byte(11)
     write_byte(MM_FAKE_WEAPON)
-    write_byte(g_data[weapon][7])
+    write_byte(0)
     message_end()
     message_begin(MSG_ONE, g_msgHide, _, id)
     write_byte(g_hide[id] | MM_HIDE_CROSSHAIR)

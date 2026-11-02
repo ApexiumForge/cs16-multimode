@@ -1,0 +1,9 @@
+8
+crosshair 320 mm_xh_v3_2_0 0 0 15 15
+autoaim 320 mm_xh_v3_2_0 0 0 15 15
+zoom 320 mm_xh_v3_2_0 0 0 15 15
+zoom_autoaim 320 mm_xh_v3_2_0 0 0 15 15
+crosshair 640 mm_xh_v3_2_0 0 0 15 15
+autoaim 640 mm_xh_v3_2_0 0 0 15 15
+zoom 640 mm_xh_v3_2_0 0 0 15 15
+zoom_autoaim 640 mm_xh_v3_2_0 0 0 15 15

@@ -3,7 +3,7 @@
 #include <mm_mode_api>
 
 #define PLUGIN_NAME    "Multi-Mode Network Menus"
-#define PLUGIN_VERSION "0.4.4"
+#define PLUGIN_VERSION "0.4.5-colors"
 #define PLUGIN_AUTHOR  "Multi-Mode Network"
 #define PROJECT_NAME   "Multi-Mode Network"
 
@@ -19,7 +19,6 @@ public plugin_init()
     register_clcmd("say_team /modes", "handle_modes_menu_command")
     log_amx("%s menu module v%s initialized successfully.", PROJECT_NAME, PLUGIN_VERSION)
 }
-
 public client_connect(id)
 {
     clear_pending_selection(id)
@@ -66,7 +65,7 @@ public handle_main_menu_selection(id, menu, item)
     {
         case 1: show_modes_menu(id)
         case 2: show_classic_formats_menu(id)
-        case 3: client_print(id, print_chat, "[%s] Server Foundation %s", PROJECT_NAME, PLUGIN_VERSION)
+        case 3: client_print_color(id, print_team_default, "^x04[%s]^x01 Server Foundation %s", PROJECT_NAME, PLUGIN_VERSION)
     }
     return PLUGIN_HANDLED
 }
@@ -109,12 +108,12 @@ public handle_mode_selection(id, menu, item)
     mm_get_mode_name(mode, mode_name, charsmax(mode_name))
     if (!has_mode_admin_access(id))
     {
-        client_print(id, print_chat, "[%s] %s is available. An administrator must confirm activation.", PROJECT_NAME, mode_name)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 %s is available. An administrator must confirm activation.", PROJECT_NAME, mode_name)
         return PLUGIN_HANDLED
     }
     if (mode == mm_get_active_mode())
     {
-        client_print(id, print_chat, "[%s] %s is already active.", PROJECT_NAME, mode_name)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 %s is already active.", PROJECT_NAME, mode_name)
         return PLUGIN_HANDLED
     }
     g_pending_mode[id] = mode
@@ -136,13 +135,13 @@ public handle_mode_confirmation(id, menu, item)
     if (str_to_num(info) != 1)
     {
         clear_pending_selection(id)
-        client_print(id, print_chat, "[%s] Mode change cancelled.", PROJECT_NAME)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 Mode change cancelled.", PROJECT_NAME)
         return PLUGIN_HANDLED
     }
     if (!has_mode_admin_access(id))
     {
         clear_pending_selection(id)
-        client_print(id, print_chat, "[%s] You are no longer authorized to change modes.", PROJECT_NAME)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 You are no longer authorized to change modes.", PROJECT_NAME)
         return PLUGIN_HANDLED
     }
     new MmMode:mode = g_pending_mode[id]
@@ -190,12 +189,12 @@ public handle_classic_format_selection(id, menu, item)
     mm_get_classic_format_name(format, format_name, charsmax(format_name))
     if (!has_mode_admin_access(id))
     {
-        client_print(id, print_chat, "[%s] Classic %s is available. An administrator must confirm selection.", PROJECT_NAME, format_name)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 Classic %s is available. An administrator must confirm selection.", PROJECT_NAME, format_name)
         return PLUGIN_HANDLED
     }
     if (format == mm_get_classic_format())
     {
-        client_print(id, print_chat, "[%s] Classic format %s is already selected.", PROJECT_NAME, format_name)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 Classic format %s is already selected.", PROJECT_NAME, format_name)
         return PLUGIN_HANDLED
     }
     g_pending_format[id] = format
@@ -217,13 +216,13 @@ public handle_format_confirmation(id, menu, item)
     if (str_to_num(info) != 1)
     {
         clear_pending_selection(id)
-        client_print(id, print_chat, "[%s] Classic format change cancelled.", PROJECT_NAME)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 Classic format change cancelled.", PROJECT_NAME)
         return PLUGIN_HANDLED
     }
     if (!has_mode_admin_access(id))
     {
         clear_pending_selection(id)
-        client_print(id, print_chat, "[%s] You are no longer authorized to change formats.", PROJECT_NAME)
+        client_print_color(id, print_team_default, "^x04[%s]^x01 You are no longer authorized to change formats.", PROJECT_NAME)
         return PLUGIN_HANDLED
     }
     new MmClassicFormat:format = g_pending_format[id]
@@ -244,11 +243,11 @@ print_request_result(id, MmRequestResult:result)
 {
     switch (result)
     {
-        case MM_REQUEST_ACCEPTED: client_print(id, print_chat, "[%s] Request accepted; transition is being verified.", PROJECT_NAME)
-        case MM_REQUEST_DUPLICATE: client_print(id, print_chat, "[%s] That selection is already active.", PROJECT_NAME)
-        case MM_REQUEST_BUSY: client_print(id, print_chat, "[%s] Another transition is already in progress.", PROJECT_NAME)
-        case MM_REQUEST_INVALID: client_print(id, print_chat, "[%s] Invalid selection.", PROJECT_NAME)
-        case MM_REQUEST_UNAUTHORIZED: client_print(id, print_chat, "[%s] You are not authorized to change mode state.", PROJECT_NAME)
-        default: client_print(id, print_chat, "[%s] Request failed; Classic fallback was attempted.", PROJECT_NAME)
+        case MM_REQUEST_ACCEPTED: client_print_color(id, print_team_default, "^x04[%s]^x01 Request accepted; transition is being verified.", PROJECT_NAME)
+        case MM_REQUEST_DUPLICATE: client_print_color(id, print_team_default, "^x04[%s]^x01 That selection is already active.", PROJECT_NAME)
+        case MM_REQUEST_BUSY: client_print_color(id, print_team_default, "^x04[%s]^x01 Another transition is already in progress.", PROJECT_NAME)
+        case MM_REQUEST_INVALID: client_print_color(id, print_team_default, "^x04[%s]^x01 Invalid selection.", PROJECT_NAME)
+        case MM_REQUEST_UNAUTHORIZED: client_print_color(id, print_team_default, "^x04[%s]^x01 You are not authorized to change mode state.", PROJECT_NAME)
+        default: client_print_color(id, print_team_default, "^x04[%s]^x01 Request failed; Classic fallback was attempted.", PROJECT_NAME)
     }
 }

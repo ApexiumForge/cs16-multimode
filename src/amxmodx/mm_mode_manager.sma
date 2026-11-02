@@ -3,7 +3,7 @@
 #include <mm_mode_api>
 
 #define PLUGIN_NAME    "Multi-Mode Network Mode Manager"
-#define PLUGIN_VERSION "0.4.4"
+#define PLUGIN_VERSION "0.4.5-colors"
 #define PLUGIN_AUTHOR  "Multi-Mode Network"
 #define PROJECT_NAME   "Multi-Mode Network"
 #define MODE_CONFIG_DIR "addons/amxmodx/configs/mm_modes"
@@ -18,7 +18,6 @@ new const MODE_NAMES[MM_MODE_COUNT][] =
     "AWP Only",
     "HE Battle"
 }
-
 new const MODE_COMMAND_NAMES[MM_MODE_COUNT][] =
 {
     "classic",
@@ -165,7 +164,7 @@ public handle_mode_status(id)
     copy(mode_name, charsmax(mode_name), MODE_NAMES[g_active_mode])
     copy(format_name, charsmax(format_name), CLASSIC_FORMAT_NAMES[g_classic_format])
 
-    client_print(id, print_chat, "[%s] Active mode: %s | Classic format: %s", PROJECT_NAME, mode_name, format_name)
+    client_print_color(id, print_team_default, "^x04[%s]^x01 Active mode: %s | Classic format: %s", PROJECT_NAME, mode_name, format_name)
     return PLUGIN_HANDLED
 }
 
@@ -298,7 +297,7 @@ public task_verify_requested_mode()
 
     new requester_name[32]
     get_requester_name(g_transition_requester, requester_name, charsmax(requester_name))
-    client_print(0, print_chat, "[%s] %s activated %s mode.", PROJECT_NAME, requester_name, MODE_NAMES[new_mode])
+    client_print_color(0, print_team_default, "^x04[%s]^x01 ^x04%s^x01 activated %s mode.", PROJECT_NAME, requester_name, MODE_NAMES[new_mode])
     log_amx("Mode changed from %s to %s by %s.", MODE_NAMES[g_previous_mode], MODE_NAMES[new_mode], requester_name)
 }
 
@@ -345,7 +344,7 @@ MmRequestResult:request_classic_format(MmClassicFormat:format, requester)
 
     new requester_name[32]
     get_requester_name(requester, requester_name, charsmax(requester_name))
-    client_print(0, print_chat, "[%s] %s selected Classic format %s.", PROJECT_NAME, requester_name, CLASSIC_FORMAT_NAMES[format])
+    client_print_color(0, print_team_default, "^x04[%s]^x01 ^x04%s^x01 selected Classic format %s.", PROJECT_NAME, requester_name, CLASSIC_FORMAT_NAMES[format])
     log_amx("Classic format changed from %s to %s by %s.", CLASSIC_FORMAT_NAMES[old_format], CLASSIC_FORMAT_NAMES[format], requester_name)
     return MM_REQUEST_ACCEPTED
 }
@@ -445,4 +444,3 @@ print_request_result(id, MmRequestResult:result, const target_name[])
         default: console_print(id, "[MM] Request failed; Classic fallback was attempted.")
     }
 }
-

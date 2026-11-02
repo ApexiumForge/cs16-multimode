@@ -122,6 +122,19 @@ Phase 5 voting is not validated by source review or compilation alone. Follow [M
 
 Phase 1 remains verified by its foundation and LAN checks. Phase 2 remains verified by its menu and state-management checks. A successful compile alone does not prove runtime behavior.
 
+## Hosted arcade additions
+
+- [ ] Run `scripts\install-reapi.ps1`; confirm version `5.29.0.358` and both pinned SHA-256 checks succeed.
+- [ ] Run `tests\hosted-features.ps1` and `tests\remote-sync.ps1`; confirm both pass.
+- [ ] Build all plugins with zero warnings; confirm `mm_he_battle`, `mm_armsrace_restrictions`, `mm_random_spawns`, and `mm_weapon_tuning` are generated and registered once.
+- [ ] Start the isolated/local server and confirm ReAPI plus every managed plugin reports running without missing-native errors.
+- [ ] Activate HE Battle; verify HE-only inventory, grenade replenishment, blocked buying/pickups, one-second respawns, FFA damage, and continuous rounds.
+- [ ] Switch HE Battle to Classic while supply/respawn tasks are pending; verify no delayed HE action and normal Classic inventory/round cvars return.
+- [ ] In Arms Race, verify two assigned-weapon kills advance one level, a knife kill advances immediately, and the knifed victim loses no more than one level without underflow.
+- [ ] In Deathmatch and Arms Race, run `mm_spawn_status`; verify grounded points exist and repeated spawns avoid walls, hazards, and occupied hulls on every installed map.
+- [ ] Set `mm_weapon_tuning 0`; verify native weapon behavior returns. Re-enable it and verify only grounded stationary supported weapons receive the configured server-side scaling.
+- [ ] From a clean client, verify every `mm_xh_v3_*.spr/.txt` request succeeds through FastDL and `/crosshair` exposes five shapes and five colors.
+
 ## Phase 3 Classic automated and local-load checks
 
 - [ ] Run `./tests/phase3.ps1`; confirm every static architecture/rules assertion passes.

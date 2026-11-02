@@ -2,7 +2,7 @@
 
 A modular Counter-Strike 1.6 / GoldSrc server built for private LAN play and Linux hosting. The project uses SteamCMD HLDS, Metamod-P, AMX Mod X and Pawn. ReGameDLL_CS supplies the continuous-round controls required by the respawn-based arcade modes.
 
-The current release candidate is **v1.0.0-rc.1**. It contains four supported modes, centralized mode ownership, map and mode voting, and a permission-checked in-game administration panel. HE Battle, XP, coins, rankings, persistence, cosmetics and the website are not part of V1.
+The current development baseline contains five playable modes, centralized mode ownership, four-mode map/mode voting, and a permission-checked in-game administration panel. XP, coins, rankings, persistent profiles and the website are not implemented.
 
 > **Release status:** source compilation and automated regression checks pass without warnings. Final hosted gameplay validation of the V1 admin workflows is still required before publishing `v1.0.0` as stable.
 
@@ -12,6 +12,8 @@ The current release candidate is **v1.0.0-rc.1**. It contains four supported mod
 - **Deathmatch:** free-for-all targeting, automatic respawns, weapon selection, spawn protection and session leaderboard.
 - **Arms Race:** free-for-all 15-level weapon progression, immediate loadouts, respawns, HUD and final knife-kill victory.
 - **AWP Only:** free-for-all AWP/Knife restriction, respawns, protection, standings and configurable `awp_` map selection.
+- **HE Battle:** free-for-all HE-only loadouts, automatic grenade replenishment, purchase/pickup restrictions and respawns.
+- **Arcade refinements:** distributed Deathmatch/Arms Race spawns, stricter Arms Race pickup controls, two-kill gun levels with knife demotion, and optional grounded/stationary weapon tuning.
 - **Voting:** `/rtv`, `/votemode`, `/votemap` and `/nextmap` with installed-map validation and one authoritative next mode/map decision.
 - **Administration:** `/admin` and `/adminmenu` for confirmed mode, map, Classic, YaPB, player and server actions.
 - **Player customization:** persistent `/crosshair` styles plus separately deployed optional HD player/Butterfly cosmetics.
@@ -24,6 +26,7 @@ The current release candidate is **v1.0.0-rc.1**. It contains four supported mod
 - Metamod-P `v1.21p109`
 - AMX Mod X `1.10.0-git5487`
 - ReGameDLL_CS for arcade continuous-round policy
+- ReAPI `5.29.0.358` for verified ReGameDLL weapon/purchase hooks
 - Optional YaPB `4.4.957`
 
 ## Repository layout
@@ -45,6 +48,7 @@ Run these commands in PowerShell from the repository root. A normal user account
 ```powershell
 .\scripts\install-server.ps1
 .\scripts\install-addons.ps1
+.\scripts\install-reapi.ps1
 .\scripts\build-plugins.ps1
 # Administrator PowerShell:
 .\scripts\configure-firewall.ps1
@@ -88,9 +92,9 @@ Production-only additions synchronized back into source control are documented i
 - **Phase 4.3.1 — shared round fix (implemented in source):** centralized arcade round/objective policy with required-versus-optional ReGameDLL cvar detection.
 - **Phase 4.3.2 — isolated ReGameDLL trial (core validation passed):** clone-only setup/install/start/stop/status/rollback scripts, pinned official artifact verification, separate port/state, and observed Classic/arcade transition checks. Arms Race final completion and the complete AWP map-change path remain manual checks.
 - **Phase 4.3.3 — safe production migration (prepared, not executed):** read-only prerequisites, timestamped verified backup, manifest-bound install/status/rollback scripts, and a production smoke-test matrix. See [docs/REGAMEDLL_PRODUCTION.md](docs/REGAMEDLL_PRODUCTION.md).
+- **Phase 4.4 — HE Battle and hosted arcade refinements (implemented):** HE-only respawn gameplay, Arms Race purchase/pickup enforcement and two-kill progression, distributed DM/AR spawns, v3 crosshairs, and pinned ReAPI-backed weapon tuning.
 - **Phase 5 — Map & Mode Voting (implemented in source):** `/rtv`, `/votemode`, `/votemap`, `/nextmap`, installed-map validation, mode-specific pools, Classic-safe deferral, and single-use cross-map mode restoration. See [docs/MAP_VOTING.md](docs/MAP_VOTING.md).
 - **Phase 6 — Custom Admin Menu V1 (implemented and compile-tested):** permission-checked native menus for modes, maps, Classic lifecycle, YaPB, player actions and safe server controls. Hosted gameplay validation remains pending. See [docs/ADMIN_MENU.md](docs/ADMIN_MENU.md).
-- **Later Phase 4 — remaining arcade:** isolated HE Battle module; its gameplay policy remains unimplemented.
 - **Later shared systems:** SQLite profiles, global XP/levels/coins, separate competitive rating, mastery, achievements, enhanced HUD, cosmetics, leaderboards, missions and events.
 - **Optional later:** Next.js/TypeScript management dashboard and public-hosting hardening.
 
