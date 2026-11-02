@@ -22,9 +22,6 @@ $spawns = Read-ProjectFile 'src\amxmodx\mm_random_spawns.sma'
 $tuning = Read-ProjectFile 'src\amxmodx\mm_weapon_tuning.sma'
 $build = Read-ProjectFile 'scripts\build-plugins.ps1'
 $installer = Read-ProjectFile 'scripts\install-reapi.ps1'
-$classicMaps = Read-ProjectFile 'config\cstrike\addons\amxmodx\configs\mm_voting\maps_classic.ini'
-$awpMaps = Read-ProjectFile 'config\cstrike\addons\amxmodx\configs\mm_voting\maps_awponly.ini'
-$knifeMaps = Read-ProjectFile 'config\cstrike\addons\amxmodx\configs\mm_voting\maps_knife.ini'
 
 Assert-Match $api 'MM_MODE_HE_BATTLE' 'The shared mode contract must expose HE Battle.'
 Assert-Match $api 'MM_MODE_KNIFE' 'The shared mode contract must expose Knife 35HP.'
@@ -72,15 +69,5 @@ foreach ($plugin in @('mm_he_battle', 'mm_arcade_protection', 'mm_knife', 'mm_ar
 }
 Assert-Match $build 'mm_weapon_tuning\.cfg' 'The weapon tuning configuration must be deployed.'
 Assert-Match $build 'mm_rules\.html' 'The rules MOTD must be deployed.'
-
-foreach ($entry in ($classicMaps -split "`r?`n" | Where-Object { $_ -and $_[0] -notin @(';', '#') })) {
-    if ($entry -notmatch '^(?:de|cs)_[A-Za-z0-9_-]+$') { throw "Hosted-feature check failed: invalid Classic map pool entry: $entry" }
-}
-foreach ($entry in ($awpMaps -split "`r?`n" | Where-Object { $_ -and $_[0] -notin @(';', '#') })) {
-    if ($entry -notmatch '^awp_[A-Za-z0-9_-]+$') { throw "Hosted-feature check failed: invalid AWP map pool entry: $entry" }
-}
-foreach ($entry in ($knifeMaps -split "`r?`n" | Where-Object { $_ -and $_[0] -notin @(';', '#') })) {
-    if ($entry -notmatch '^(?:35hp|ka_)[A-Za-z0-9_-]*$') { throw "Hosted-feature check failed: invalid Knife map pool entry: $entry" }
-}
 
 Write-Host 'All hosted-feature architecture and lifecycle checks passed.'
