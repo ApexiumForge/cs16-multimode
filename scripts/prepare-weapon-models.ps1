@@ -1,10 +1,11 @@
 [CmdletBinding()]
-param([Parameter(Mandatory)][string]$PackDir, [Parameter(Mandatory)][string]$OutputDir)
+param([Parameter(Mandatory)][string]$PackDir, [Parameter(Mandatory)][string]$OutputDir, [switch]$IncludeKnife)
 $ErrorActionPreference = 'Stop'
 $PackDir = (Resolve-Path -LiteralPath $PackDir).Path
 $OutputDir = [IO.Path]::GetFullPath($OutputDir)
 if (Test-Path -LiteralPath $OutputDir) { throw 'Output must be a new directory.' }
 $models = @('ak47','aug','awp','deagle','elite','famas','fiveseven','g3sg1','galil','glock18','m249','m3','m4a1','mac10','mp5','p228','p90','scout','sg550','sg552','tmp','ump45','usp','xm1014')
+if ($IncludeKnife) { $models += 'knife' }
 $modelDir = Join-Path $OutputDir 'models\multimode\csgo_inspect'
 $soundDir = Join-Path $OutputDir 'sound\multimode\csgo_inspect'
 New-Item -ItemType Directory -Path $modelDir,$soundDir -Force | Out-Null

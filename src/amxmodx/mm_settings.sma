@@ -12,7 +12,8 @@ enum SettingsAction
     SETTINGS_MODE_STATUS,
     SETTINGS_LEADERBOARD,
     SETTINGS_VOTING,
-    SETTINGS_RULES
+    SETTINGS_RULES,
+    SETTINGS_KNIFE
 }
 
 enum VotingAction
@@ -48,6 +49,7 @@ public command_settings(id)
     menu_additem(menu, "Current leaderboard", "4")
     menu_additem(menu, "Voting and next map", "5")
     menu_additem(menu, "Mode rules / how to play", "6")
+    menu_additem(menu, "Knife model", "7")
     menu_setprop(menu, MPROP_EXITNAME, "Close")
     menu_display(id, menu)
     return PLUGIN_HANDLED
@@ -81,6 +83,7 @@ public handle_settings(id, menu, item)
         case SETTINGS_LEADERBOARD: show_mode_leaderboard(id)
         case SETTINGS_VOTING: show_voting_menu(id)
         case SETTINGS_RULES: run_chat_command(id, "/rules")
+        case SETTINGS_KNIFE: run_chat_command(id, "/knife")
     }
     return PLUGIN_HANDLED
 }

@@ -41,6 +41,8 @@ The ReAPI-backed modules require the pinned official dependency installed by `sc
 
 Register it exactly once through `plugins-mm-skins.ini` after installing its resources. Do not also add `mm_skins.amxx` to the main `plugins.ini`.
 
+Version 0.3.0 adds ordinary-player `/knife`, linked from `/settings`, with Butterfly and the separately installed CS GO pack knife. The existing refresh path respects each player's choice. Install `models/multimode/csgo_inspect/v_knife.mdl` and `knife_sounds.ini` from `prepare-weapon-models.ps1 -IncludeKnife` before reloading. Stable IDs store the selection in `mm_knife_choice` nVault; LAN/pending identities remain session-only. The pack knife does not include inspect animations. This optional cosmetic plugin requires ReAPI.
+
 ## Optional Double Kill announcer
 
 `src/amxmodx/optional/mm_announcer.sma` preserves the source for the local Double Kill announcer. It counts two valid player kills by the same attacker inside the configured window, resets sequences on death, disconnect, and mode transition, and rejects suicides. Classic accepts only opposing-team kills; FFA arcade modes accept any non-suicide player kill.
