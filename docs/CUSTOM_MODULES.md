@@ -31,6 +31,10 @@ The plugin preserves native sniper scopes and does not draw for Knife, C4, grena
 
 The ReAPI-backed modules require the pinned official dependency installed by `scripts/install-reapi.ps1` before compilation or startup.
 
+## Player settings
+
+`mm_settings` provides `/settings` and `/set` to every connected player. It delegates crosshair, Deathmatch loadout, personal mode status, current leaderboard, voting/next-map actions, and rules to their existing production handlers. Their mode checks, vote cooldowns, identity persistence, and permission rules remain authoritative.
+
 ## Optional HD skins and Butterfly knife
 
 `src/amxmodx/optional/mm_skins.sma` preserves the source for the deployed cosmetic module. It is intentionally excluded from the default production build because it depends on separately licensed model and sound resources that are not distributed by this repository.

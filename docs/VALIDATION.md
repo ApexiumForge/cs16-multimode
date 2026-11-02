@@ -99,6 +99,9 @@ Phase 5 voting is not validated by source review or compilation alone. Follow [M
 - [ ] Send `/menu`; confirm the native main menu offers **Game Modes** and **Server Information**.
 - [ ] Select **Game Modes**; confirm Classic, Deathmatch, Arms Race, AWP Only, HE Battle, and Knife 35HP appear.
 - [ ] Send `/modes`; confirm it opens the same six-mode menu directly, and `/rules` opens the rules MOTD.
+- [ ] As a normal non-admin player, send `/settings` and `/set`; confirm both open Player Settings and the main `/menu` links to it.
+- [ ] Verify Crosshair opens `/crosshair`; DM Loadout is refused outside Deathmatch and opens `/dm` inside it; personal status and leaderboard route correctly for the active mode.
+- [ ] Open Voting and Next Map; verify `/nextmap`, `/votemode`, `/votemap`, and `/rtv` retain their existing cooldown, minimum-player, and Classic-live safeguards.
 - [ ] Select **Classic**; confirm 1v1, 2v2, 3v3, 4v4, 5v5, 1v2, 2v3, 3v4, and 4v5 appear.
 - [ ] Select every mode and at least one Classic format; confirm an informational chat message appears and gameplay does not restart or change.
 - [ ] Repeat `/menu` and `/modes` in team chat.

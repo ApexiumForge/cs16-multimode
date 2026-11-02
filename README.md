@@ -14,6 +14,7 @@ The current development baseline contains six playable modes, centralized mode o
 - **AWP Only:** free-for-all AWP/Knife restriction, respawns, protection, standings and configurable `awp_` map selection.
 - **HE Battle:** team-aware HE-only loadouts, automatic grenade replenishment, enemy-kill standings, purchase/pickup restrictions and respawns.
 - **Knife 35HP:** team-based knife-only rounds with 35 HP, no armor/buying, and routing to installed `35hp`/`ka_` maps.
+- **Player settings:** `/settings` or `/set` opens ordinary-player crosshair, DM loadout, personal status, leaderboard, voting/next-map, and rules shortcuts.
 - **Arcade refinements:** distributed Deathmatch/Arms Race spawns, stricter Arms Race pickup controls, two-kill gun levels with knife demotion, and optional grounded/stationary weapon tuning.
 - **Voting:** `/rtv`, `/votemode`, `/votemap` and `/nextmap` with installed-map validation and one authoritative next mode/map decision.
 - **Administration:** `/admin` and `/adminmenu` for confirmed mode, map, Classic, YaPB, player and server actions.
