@@ -3,7 +3,7 @@
 #include <mm_mode_api>
 
 #define PLUGIN_NAME    "Multi-Mode Network Mode Manager"
-#define PLUGIN_VERSION "0.6.0"
+#define PLUGIN_VERSION "0.7.0"
 #define PLUGIN_AUTHOR  "Multi-Mode Network"
 #define PROJECT_NAME   "Multi-Mode Network"
 #define MODE_CONFIG_DIR "addons/amxmodx/configs/mm_modes"
@@ -17,7 +17,8 @@ new const MODE_NAMES[MM_MODE_COUNT][] =
     "Arms Race",
     "AWP Only",
     "HE Battle",
-    "Knife 35HP"
+    "Knife 35HP",
+    "Football"
 }
 
 new const MODE_COMMAND_NAMES[MM_MODE_COUNT][] =
@@ -27,7 +28,8 @@ new const MODE_COMMAND_NAMES[MM_MODE_COUNT][] =
     "armsrace",
     "awponly",
     "hebattle",
-    "knife"
+    "knife",
+    "football"
 }
 
 new const MODE_CONFIG_NAMES[MM_MODE_COUNT][] =
@@ -37,7 +39,8 @@ new const MODE_CONFIG_NAMES[MM_MODE_COUNT][] =
     "armsrace.cfg",
     "awp_only.cfg",
     "he_battle.cfg",
-    "knife.cfg"
+    "knife.cfg",
+    "football.cfg"
 }
 
 new const CLASSIC_FORMAT_NAMES[MM_FORMAT_COUNT][] =
@@ -78,7 +81,7 @@ public plugin_init()
     register_clcmd("say_team /mode", "handle_mode_status")
     // AMX Mod X reserves the server cvar "amx_mode" for admin authentication.
     // A client command can safely use the requested name without replacing it.
-    register_clcmd("amx_mode", "handle_admin_mode", ADMIN_CFG, "<classic|deathmatch|armsrace|awponly|hebattle|knife>")
+    register_clcmd("amx_mode", "handle_admin_mode", ADMIN_CFG, "<classic|deathmatch|armsrace|awponly|hebattle|knife|football>")
     register_concmd("amx_classic_format", "handle_admin_classic_format", ADMIN_CFG, "<1v1|2v2|3v3|4v4|5v5|1v2|2v3|3v4|4v5>")
     register_srvcmd("mm_mode", "handle_server_mode")
 
@@ -184,7 +187,7 @@ public handle_admin_mode(id, level, cid)
     new MmMode:mode = find_mode(argument)
     if (!is_valid_mode(mode))
     {
-        console_print(id, "[MM] Invalid mode. Use: classic, deathmatch, armsrace, awponly, hebattle, or knife.")
+        console_print(id, "[MM] Invalid mode. Use: classic, deathmatch, armsrace, awponly, hebattle, knife, or football.")
         return PLUGIN_HANDLED
     }
 
@@ -219,7 +222,7 @@ public handle_server_mode()
     new MmMode:mode = find_mode(argument)
     if (!is_valid_mode(mode))
     {
-        server_print("[MM] Invalid mode. Use: classic, deathmatch, armsrace, awponly, hebattle, or knife.")
+        server_print("[MM] Invalid mode. Use: classic, deathmatch, armsrace, awponly, hebattle, knife, or football.")
         return PLUGIN_HANDLED
     }
 
@@ -295,6 +298,9 @@ public task_verify_requested_mode()
 
     new MmMode:new_mode = g_requested_mode
     new forward_result
+    new persisted_mode[8]
+    num_to_str((new_mode == MM_MODE_KNIFE || new_mode == MM_MODE_HE_BATTLE || new_mode == MM_MODE_FOOTBALL) ? (_:new_mode) : -1, persisted_mode, charsmax(persisted_mode))
+    set_localinfo("mm_dedicated_mode", persisted_mode)
     set_localinfo("mm_knife_persist", new_mode == MM_MODE_KNIFE ? "1" : "0")
     g_active_mode = new_mode
     g_transition_state = MM_TRANSITION_IDLE
@@ -453,13 +459,28 @@ print_request_result(id, MmRequestResult:result, const target_name[])
 
 public plugin_cfg()
 {
-    new saved[4]
-    get_localinfo("mm_knife_persist", saved, charsmax(saved))
-    if (equal(saved, "1")) set_task(0.8, "mm_restore_knife")
+    new saved[8]
+    get_localinfo("mm_dedicated_mode", saved, charsmax(saved))
+    new mode = str_to_num(saved)
+    if (saved[0] && (mode == _:MM_MODE_KNIFE || mode == _:MM_MODE_HE_BATTLE || mode == _:MM_MODE_FOOTBALL))
+        set_task(0.8, "mm_restore_dedicated_mode")
+    else
+    {
+        get_localinfo("mm_knife_persist", saved, charsmax(saved))
+        if (equal(saved, "1")) set_task(0.8, "mm_restore_legacy_knife")
+    }
 }
 
-public mm_restore_knife()
+public mm_restore_legacy_knife()
 {
-    if (g_active_mode == MM_MODE_CLASSIC && g_transition_state == MM_TRANSITION_IDLE)
-        request_mode(MM_MODE_KNIFE, 0)
+    if (g_active_mode == MM_MODE_CLASSIC && g_transition_state == MM_TRANSITION_IDLE) request_mode(MM_MODE_KNIFE, 0)
+}
+
+public mm_restore_dedicated_mode()
+{
+    new saved[8]
+    get_localinfo("mm_dedicated_mode", saved, charsmax(saved))
+    new MmMode:mode = MmMode:str_to_num(saved)
+    if (g_active_mode == MM_MODE_CLASSIC && g_transition_state == MM_TRANSITION_IDLE
+        && (mode == MM_MODE_HE_BATTLE || mode == MM_MODE_KNIFE || mode == MM_MODE_FOOTBALL)) request_mode(mode, 0)
 }

@@ -1,5 +1,7 @@
 # Multi-Mode Network validation checklist
 
+Football: follow docs/FOOTBALL.md for resource installation, two-player controls/scoring, geometry selftest, map persistence and Football -> DM -> Football -> Classic round-policy/ball cleanup checks. Keep the isolated runtime harness out of normal plugin registration.
+
 Optional admin fun: verify a non-admin cannot invoke `/ww1`, `mm_ww1`, `mm_ww1_esp`, or `mm_ww1_recoil`; revoking flag `l` and disabling `mm_admin_fun` must immediately revoke effects. Verify switches reset after reconnect, MOUSE4/MOUSE5 toggle independently, ESP labels appear for living players behind walls and expire when disabled, and other players' recoil remains unchanged. Check pistols/rifles/scoped weapons and client prediction manually; compilation does not establish visual correctness.
 
 Knife choice: open `/settings` -> Knife model (or `/knife`) as an ordinary player. Select Butterfly then CS GO pack knife while holding a knife; verify each viewmodel and that another player's choice is unaffected. Switch to a gun and back, respawn and change modes; verify the chosen knife persists. Stable Steam/Valve identities persist across reconnects via nVault; LAN identities are session-only. Missing pack resources must refuse the pack choice. The supplied pack knife has no inspect sequence; Butterfly inspect remains available through Weapon Inspector.

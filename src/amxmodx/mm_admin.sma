@@ -6,7 +6,7 @@
 #include <mm_voting_api>
 
 #define PLUGIN_NAME "Apexium Forge Admin Panel"
-#define PLUGIN_VERSION "1.2.0"
+#define PLUGIN_VERSION "1.3.0"
 #define PLUGIN_AUTHOR "ApexiumForge"
 #define MAX_MAP_NAME 32
 #define SUPPORTED_MODE_COUNT _:MM_MODE_COUNT
@@ -29,7 +29,7 @@ enum PendingAction
     ACTION_CANCEL_VOTE
 }
 
-new const MODE_NAMES[SUPPORTED_MODE_COUNT][] = { "Classic", "Deathmatch", "Arms Race", "AWP Only", "HE Battle", "Knife 35HP" }
+new const MODE_NAMES[SUPPORTED_MODE_COUNT][] = { "Classic", "Deathmatch", "Arms Race", "AWP Only", "HE Battle", "Knife 35HP", "Football" }
 new const CLASSIC_FORMAT_NAMES[_:MM_FORMAT_COUNT][] = { "1v1", "2v2", "3v3", "4v4", "5v5", "1v2", "2v3", "3v4", "4v5" }
 new const CONTROL_LABELS[][] =
 {
@@ -46,7 +46,8 @@ new const MAP_POOL_FILES[SUPPORTED_MODE_COUNT][] =
     "addons/amxmodx/configs/mm_voting/maps_armsrace.ini",
     "addons/amxmodx/configs/mm_voting/maps_awponly.ini",
     "addons/amxmodx/configs/mm_voting/maps_hebattle.ini",
-    "addons/amxmodx/configs/mm_voting/maps_knife.ini"
+    "addons/amxmodx/configs/mm_voting/maps_knife.ini",
+    "addons/amxmodx/configs/mm_voting/maps_football.ini"
 }
 
 new PendingAction:g_pending_action[33]

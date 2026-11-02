@@ -39,6 +39,8 @@ $plugins = @(
     @{ Name = 'mm_he_battle'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_he_battle.sma') }
     @{ Name = 'mm_arcade_protection'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_arcade_protection.sma') }
     @{ Name = 'mm_knife'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_knife.sma') }
+    @{ Name = 'mm_football'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_football.sma') }
+    @{ Name = 'mm_mode_maps'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_mode_maps.sma') }
     @{ Name = 'mm_voting'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_voting.sma') }
     @{ Name = 'mm_admin'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_admin.sma') }
     @{ Name = 'mm_warmup_money'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_warmup_money.sma') }
@@ -52,6 +54,9 @@ New-Item -ItemType Directory -Path $pluginDir -Force | Out-Null
 New-Item -ItemType Directory -Path $modeConfigDestination -Force | Out-Null
 New-Item -ItemType Directory -Path $votingMapDestination -Force | Out-Null
 New-Item -ItemType Directory -Path $crosshairResourceDestination -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $ServerDir 'cstrike\addons\amxmodx\configs\mm_football') -Force | Out-Null
+Get-ChildItem -LiteralPath (Join-Path $repoRoot 'config\cstrike\addons\amxmodx\configs\mm_football') -Filter '*.ini' -File |
+    Copy-Item -Destination (Join-Path $ServerDir 'cstrike\addons\amxmodx\configs\mm_football') -Force
 Get-ChildItem -LiteralPath $modeConfigSource -Filter '*.cfg' -File | Copy-Item -Destination $modeConfigDestination -Force
 Get-ChildItem -LiteralPath $votingMapSource -Filter '*.ini' -File | Copy-Item -Destination $votingMapDestination -Force
 Copy-Item -LiteralPath $classicConfigSource -Destination $classicConfigDestination -Force
@@ -81,11 +86,11 @@ foreach ($plugin in $plugins) {
 }
 
 $existingConfig = Get-Content -LiteralPath $pluginsIni | Where-Object {
-    $_ -notmatch '^\s*mm_(?:core|mode_manager|arcade_rounds|modes|settings|classic|deathmatch|armsrace|armsrace_restrictions|awponly|he_battle|arcade_protection|knife|voting|admin|warmup_money|random_spawns|weapon_tuning|crosshair)\.amxx(?:\s|$)' -and
+    $_ -notmatch '^\s*mm_(?:core|mode_manager|arcade_rounds|modes|settings|classic|deathmatch|armsrace|armsrace_restrictions|awponly|he_battle|arcade_protection|knife|football|mode_maps|voting|admin|warmup_money|random_spawns|weapon_tuning|crosshair)\.amxx(?:\s|$)' -and
     $_ -notmatch '^\s*;?\s*(?:mapchooser|nextmap|adminvote|mapsmenu)\.amxx(?:\s|$)' -and
     $_ -ne '; Multi-Mode Network' -and
     $_ -ne '; Stock voting disabled: mm_voting owns map and mode decisions'
 }
 Set-Content -LiteralPath $pluginsIni -Encoding ASCII -Value $existingConfig
-Add-Content -LiteralPath $pluginsIni -Encoding ASCII -Value @('', '; Stock voting disabled: mm_voting owns map and mode decisions', '; mapchooser.amxx', '; nextmap.amxx', '; adminvote.amxx', '; mapsmenu.amxx', '', '; Multi-Mode Network', 'mm_core.amxx', 'mm_mode_manager.amxx', 'mm_arcade_rounds.amxx', 'mm_modes.amxx', 'mm_settings.amxx', 'mm_classic.amxx', 'mm_deathmatch.amxx', 'mm_armsrace.amxx', 'mm_armsrace_restrictions.amxx', 'mm_awponly.amxx', 'mm_he_battle.amxx', 'mm_arcade_protection.amxx', 'mm_knife.amxx', 'mm_voting.amxx', 'mm_admin.amxx', 'mm_warmup_money.amxx', 'mm_random_spawns.amxx', 'mm_weapon_tuning.amxx', 'mm_crosshair.amxx')
+Add-Content -LiteralPath $pluginsIni -Encoding ASCII -Value @('', '; Stock voting disabled: mm_voting owns map and mode decisions', '; mapchooser.amxx', '; nextmap.amxx', '; adminvote.amxx', '; mapsmenu.amxx', '', '; Multi-Mode Network', 'mm_core.amxx', 'mm_mode_manager.amxx', 'mm_arcade_rounds.amxx', 'mm_modes.amxx', 'mm_settings.amxx', 'mm_classic.amxx', 'mm_deathmatch.amxx', 'mm_armsrace.amxx', 'mm_armsrace_restrictions.amxx', 'mm_awponly.amxx', 'mm_he_battle.amxx', 'mm_arcade_protection.amxx', 'mm_knife.amxx', 'mm_football.amxx', 'mm_mode_maps.amxx', 'mm_voting.amxx', 'mm_admin.amxx', 'mm_warmup_money.amxx', 'mm_random_spawns.amxx', 'mm_weapon_tuning.amxx', 'mm_crosshair.amxx')
 

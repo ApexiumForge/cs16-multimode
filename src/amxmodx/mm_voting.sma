@@ -5,7 +5,7 @@
 #include <mm_voting_api>
 
 #define PLUGIN_NAME "Multi-Mode Network Voting"
-#define PLUGIN_VERSION "0.6.0"
+#define PLUGIN_VERSION "0.7.0"
 #define PLUGIN_AUTHOR "Multi-Mode Network"
 #define PROJECT_NAME "Multi-Mode Network"
 
@@ -37,7 +37,8 @@ new const MODE_NAMES[SUPPORTED_MODE_COUNT][] =
     "Arms Race",
     "AWP Only",
     "HE Battle",
-    "Knife 35HP"
+    "Knife 35HP",
+    "Football"
 }
 
 new const MODE_KEYS[SUPPORTED_MODE_COUNT][] =
@@ -47,7 +48,8 @@ new const MODE_KEYS[SUPPORTED_MODE_COUNT][] =
     "armsrace",
     "awponly",
     "hebattle",
-    "knife"
+    "knife",
+    "football"
 }
 
 new const MAP_POOL_FILES[SUPPORTED_MODE_COUNT][] =
@@ -57,7 +59,8 @@ new const MAP_POOL_FILES[SUPPORTED_MODE_COUNT][] =
     "addons/amxmodx/configs/mm_voting/maps_armsrace.ini",
     "addons/amxmodx/configs/mm_voting/maps_awponly.ini",
     "addons/amxmodx/configs/mm_voting/maps_hebattle.ini",
-    "addons/amxmodx/configs/mm_voting/maps_knife.ini"
+    "addons/amxmodx/configs/mm_voting/maps_knife.ini",
+    "addons/amxmodx/configs/mm_voting/maps_football.ini"
 }
 
 new g_map_pool[SUPPORTED_MODE_COUNT][MAX_MAPS_PER_MODE][MAX_MAP_NAME]
@@ -170,6 +173,7 @@ public plugin_init()
 
     g_mode_enabled_cvar[_:MM_MODE_HE_BATTLE] = register_cvar("mm_vote_mode_hebattle", "1")
     g_mode_enabled_cvar[_:MM_MODE_KNIFE] = register_cvar("mm_vote_mode_knife", "1")
+    g_mode_enabled_cvar[_:MM_MODE_FOOTBALL] = register_cvar("mm_vote_mode_football", "1")
     reset_player_ballots()
     log_amx("%s voting system v%s initialized.", PROJECT_NAME, PLUGIN_VERSION)
 }
@@ -848,6 +852,8 @@ load_map_pool(mode)
 
 bool:map_matches_mode(mode, const map_name[])
 {
+    if (mode == _:MM_MODE_FOOTBALL) return bool:(equali(map_name, "soccer", 6) || equali(map_name, "sj_", 3) || equali(map_name, "sm_", 3))
+    if (mode == _:MM_MODE_HE_BATTLE) return bool:equali(map_name, "he_", 3)
     if (mode == _:MM_MODE_KNIFE) return bool:(equali(map_name, "35hp", 4) || equali(map_name, "ka_", 3))
     if (mode == _:MM_MODE_CLASSIC)
     {

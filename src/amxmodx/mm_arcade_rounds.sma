@@ -4,7 +4,7 @@
 #include <mm_mode_api>
 
 #define PLUGIN_NAME    "Multi-Mode Network Arcade Rounds"
-#define PLUGIN_VERSION "0.4.4"
+#define PLUGIN_VERSION "0.5.0"
 #define PLUGIN_AUTHOR  "Multi-Mode Network"
 #define PROJECT_NAME   "Multi-Mode Network"
 
@@ -200,7 +200,9 @@ enable_arcade_round_policy()
     {
         if (g_regamedll_cvars[index])
         {
-            set_pcvar_string(g_regamedll_cvars[index], ARCADE_CVAR_VALUES[index])
+            if (index == CVAR_FREE_FOR_ALL && mm_get_active_mode() == MM_MODE_FOOTBALL)
+                set_pcvar_num(g_regamedll_cvars[index], 0)
+            else set_pcvar_string(g_regamedll_cvars[index], ARCADE_CVAR_VALUES[index])
         }
     }
 
@@ -209,7 +211,7 @@ enable_arcade_round_policy()
         remove_active_bomb_objective()
     }
 
-    log_amx("Continuous FFA arcade policy enabled: all players are enemies and ordinary round endings are blocked.")
+    log_amx("Continuous arcade policy enabled; football remains team-based.")
 }
 
 save_current_cvars()
@@ -303,5 +305,5 @@ bool:is_arcade_mode(MmMode:mode)
     return mode == MM_MODE_DEATHMATCH ||
         mode == MM_MODE_ARMS_RACE ||
         mode == MM_MODE_AWP_ONLY ||
-        mode == MM_MODE_HE_BATTLE
+        mode == MM_MODE_HE_BATTLE || mode == MM_MODE_FOOTBALL
 }

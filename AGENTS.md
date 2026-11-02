@@ -22,6 +22,7 @@
 - `mm_arcade_protection` owns spawn protection for Arms Race and HE Battle only; attacking must cancel protection.
 - `mm_random_spawns` may relocate players only in Deathmatch, Arms Race, and HE Battle. It must reject blocked hulls, hazards, and active transitions.
 - `mm_settings` is an ordinary-player routing menu. It must delegate to existing command handlers and must not duplicate mode state, bypass vote safeguards, or expose privileged commands.
+- `mm_football` owns team Football ball physics, pitch geometry, scoring, controls, loadouts and cleanup. Preserve its GPL notices. `mm_mode_maps` routes dedicated HE/Knife/Football maps through voting; individual modes must not duplicate its routing.
 - ReAPI is a pinned explicit dependency only for documented server-side weapon hooks and engine-level purchase/default-item restrictions. Do not add other ReAPI dependencies casually.
 - Persistent profile data and competitive rating are separate concerns. Unbalanced Classic matches are casual until requirements explicitly change.
 

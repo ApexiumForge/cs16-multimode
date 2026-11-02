@@ -105,7 +105,8 @@ public on_player_spawn(id)
 
 public client_disconnected(id)
 {
-    cs_reset_user_model(id)
+    g_choice[id] = 0
+    if (is_user_connected(id)) cs_reset_user_model(id)
 }
 
 public plugin_end()

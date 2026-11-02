@@ -67,7 +67,7 @@ foreach ($descriptor in Get-ChildItem -LiteralPath $spriteDir -Filter 'mm_xh_v*.
 Assert-Match $build "Name = 'mm_warmup_money'" 'The practice-money plugin must be built.'
 Assert-Match $build "Name = 'mm_crosshair'" 'The crosshair plugin must be built.'
 Assert-Match $build "Get-ChildItem[^\r\n]+mm_xh_v\*" 'Versioned crosshair resources must be copied by the build.'
-Assert-Match $build "'mm_arcade_protection\.amxx', 'mm_knife\.amxx', 'mm_voting\.amxx', 'mm_admin\.amxx'" 'Generated plugin order must include protection, Knife, voting, and administration.'
+Assert-Match $build "'mm_arcade_protection\.amxx', 'mm_knife\.amxx', 'mm_football\.amxx', 'mm_mode_maps\.amxx', 'mm_voting\.amxx', 'mm_admin\.amxx'" 'Generated plugin order must include gameplay, shared map routing, voting, and administration.'
 Assert-Match $build "'mm_admin\.amxx', 'mm_warmup_money\.amxx', 'mm_random_spawns\.amxx', 'mm_weapon_tuning\.amxx', 'mm_crosshair\.amxx'" 'Generated plugin order must include the synchronized modules.'
 
 Write-Host 'All remote-only module synchronization checks passed.'

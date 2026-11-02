@@ -3,7 +3,6 @@
 #include <cstrike>
 #include <fun>
 #include <fakemeta>
-#include <mm_voting_api>
 #include <reapi>
 #include <mm_mode_api>
 
@@ -14,7 +13,6 @@ new Float:g_next_notice[33]
 new g_pickups, g_purchases
 #define MM_KNIFE_LOADOUT 894100
 #define MM_KNIFE_SUPPLY 894000
-#define MM_KNIFE_ROUTE 894200
 new bool:g_enabled
 new g_added_spawns
 new const MAP_POOLS[][] = {
@@ -33,7 +31,6 @@ public plugin_init()
     RegisterHam(Ham_Spawn, "player", "mm_spawn_post", 1)
     RegisterHam(Ham_TakeDamage, "player", "mm_damage_pre")
     register_clcmd("drop", "mm_buy_command")
-    register_forward(FM_ChangeLevel, "mm_changelevel")
     // World equipment must not overwrite the knife loadout.
     RegisterHam(Ham_Touch, "armoury_entity", "mm_world_touch")
     RegisterHam(Ham_Touch, "weaponbox", "mm_world_touch")
@@ -161,7 +158,6 @@ public mm_mode_changed(old_mode, new_mode)
     else if (MmMode:old_mode == MM_MODE_KNIFE)
     {
         mm_shutdown()
-        set_task(0.3, "mm_route_map", MM_KNIFE_ROUTE)
     }
 }
 
@@ -170,7 +166,6 @@ mm_activate()
     mm_shutdown()
     g_enabled = true
     set_task(0.25, "mm_enforce", MM_KNIFE_SUPPLY, "", 0, "b")
-    set_task(0.3, "mm_route_map", MM_KNIFE_ROUTE)
     for (new id = 1; id <= MaxClients; id++) if (is_user_alive(id)) mm_loadout(id)
     client_print_color(0, print_team_default, "^4[Knife 35HP]^1 Knives only, 35 HP, no armor. Eliminate the enemy team to win the round.")
 }
@@ -178,7 +173,6 @@ mm_activate()
 mm_shutdown()
 {
     remove_task(MM_KNIFE_SUPPLY)
-    remove_task(MM_KNIFE_ROUTE)
     for (new id = 1; id <= MaxClients; id++) remove_task(MM_KNIFE_LOADOUT + id)
     g_enabled = false
 }
@@ -249,37 +243,6 @@ bool:mm_pool_contains(mode, const map[])
     }
     fclose(file)
     return found
-}
-
-public mm_route_map()
-{
-    new mode = _:mm_get_active_mode(), current[32]
-    if (mode < 0 || mode >= sizeof MAP_POOLS || mm_get_transition_state() != MM_TRANSITION_IDLE) return
-    get_mapname(current, charsmax(current))
-    if (mm_pool_contains(mode, current)) return
-    new file = fopen(MAP_POOLS[mode], "rt"), map[32], chosen[32], count
-    if (!file) {log_amx("Missing target mode map pool; map change cancelled."); return;}
-    while (!feof(file))
-    {
-        fgets(file, map, charsmax(map)); trim(map)
-        if (!map[0] || map[0] == ';' || map[0] == '#' || !is_map_valid(map)) continue
-        if (random_num(1, ++count) == 1) copy(chosen, charsmax(chosen), map)
-    }
-    fclose(file)
-    if (!count) {log_amx("No installed maps for target mode; map change cancelled."); return;}
-    new MmVotingAdminResult:result = mm_voting_admin_change(MmMode:mode, chosen, 0)
-    log_amx("Automatic mode map route: %s, result %d.", chosen, _:result)
-}
-
-public mm_changelevel(const map[], const landmark[])
-{
-    if (mm_restricted() && !mm_pool_contains(_:MM_MODE_KNIFE, map))
-    {
-        log_amx("Blocked non-Knife changelevel to %s; select another mode first.", map)
-        client_print_color(0, print_team_default, "^4[Knife 35HP]^1 Choose a map from the Knife map pool, or switch modes first.")
-        return FMRES_SUPERCEDE
-    }
-    return FMRES_IGNORED
 }
 
 mm_expand_spawns(const classname[])

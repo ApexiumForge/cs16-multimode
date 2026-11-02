@@ -2,7 +2,7 @@
 
 A modular Counter-Strike 1.6 / GoldSrc server built for private LAN play and Linux hosting. The project uses SteamCMD HLDS, Metamod-P, AMX Mod X and Pawn. ReGameDLL_CS supplies the continuous-round controls required by the respawn-based arcade modes.
 
-The current development baseline contains six playable modes, centralized mode ownership, six-mode map/mode voting, and a permission-checked in-game administration panel. XP, coins, rankings, persistent profiles and the website are not implemented.
+The current development baseline contains seven playable modes, centralized mode ownership, mode-specific map/mode voting, and a permission-checked in-game administration panel. XP, coins, rankings, persistent profiles and the website are not implemented.
 
 > **Release status:** source compilation and automated regression checks pass without warnings. Final hosted gameplay validation of the V1 admin workflows is still required before publishing `v1.0.0` as stable.
 
@@ -14,6 +14,7 @@ The current development baseline contains six playable modes, centralized mode o
 - **AWP Only:** free-for-all AWP/Knife restriction, respawns, protection, standings and configurable `awp_` map selection.
 - **HE Battle:** team-aware HE-only loadouts, automatic grenade replenishment, enemy-kill standings, purchase/pickup restrictions and respawns.
 - **Knife 35HP:** team-based knife-only rounds with 35 HP, no armor/buying, and routing to installed `35hp`/`ka_` maps.
+- **Football:** team-based ball physics, dribbling, shoot/pass controls, goal scoring and kickoff resets on a configured pitch. See [Football setup and tests](docs/FOOTBALL.md).
 - **Player settings:** `/settings` or `/set` opens ordinary-player crosshair, DM loadout, personal status, leaderboard, voting/next-map, and rules shortcuts.
 - **Arcade refinements:** distributed Deathmatch/Arms Race spawns, stricter Arms Race pickup controls, two-kill gun levels with knife demotion, and optional grounded/stationary weapon tuning.
 - **Voting:** `/rtv`, `/votemode`, `/votemap` and `/nextmap` with installed-map validation and one authoritative next mode/map decision.

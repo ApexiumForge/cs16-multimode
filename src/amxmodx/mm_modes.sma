@@ -97,7 +97,7 @@ add_mode_item(menu, MmMode:mode)
     mm_get_mode_name(mode, mode_name, charsmax(mode_name))
     if (mode == mm_get_active_mode()) formatex(item_name, charsmax(item_name), "%s \y[ACTIVE]", mode_name)
     else copy(item_name, charsmax(item_name), mode_name)
-    new const descriptions[][] = {"Team rounds and objectives", "FFA | /dm weapons, /top scores", "FFA | 2 gun kills or 1 knife kill to advance", "FFA | AWP and knife", "Teams | unlimited HE, first to 30 kills", "Teams | knives only, 35 HP, round-based"}
+    new const descriptions[][] = {"Team rounds and objectives", "FFA | /dm weapons, /top scores", "FFA | 2 gun kills or 1 knife kill to advance", "FFA | AWP and knife", "Teams | unlimited HE, first to 30 kills", "Teams | knives only, 35 HP, round-based", "Teams | E shoots, R passes, first to 5 goals"}
     format(item_name, charsmax(item_name), "%s \d- %s", item_name, descriptions[_:mode])
     num_to_str(_:mode, info, charsmax(info))
     menu_additem(menu, item_name, info)
