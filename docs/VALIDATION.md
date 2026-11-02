@@ -130,6 +130,7 @@ Phase 1 remains verified by its foundation and LAN checks. Phase 2 remains verif
 - [ ] Start the isolated/local server and confirm ReAPI plus every managed plugin reports running without missing-native errors.
 - [ ] Activate HE Battle; verify HE-only inventory, grenade replenishment, blocked buying/pickups, one-second respawns, ally protection, enemy-kill standings, and continuous rounds.
 - [ ] Activate Knife 35HP on an installed map from `maps_knife.ini`; verify Knife only, 35 HP, no armor/buying/fall or team damage, and normal team round endings.
+- [ ] Open the admin map menu in each mode; confirm it lists only installed maps from that mode's pool. Classic must contain only `de_` and `cs_`, AWP Only only `awp_`, and Knife only `35hp`/`ka_` maps.
 - [ ] Switch HE Battle to Classic while supply/respawn tasks are pending; verify no delayed HE action and normal Classic inventory/round cvars return.
 - [ ] In Arms Race, verify two assigned-weapon kills advance one level, a knife kill advances immediately, and the knifed victim loses no more than one level without underflow.
 - [ ] In Deathmatch and Arms Race, run `mm_spawn_status`; verify grounded points exist and repeated spawns avoid walls, hazards, and occupied hulls on every installed map.
