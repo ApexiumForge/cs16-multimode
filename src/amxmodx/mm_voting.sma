@@ -119,7 +119,7 @@ public native_voting_admin_change(plugin_id, parameter_count)
 
     if (!voting_admin_authorized(requester)) return _:MM_VOTING_ADMIN_UNAUTHORIZED
     if (!is_supported_mode(mode)) return _:MM_VOTING_ADMIN_INVALID_MODE
-    if (!is_map_name_safe(map_name) || !map_matches_mode(mode, map_name) || !is_map_valid(map_name)) return _:MM_VOTING_ADMIN_INVALID_MAP
+    if (!is_map_name_safe(map_name) || !map_matches_mode(_:mode, map_name) || !is_map_valid(map_name)) return _:MM_VOTING_ADMIN_INVALID_MAP
 
     if (g_vote_phase != VOTE_NONE) cancel_active_vote("Active vote cancelled by an administrator.")
     clear_decision()
@@ -156,10 +156,10 @@ public plugin_init()
     g_automatic_cvar = register_cvar("mm_vote_automatic", "1")
     g_auto_delay_cvar = register_cvar("mm_vote_auto_delay", "900")
     g_map_choices_cvar = register_cvar("mm_vote_map_choices", "5")
-    g_mode_enabled_cvar[MM_MODE_CLASSIC] = register_cvar("mm_vote_mode_classic", "1")
-    g_mode_enabled_cvar[MM_MODE_DEATHMATCH] = register_cvar("mm_vote_mode_deathmatch", "1")
-    g_mode_enabled_cvar[MM_MODE_ARMS_RACE] = register_cvar("mm_vote_mode_armsrace", "1")
-    g_mode_enabled_cvar[MM_MODE_AWP_ONLY] = register_cvar("mm_vote_mode_awponly", "1")
+    g_mode_enabled_cvar[_:MM_MODE_CLASSIC] = register_cvar("mm_vote_mode_classic", "1")
+    g_mode_enabled_cvar[_:MM_MODE_DEATHMATCH] = register_cvar("mm_vote_mode_deathmatch", "1")
+    g_mode_enabled_cvar[_:MM_MODE_ARMS_RACE] = register_cvar("mm_vote_mode_armsrace", "1")
+    g_mode_enabled_cvar[_:MM_MODE_AWP_ONLY] = register_cvar("mm_vote_mode_awponly", "1")
 
     reset_player_ballots()
     log_amx("%s voting system v%s initialized.", PROJECT_NAME, PLUGIN_VERSION)
@@ -841,11 +841,11 @@ bool:map_matches_mode(mode, const map_name[])
 {
     if (mode == _:MM_MODE_CLASSIC)
     {
-        return equali(map_name, "de_", 3) || equali(map_name, "cs_", 3)
+        return bool:(equali(map_name, "de_", 3) || equali(map_name, "cs_", 3))
     }
     if (mode == _:MM_MODE_AWP_ONLY)
     {
-        return equali(map_name, "awp_", 4)
+        return bool:equali(map_name, "awp_", 4)
     }
     return true
 }

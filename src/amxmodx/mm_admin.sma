@@ -391,7 +391,14 @@ public handle_server_controls(id, menu, item)
     if (item == MENU_EXIT) { show_main_menu(id); return PLUGIN_HANDLED; }
     if (!require_flag(id, ADMIN_CFG)) return PLUGIN_HANDLED
     if (item < 0 || item >= sizeof CONTROL_LABELS) return PLUGIN_HANDLED
-    g_pending_action[id] = PendingAction:(ACTION_FRIENDLY_FIRE + item)
+    switch (item)
+    {
+        case 0: g_pending_action[id] = ACTION_FRIENDLY_FIRE
+        case 1: g_pending_action[id] = ACTION_AUTOBALANCE
+        case 2: g_pending_action[id] = ACTION_TEAM_LIMITS
+        case 3: g_pending_action[id] = ACTION_GRAVITY
+        case 4: g_pending_action[id] = ACTION_RESTART_ROUND
+    }
     show_confirmation(id, CONTROL_LABELS[item])
     return PLUGIN_HANDLED
 }
