@@ -2,6 +2,8 @@
 
 Optional weapon pack: verify all 24 firearms draw, reload, fire, scope and inspect correctly on a clean client. Confirm Butterfly remains unchanged, namespaced animation sounds download, missing-source sounds remain silent, and `mm_weapon_models 0` restores default viewmodels on subsequent deployments. Compilation does not verify animations in-game.
 
+For weapon model diagnostics, run `mm_weapon_models_status` after equipping a firearm: expect 24 precached models, increasing deploy/applied counters and a namespaced viewmodel path. Version 1.0.1 identifies the deployed weapon entity independently of other model overrides.
+
 Record the date, machine, command output, and pass/fail result. Do not mark an item passed unless it was actually observed.
 
 For the optional production ReGameDLL migration, follow [REGAMEDLL_PRODUCTION.md](REGAMEDLL_PRODUCTION.md). Preparation scripts are not runtime validation; record `game version`, `meta list`, `amxx plugins`, controller diagnostics, all four mode checks, transitions, and any rollback separately.

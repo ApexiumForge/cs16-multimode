@@ -56,6 +56,7 @@ new const MM_ORIGINALS[][] = {
 }
 new g_mm_enabled
 new bool:g_mm_available[sizeof MM_MODELS]
+new g_mm_deploys, g_mm_applied
 public plugin_precache()
 {
     new file = fopen("models/multimode/csgo_inspect/sounds.ini", "rt")
@@ -77,7 +78,8 @@ public plugin_precache()
 }
 public plugin_init()
 {
-    register_plugin("Multi-Mode Weapon Models", "1.0.0", "ApexiumForge")
+    register_plugin("Multi-Mode Weapon Models", "1.0.1", "ApexiumForge")
+    register_srvcmd("mm_weapon_models_status", "mm_status")
     g_mm_enabled = register_cvar("mm_weapon_models", "1")
     new const weapons[][] = {
         "weapon_ak47",
@@ -114,16 +116,34 @@ public mm_deploy_post(entity)
     if (!get_pcvar_num(g_mm_enabled) || !pev_valid(entity)) return HAM_IGNORED
     new id = pev(entity, pev_owner)
     if (id < 1 || id > MaxClients || !is_user_alive(id)) return HAM_IGNORED
-    new current[96]
-    pev(id, pev_viewmodel2, current, charsmax(current))
+    g_mm_deploys++
+    new classname[32], expected[32], basename[32]
+    pev(entity, pev_classname, classname, charsmax(classname))
     for (new i = 0; i < sizeof MM_MODELS; i++)
     {
-        // Match the original viewmodel name, preserving all weapon mechanics.
-        if (equal(current, MM_ORIGINALS[i]) && g_mm_available[i])
+        copy(basename, charsmax(basename), MM_ORIGINALS[i][9])
+        replace(basename, charsmax(basename), ".mdl", "")
+        if (equal(basename, "mp5")) copy(basename, charsmax(basename), "mp5navy")
+        formatex(expected, charsmax(expected), "weapon_%s", basename)
+        if (equal(classname, expected) && g_mm_available[i])
         {
             set_pev(id, pev_viewmodel2, MM_MODELS[i])
+            g_mm_applied++
             break
         }
     }
     return HAM_IGNORED
+}
+
+public mm_status()
+{
+    new count, viewmodel[96]
+    for (new i = 0; i < sizeof MM_MODELS; i++) if (g_mm_available[i]) count++
+    server_print("[Weapon Models] version=1.0.1 enabled=%d precached=%d/24 deploys=%d applied=%d", get_pcvar_num(g_mm_enabled), count, g_mm_deploys, g_mm_applied)
+    for (new id = 1; id <= MaxClients; id++)
+    {
+        if (!is_user_alive(id)) continue
+        pev(id, pev_viewmodel2, viewmodel, charsmax(viewmodel))
+        server_print("[Weapon Models] player=%d viewmodel=%s", id, viewmodel)
+    }
 }
