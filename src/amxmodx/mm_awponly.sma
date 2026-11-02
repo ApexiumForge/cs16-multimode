@@ -6,7 +6,7 @@
 #include <mm_mode_api>
 
 #define PLUGIN_NAME    "Multi-Mode Network AWP Only"
-#define PLUGIN_VERSION "0.4.3"
+#define PLUGIN_VERSION "0.4.4"
 #define PLUGIN_AUTHOR  "Multi-Mode Network"
 #define PROJECT_NAME   "Multi-Mode Network"
 

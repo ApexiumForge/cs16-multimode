@@ -1,7 +1,7 @@
 #include <amxmodx>
 
 #define PLUGIN_NAME    "Multi-Mode Network Core"
-#define PLUGIN_VERSION "0.4.3"
+#define PLUGIN_VERSION "0.4.4"
 #define PLUGIN_AUTHOR  "Multi-Mode Network"
 #define PROJECT_NAME   "Multi-Mode Network"
 

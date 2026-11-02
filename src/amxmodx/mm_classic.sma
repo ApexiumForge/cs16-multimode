@@ -5,7 +5,7 @@
 #include <mm_classic_api>
 
 #define PLUGIN_NAME    "Multi-Mode Network Classic"
-#define PLUGIN_VERSION "0.4.3"
+#define PLUGIN_VERSION "0.4.4"
 #define PLUGIN_AUTHOR  "Multi-Mode Network"
 #define PROJECT_NAME   "Multi-Mode Network"
 #define TASK_WARMUP    30001
@@ -686,7 +686,7 @@ apply_live_rules()
     set_cvar_num("mp_freezetime", 6)
     set_cvar_float("mp_roundtime", 1.75)
     set_cvar_float("mp_buytime", 0.333333)
-    set_cvar_num("mp_friendlyfire", 1)
+    set_cvar_num("mp_friendlyfire", 0)
     set_cvar_num("mp_autoteambalance", 0)
     set_cvar_num("mp_limitteams", 0)
     set_cvar_num("mp_maxrounds", 0)

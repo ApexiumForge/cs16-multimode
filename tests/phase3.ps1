@@ -34,7 +34,7 @@ Assert-Match $source 'sv_restart 3' 'Live and halftime transitions must restart 
 
 $expectedCvars = @{
     mp_startmoney='800'; mp_freezetime='6'; mp_roundtime='1.75';
-    mp_buytime='0.333333'; mp_friendlyfire='1'; mp_autoteambalance='0';
+    mp_buytime='0.333333'; mp_friendlyfire='0'; mp_autoteambalance='0';
     mp_limitteams='0'; mp_maxrounds='0'; mp_winlimit='0'
 }
 foreach ($entry in $expectedCvars.GetEnumerator()) {

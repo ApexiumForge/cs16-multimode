@@ -3,7 +3,7 @@
 #include <cstrike>
 
 #define PLUGIN_NAME    "Multi-Mode Network Classic Test Bridge"
-#define PLUGIN_VERSION "0.4.3"
+#define PLUGIN_VERSION "0.4.4"
 #define PLUGIN_AUTHOR  "Multi-Mode Network"
 #define TASK_AUTORUN_ADD   39001
 #define TASK_AUTORUN_READY 39002

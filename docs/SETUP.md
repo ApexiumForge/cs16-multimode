@@ -94,7 +94,7 @@ Activate from the HLDS console with `mm_mode deathmatch` or from an authorized p
 
 Deathmatch is team-based with friendly fire disabled. It does not implement FFA. Scores are transient and reset on Deathmatch activation/exit or reconnect. Exiting Deathmatch cancels respawn/loadout/protection tasks, removes godmode, and executes the tracked server baseline before the next mode configuration applies.
 
-Stock CS 1.6 can still declare a normal round result when an entire team is eliminated; no stock cvar disables that rule. The plugin respawns players and preserves its own leaderboard across those engine round boundaries, but a two-player 1v1 may visibly enter the normal round-end/restart sequence. Eliminating that sequence requires a separately evaluated engine/game-DLL capability and is not hidden behind a ReGameDLL dependency in this phase.
+Stock CS 1.6 can still declare a normal round result when an entire team is eliminated; no stock cvar disables that rule. The plugin respawns players and preserves its own leaderboard across those engine round boundaries, but a two-player 1v1 may visibly enter the normal round-end/restart sequence. Eliminating that sequence requires the separately evaluated shared round controller.
 
 ### Phase 4.2 Arms Race
 
@@ -131,7 +131,7 @@ Test-Path '.\runtime\hlds-steam-legacy\cstrike\maps\awp_india.bsp'
 Test-Path '.\runtime\hlds-steam-legacy\cstrike\maps\awp_map.bsp'
 ```
 
-Stock CS 1.6 may still declare a round win when a team is eliminated. The AWP Only plugin retains its transient standings and schedules respawns, but the engine's normal round-end presentation/restart may be visible with one player per team. No ReGameDLL or replacement game DLL is introduced.
+Stock CS 1.6 may still declare a round win when a team is eliminated. The AWP Only plugin retains its transient standings and schedules respawns; the shared round controller can suppress the engine's normal round-end presentation after a separately validated ReGameDLL migration.
 
 ### Phase 3 Classic commands and rules
 

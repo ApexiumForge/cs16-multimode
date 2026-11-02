@@ -4,6 +4,8 @@ Record the date, machine, command output, and pass/fail result. Do not mark an i
 
 For the optional production ReGameDLL migration, follow [REGAMEDLL_PRODUCTION.md](REGAMEDLL_PRODUCTION.md). Preparation scripts are not runtime validation; record `game version`, `meta list`, `amxx plugins`, controller diagnostics, all four mode checks, transitions, and any rollback separately.
 
+For the optional Double Kill announcer, confirm `sound/multimode/doublekill.wav` downloads on a clean client, `mm_announcer.amxx` reports `running`, two valid kills by one player within four seconds play the sound once, suicide and Classic team-kills do not trigger it, and a death/mode transition clears the pending sequence.
+
 Phase 5 voting is not validated by source review or compilation alone. Follow [MAP_VOTING.md](MAP_VOTING.md), disable the four stock vote owners, and record each manual observation below.
 
 ## Phase 5 map and mode voting checks (manual; not yet executed)
@@ -70,14 +72,14 @@ Phase 5 voting is not validated by source review or compilation alone. Follow [M
 - [ ] In the HLDS console, run `status`; confirm hostname, UDP port `27015`, map, and no more than 12 slots.
 - [ ] Run `meta version` and `meta list`; confirm Metamod-P `v1.21p109` and AMX Mod X are loaded.
 - [ ] Run `amxx version` and `amxx plugins`; confirm AMX Mod X `1.10.0-git5487` and `mm_core.amxx` show a running/loaded state.
-- [ ] Inspect the AMX Mod X log and confirm `Multi-Mode Network v0.4.3 initialized successfully.` appears.
+- [ ] Inspect the AMX Mod X log and confirm `Multi-Mode Network v0.4.4 initialized successfully.` appears.
 - [ ] Stop with `.\scripts\stop-server.ps1` and confirm `hlds.exe` exits and `.runtime\hlds.pid` is removed.
 
 ## Same-machine client smoke test
 
 - [ ] Start Counter-Strike 1.6 and open its console.
 - [ ] Run `connect 127.0.0.1:27015` and join successfully.
-- [ ] Send `/serverinfo` in normal chat; confirm `[Multi-Mode Network] Server Foundation 0.4.3` appears.
+- [ ] Send `/serverinfo` in normal chat; confirm `[Multi-Mode Network] Server Foundation 0.4.4` appears.
 - [ ] Repeat `/serverinfo` in team chat and confirm the same response.
 
 ## Second LAN computer
@@ -86,14 +88,14 @@ Phase 5 voting is not validated by source review or compilation alone. Follow [M
 - [ ] Confirm both computers are on the same trusted LAN and Windows Firewall Private-profile rules exist for UDP/TCP `27015`.
 - [ ] From a second computer with CS 1.6, run `connect <server-ip>:27015` in the game console.
 - [ ] Confirm the second computer joins, can select a team, spawn, and move without an immediate disconnect.
-- [ ] From the second computer, send `/serverinfo` and verify the project name and `0.4.3` version.
+- [ ] From the second computer, send `/serverinfo` and verify the project name and `0.4.4` version.
 - [ ] Confirm the HLDS `status` output lists the remote client.
 
 ## Phase 2.1 menu checks
 
 - [ ] Run `.\scripts\build-plugins.ps1`; confirm both Pawn sources compile without warnings or errors.
 - [ ] Restart the server and run `amxx plugins`; confirm `mm_core.amxx`, `mm_mode_manager.amxx`, and `mm_modes.amxx` are running.
-- [ ] Send `/serverinfo`; confirm `[Multi-Mode Network] Server Foundation 0.4.3` appears.
+- [ ] Send `/serverinfo`; confirm `[Multi-Mode Network] Server Foundation 0.4.4` appears.
 - [ ] Send `/menu`; confirm the native main menu offers **Game Modes** and **Server Information**.
 - [ ] Select **Game Modes**; confirm Classic, Deathmatch, Arms Race, AWP Only, and HE Battle appear.
 - [ ] Send `/modes`; confirm it opens the same five-mode menu directly.
@@ -103,7 +105,7 @@ Phase 5 voting is not validated by source review or compilation alone. Follow [M
 
 ## Phase 2.2 mode-management checks
 
-- [ ] Restart and confirm the log reports version `0.4.3`, active mode Classic, and Classic format 5v5.
+- [ ] Restart and confirm the log reports version `0.4.4`, active mode Classic, and Classic format 5v5.
 - [ ] Send `/mode`; confirm it reports the active mode and selected Classic format.
 - [ ] As a normal player, select every mode; confirm no mode changes and an administrator-required message appears.
 - [ ] As an administrator with flag `h`, select Deathmatch, cancel once, then confirm; verify the active marker updates only after confirmation.
@@ -124,8 +126,8 @@ Phase 1 remains verified by its foundation and LAN checks. Phase 2 remains verif
 
 - [ ] Run `./tests/phase3.ps1`; confirm every static architecture/rules assertion passes.
 - [ ] Run `./scripts/build-plugins.ps1`; confirm all seven production plugins compile with no warnings or errors and the tracked mode configurations are deployed.
-- [ ] Restart the server; run `amxx plugins` and confirm all seven production project plugins report `running` at version `0.4.3`.
-- [ ] Confirm the AMX Mod X log contains `Multi-Mode Network Classic match system v0.4.3 initialized.` and no plugin runtime errors.
+- [ ] Restart the server; run `amxx plugins` and confirm all eight production project plugins report `running` at version `0.4.4`.
+- [ ] Confirm the AMX Mod X log contains `Multi-Mode Network Classic match system v0.4.4 initialized.` and no plugin runtime errors.
 - [ ] Run `/serverinfo` and `/mode`; verify existing Phase 1/2 behavior still works.
 
 ## Phase 3 multi-client in-game checks
@@ -134,8 +136,9 @@ Repeat the flow for all formats: 1v1, 2v2, 3v3, 4v4, 5v5, 1v2, 2v3, 3v4, and 4v5
 
 - [ ] Set the format with `mm_match_format <format>` and verify the setup returns to Waiting.
 - [ ] Join T and CT up to their stated limits; verify `/teams` counts slots correctly, a full-team attempt is rejected, and Spectator remains available.
+- [ ] In Classic, die and confirm teammates can be viewed only in first-person and living opponents cannot be revealed (`mp_forcecamera 2`, `mp_forcechasecam 2`). Switch to each respawn arcade mode and confirm both values become `0`, then return to Classic and confirm both restore to `2`.
 - [ ] Fill both teams; verify Warmup starts. Test `/ready`, `/unready`, and the ready count, then ready every active player.
-- [ ] Verify a three-second restart occurs, state becomes Live, starting money is $800, freeze time is 6 seconds, round time is 1:45, buy time is 20 seconds, friendly fire and collision use normal CS behavior, and dead players do not respawn during the round.
+- [ ] Verify a three-second restart occurs, state becomes Live, starting money is $800, freeze time is 6 seconds, round time is 1:45, buy time is 20 seconds, friendly fire remains disabled, and dead players do not respawn during the round.
 - [ ] Win controlled rounds on each side; verify `/score` and the HUD credit the correct logical Team A/B score.
 - [ ] For MR3, verify halftime after 3 rounds and the match ends when a team reaches 4. Repeat MR5 (5/6) and MR12 (12/13).
 - [ ] At halftime, verify every active player changes T/CT side and logical scores remain attached to Team A/B. For an unbalanced format, verify the capacity orientation swaps with the players.
@@ -163,7 +166,7 @@ Automated runtime evidence may prove plugin compatibility and state transitions,
 ## Phase 4.1 team Deathmatch checks
 
 - [ ] Run `./tests/phase4-1.ps1`; confirm all architecture, lifecycle, configuration, and scope checks pass.
-- [ ] Build and restart; confirm `amxx plugins` reports all seven production plugins running at `0.4.3`.
+- [ ] Build and restart; confirm all eight production plugins run, with the updated project plugins reporting `0.4.4`.
 - [ ] Activate Deathmatch and confirm the log records `Deathmatch activated; transient scores reset.` while Classic produces no further match-state activity.
 - [ ] Join T or CT, select every primary/secondary combination through `/dm`, and verify the selected loadout is applied immediately and after subsequent spawns.
 - [ ] Die and verify respawn occurs approximately one second later. Repeat as a YaPB bot and a human.
@@ -173,7 +176,7 @@ Automated runtime evidence may prove plugin compatibility and state transitions,
 - [ ] Confirm teammates remain teammates, friendly fire is disabled, and no FFA behavior occurs.
 - [ ] Switch to Classic while a respawn and protection timer are pending. Confirm the pending respawn/loadout does not occur, damage is normal, Classic returns to Waiting, and normal Classic cvars/loadouts resume.
 - [ ] Switch repeatedly Classic → Deathmatch → Classic and inspect logs for native, Ham, invalid-player, or task errors.
-- [ ] Confirm the known stock-engine behavior: eliminating the final member of a team may trigger the normal round-end/restart sequence even though Deathmatch respawn and its leaderboard remain active.
+- [ ] With validated ReGameDLL, eliminate every living player repeatedly and confirm the shared infinite-round policy prevents ordinary round-end/restart events.
 
 ### Manual two-YaPB smoke test
 
@@ -207,7 +210,7 @@ YaPB remains disabled by default; do not leave the development registration enab
 ## Phase 4.2 team Arms Race checks
 
 - [ ] Compile all plugins manually and confirm `mm_armsrace.sma` produces no errors or warnings.
-- [ ] Restart and confirm `amxx plugins` reports `mm_armsrace.amxx` running at `0.4.3` while the server still defaults to Classic.
+- [ ] Restart and confirm `amxx plugins` reports `mm_armsrace.amxx` running at `0.4.4` while the server still defaults to Classic.
 - [ ] Activate Arms Race with `mm_mode armsrace`; confirm Classic and Deathmatch stop changing state and the log reports a validated 15-level progression.
 - [ ] Confirm the configured order begins with Glock/USP/Deagle, moves through SMGs, rifles, and snipers, then ends with M249 and Knife.
 - [ ] As a human, kill an enemy with the assigned weapon; verify the level advances and the next weapon is equipped immediately with full reserve ammunition.
@@ -219,7 +222,7 @@ YaPB remains disabled by default; do not leave the development registration enab
 - [ ] Confirm the HUD shows the local level/weapon/kills and current leader without obscuring normal play.
 - [ ] Complete level 14, then make a valid knife kill on level 15. Verify winner chat/HUD announcements, no further progression during the five-second finish window, and a clean reset to level 1 for the next match.
 - [ ] Change to Deathmatch and Classic while respawn/loadout/reset tasks are pending. Verify Arms Race performs no later respawn/equip/reset action and the selected mode owns gameplay.
-- [ ] Confirm the known stock-engine limitation: eliminating the last living team member may still produce a normal CS round-end/restart sequence; Arms Race progression must survive that engine boundary.
+- [ ] Eliminate every living player repeatedly and confirm continuous-round policy prevents ordinary round-end/restart events while progression persists.
 - [ ] Change `mm_ar_level_1` to another supported weapon and restart/activate Arms Race; verify the configured weapon is used. Set an invalid name and verify the log reports fallback. Restore the tracked default afterward.
 
 ### Manual YaPB Arms Race setup
@@ -240,7 +243,7 @@ yb add 2 0 2 0 AR_Test_CT
 yb list
 ```
 
-Connect your client, join T/CT or spectate, and use `/ar` plus `/artop`. Expected: both bots begin with Glock, progress only on valid enemy kills with their assigned weapon, respawn near one second, and appear in the leaderboard/HUD leader calculation. Because this is a two-player team setup, expect the stock engine's normal round-end presentation after a team wipe.
+Connect your client, join T/CT or spectate, and use `/ar` plus `/artop`. Expected: both bots begin with Glock, progress only on valid enemy kills with their assigned weapon, respawn near one second, and appear in the leaderboard/HUD leader calculation.
 
 When finished, enter `mm_mode classic`, confirm Arms Race cleanup and Classic Waiting state, then stop and disable YaPB:
 
@@ -252,7 +255,7 @@ When finished, enter `mm_mode classic`, confirm Arms Race cleanup and Classic Wa
 ## Phase 4.3 team AWP Only checks
 
 - [ ] Before startup, use `Test-Path` to record whether `awp_india.bsp` or `awp_map.bsp` is installed. Do not mark map switching passed when neither exists.
-- [ ] Compile manually and confirm `mm_awponly.sma` produces no errors or warnings; confirm `amxx plugins` later reports version `0.4.3`.
+- [ ] Compile manually and confirm `mm_awponly.sma` produces no errors or warnings; confirm `amxx plugins` later reports version `0.4.4`.
 - [ ] Activate AWP Only with neither map installed; verify the current map remains loaded and the AMX Mod X log names both missing configured BSPs.
 - [ ] With `awp_india.bsp` installed, activate from another map; verify exactly one change to `awp_india`, followed by automatic AWP Only restoration through the mode manager with no loop.
 - [ ] Remove/rename only your manually installed test copy of `awp_india.bsp`, install `awp_map.bsp`, and verify it is selected as fallback. Restore your intended files/configuration afterward.
@@ -265,7 +268,7 @@ When finished, enter `mm_mode classic`, confirm Arms Race cleanup and Classic Wa
 - [ ] Use `/awp` and `/awptop`; confirm personal kills/deaths and top-five ordering by kills then fewest deaths. Confirm the HUD shows kills, deaths, and the current leader.
 - [ ] Switch AWP Only → Arms Race → Deathmatch → Classic while AWP respawn/loadout/protection tasks are pending; verify no AWP task acts after the transition and normal damage/cvars return.
 - [ ] Confirm team-based play and friendly fire off. Confirm no FFA behavior was introduced.
-- [ ] Confirm the known stock-engine limitation: eliminating the final team member may still display the normal round result/restart, while plugin standings and respawn behavior remain available.
+- [ ] Eliminate every living player repeatedly and confirm continuous-round policy prevents ordinary round results/restarts while standings and respawns remain available.
 
 ### Manual two-YaPB AWP Only setup
 
