@@ -18,7 +18,7 @@ if (-not (Test-Path -LiteralPath $hlds)) { throw "hlds.exe not found at $hlds. R
 if (Test-Path -LiteralPath $pidFile) { throw "PID file already exists: $pidFile. Stop the existing project server or remove a confirmed stale PID file." }
 
 New-Item -ItemType Directory -Path $stateDir -Force | Out-Null
-$arguments = @('-console', '-insecure', '-nomaster', '-game', 'cstrike', '+sv_lan', '1', '+ip', '0.0.0.0', '+port', $Port, '+maxplayers', $MaxPlayers, '+map', $Map)
+$arguments = @('-console', '-insecure', '-nomaster', '-game', 'cstrike', '-port', $Port, '+sv_lan', '1', '+ip', '0.0.0.0', '+maxplayers', $MaxPlayers, '+map', $Map)
 
 # The legacy Windows launcher opens its GUI instead of server console mode when
 # it has no inherited console. cmd.exe supplies that console and remains the

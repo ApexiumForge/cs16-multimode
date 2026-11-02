@@ -43,7 +43,7 @@ if (Test-Path -LiteralPath $consoleLog -PathType Leaf) {
     $archivedConsoleLog = Join-Path $logDir ("qconsole-{0}-{1}.log" -f (Get-Date -Format 'yyyyMMdd-HHmmss'), [guid]::NewGuid().ToString('N').Substring(0, 8))
     Move-Item -LiteralPath $consoleLog -Destination $archivedConsoleLog
 }
-$arguments = @('-console', '-condebug', '-insecure', '-nomaster', '-game', 'cstrike', '+sv_lan', '1', '+ip', '0.0.0.0', '+port', $Port, '+maxplayers', $MaxPlayers, '+exec', 'mm_regamedll_trial.cfg', '+map', $Map)
+$arguments = @('-console', '-condebug', '-insecure', '-nomaster', '-game', 'cstrike', '-port', $Port, '+sv_lan', '1', '+ip', '0.0.0.0', '+maxplayers', $MaxPlayers, '+exec', 'mm_regamedll_trial.cfg', '+map', $Map)
 $commandLine = 'hlds.exe ' + ($arguments -join ' ')
 $wrapper = Start-Process -FilePath 'cmd.exe' -ArgumentList @('/d', '/c', $commandLine) -WorkingDirectory $TrialDir -WindowStyle Hidden -PassThru
 

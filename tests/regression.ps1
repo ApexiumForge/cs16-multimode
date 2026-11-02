@@ -13,6 +13,15 @@ function Assert-True {
 try {
     New-Item -ItemType Directory -Path $testRoot | Out-Null
 
+    # Regression: HLDS must receive its UDP port as an engine argument. A
+    # +port command runs after socket initialization and cannot change the
+    # default bind, which makes alternate-port launches fail unexpectedly.
+    foreach ($launcher in @('start-server.ps1', 'start-regamedll-trial.ps1')) {
+        $launcherText = Get-Content -LiteralPath (Join-Path $repoRoot "scripts\$launcher") -Raw
+        Assert-True ($launcherText -match '''-port'',\s*\$Port') "$launcher must pass the selected port with -port."
+        Assert-True ($launcherText -notmatch '''\+port''') "$launcher must not defer the port selection with +port."
+    }
+
     # Regression: SteamCMD may return 7 even after its explicit success result.
     $steamDir = Join-Path $testRoot 'steam-success'
     New-Item -ItemType Directory -Path $steamDir | Out-Null
