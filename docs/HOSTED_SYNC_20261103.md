@@ -1,5 +1,9 @@
 # Hosted changes synchronized on 2026-11-03
 
+## Personal cosmetics
+
+Optional weapon models add `/skins` default/custom selection with stable-ID nVault storage. Knife selection gains the default CS 1.6 model alongside Butterfly/pack knife. Knife deployment also uses ReAPI DefaultDeploy, preserving our previously established hosted hook fix rather than relying solely on Ham. Disconnect no longer calls CStrike natives on an out-of-game client. Assets remain separate from the default build.
+
 ## Knife rounds
 
 Knife adds round-target scoring, `/ktop`, `/knifescore`, a result HUD and fresh-session reset. Actual equipped weapon IDs avoid custom crosshair interference; redundant 35hp-map health setters are blocked only while Knife is active. Routing stays exclusively in the shared router. Validate both teams, score boundaries and leaving during the delayed reset.

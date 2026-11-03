@@ -1,6 +1,8 @@
 #include <amxmodx>
 #include <fakemeta>
 #include <reapi>
+#include <hamsandwich>
+#include <nvault>
 
 new const MM_MODELS[][] = {
     "models/multimode/csgo_inspect/v_ak47.mdl",
@@ -57,6 +59,7 @@ new const MM_ORIGINALS[][] = {
 new g_mm_enabled
 new bool:g_mm_available[sizeof MM_MODELS]
 new g_mm_deploys, g_mm_applied
+new bool:g_custom[33], g_vault = INVALID_HANDLE
 public plugin_precache()
 {
     new file = fopen("models/multimode/csgo_inspect/sounds.ini", "rt")
@@ -78,7 +81,11 @@ public plugin_precache()
 }
 public plugin_init()
 {
-    register_plugin("Multi-Mode Weapon Models", "1.0.2", "ApexiumForge")
+    register_plugin("Multi-Mode Weapon Models", "1.1.0", "ApexiumForge")
+    register_clcmd("say /skins", "mm_toggle_skins")
+    register_clcmd("say_team /skins", "mm_toggle_skins")
+    g_vault = nvault_open("mm_weapon_skin_choice")
+    for (new id = 1; id <= MaxClients; id++) g_custom[id] = true
     register_srvcmd("mm_weapon_models_status", "mm_status")
     g_mm_enabled = register_cvar("mm_weapon_models", "1")
     RegisterHookChain(RG_CBasePlayerWeapon_DefaultDeploy, "mm_deploy_pre", false)
@@ -87,6 +94,8 @@ public plugin_init()
 public mm_deploy_pre(entity, const viewmodel[], const weaponmodel[], animation, const extension[], skiplocal)
 {
     if (!get_pcvar_num(g_mm_enabled) || is_nullent(entity)) return HC_CONTINUE
+    new id = get_member(entity, m_pPlayer)
+    if (id < 1 || id > MaxClients || !g_custom[id]) return HC_CONTINUE
     g_mm_deploys++
     for (new i = 0; i < sizeof MM_MODELS; i++)
     {
@@ -104,11 +113,51 @@ public mm_status()
 {
     new count, viewmodel[96]
     for (new i = 0; i < sizeof MM_MODELS; i++) if (g_mm_available[i]) count++
-    server_print("[Weapon Models] version=1.0.2 enabled=%d precached=%d/24 deploys=%d applied=%d", get_pcvar_num(g_mm_enabled), count, g_mm_deploys, g_mm_applied)
+    server_print("[Weapon Models] version=1.1.0 enabled=%d precached=%d/24 deploys=%d applied=%d", get_pcvar_num(g_mm_enabled), count, g_mm_deploys, g_mm_applied)
     for (new id = 1; id <= MaxClients; id++)
     {
         if (!is_user_alive(id)) continue
         pev(id, pev_viewmodel2, viewmodel, charsmax(viewmodel))
-        server_print("[Weapon Models] player=%d viewmodel=%s", id, viewmodel)
+        server_print("[Weapon Models] player=%d custom=%d viewmodel=%s", id, g_custom[id], viewmodel)
     }
+}
+
+public client_connect(id) g_custom[id] = true
+public client_disconnected(id) g_custom[id] = true
+bool:mm_stable_auth(const authid[])
+{
+    return (contain(authid, "STEAM_") == 0 || contain(authid, "VALVE_") == 0) && contain(authid, "LAN") == -1 && contain(authid, "PENDING") == -1 && !equal(authid, "STEAM_ID_STOP_IGNORING_RETVALS")
+}
+public client_authorized(id, const authid[])
+{
+    new value[4]
+    if (g_vault != INVALID_HANDLE && mm_stable_auth(authid) && nvault_get(g_vault, authid, value, charsmax(value))) g_custom[id] = str_to_num(value) != 0
+}
+public plugin_end()
+{
+    if (g_vault != INVALID_HANDLE) nvault_close(g_vault)
+}
+public mm_toggle_skins(id)
+{
+    if (!is_user_connected(id) || is_user_bot(id)) return PLUGIN_HANDLED
+    g_custom[id] = !g_custom[id]
+    new authid[40], value[4]
+    get_user_authid(id, authid, charsmax(authid))
+    if (g_vault != INVALID_HANDLE && mm_stable_auth(authid))
+    {
+        num_to_str(_:g_custom[id], value, charsmax(value))
+        nvault_set(g_vault, authid, value)
+    }
+    if (is_user_alive(id))
+    {
+        new item = get_member(id, m_pActiveItem)
+        if (!is_nullent(item) && get_member(item, m_iId) != WEAPON_KNIFE)
+        {
+            // Deploy restores the correct idle/draw animation for either model,
+            // including silenced USP/M4 state; inventory and ammunition stay intact.
+            ExecuteHamB(Ham_Item_Deploy, item)
+        }
+    }
+    client_print_color(id, print_team_default, "^4[Skins]^1 Weapon skins: ^4%s^1. Knife choice is separate in ^4/knife^1.", g_custom[id] ? "Custom" : "Default")
+    return PLUGIN_HANDLED
 }
