@@ -1,5 +1,9 @@
 # Hosted changes synchronized on 2026-11-03
 
+## Counter-strafe preset
+
+The shooting-mode movement preset saves/restores accelerate/friction/stopspeed, clamps configuration, and preserves deliberate external edits. It is removed before mode transitions and inactive in Football/Knife/HE/Surf. ReHLDS uses its direct-cvar hook; stock HLDS reapplies only native reset values after GameRules think. ReHLDS is not required. Use `mm_counterstrafe 0` to disable and `mm_counterstrafe_status` to inspect the saved baseline.
+
 ## Chat styling
 
 `mm_chat_style` styles plugin-tag brackets while preserving message bodies and avoiding clan-name prefixes. The hosted ReAPI engine message hook requires ReHLDS; stock HLDS uses AMXX's SayText hook as a supported fallback (some direct messages may bypass that fallback). `mm_chat_style_selftest` covers eight prefix/idempotence cases. No chat is resent, so the hook cannot recursively duplicate messages.
