@@ -1,5 +1,9 @@
 # Hosted changes synchronized on 2026-11-03
 
+## Sniper Arena
+
+AWP Only now supports match-start AWP/Scout ballots, optional admin scoped-only rules, spawn health/armor settings, kill targets, inventory enforcement and result podium. FFA and installed-map loop guards are retained. The selected weapon is validated before loadout grants. Persisted admin scoped-only settings remain local. Verify scoped shots, both loadouts, vote cancellation and task/protection restoration on exit; commands remain `/awp` and `/awptop`.
+
 ## Classic readiness and results
 
 Full teams enter ready-up immediately; live countdown, side-aware score HUD and end podium are added. Review fixes reject spectator `/unready` attempts (which could cancel another team's countdown) and clear per-slot kills/deaths on joining. Match-team limits, roster ownership, overtime and committed-match safeguards remain in Classic. Verify readiness cancellation and disconnect/rejoin during countdown with real clients.
