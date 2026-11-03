@@ -1,5 +1,7 @@
 # Multi-Mode Network validation checklist
 
+Stable release v1.0.0: see [release verification and deployment scope](releases/v1.0.0.md). Automated results are separate from the owner's confirmation of live gameplay. `/serverinfo` must report `1.0.0` after rebuilding/deploying the release core; other plugins keep independent module versions.
+
 Hosted synchronization 2026-11-03: see docs/HOSTED_SYNC_20261103.md for module-specific checks and verification results.
 
 Football: follow docs/FOOTBALL.md for resource installation, two-player controls/scoring, geometry selftest, map persistence and Football -> DM -> Football -> Classic round-policy/ball cleanup checks. Keep the isolated runtime harness out of normal plugin registration.

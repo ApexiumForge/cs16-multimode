@@ -4,7 +4,7 @@ A modular Counter-Strike 1.6 / GoldSrc server built for private LAN play and Lin
 
 The current development baseline contains eight playable modes, centralized mode ownership, mode-specific map/mode voting, and a permission-checked in-game administration panel. XP, coins, rankings, persistent profiles and the website are not implemented. See [hosted synchronization notes](docs/HOSTED_SYNC_20261103.md) for the latest module changes and validation limits.
 
-> **Release status:** source compilation and automated regression checks pass without warnings. Final hosted gameplay validation of the V1 admin workflows is still required before publishing `v1.0.0` as stable.
+> **Release status:** **v1.0.0** is the first stable source release. Automated checks and isolated lifecycle checks passed; the server owner confirmed live gameplay, administration and mode/map transitions. See [release notes](docs/releases/v1.0.0.md) for verification scope and deployment requirements. Individual plugins retain independent module versions; `/serverinfo` reports the project release.
 
 ## Features
 
@@ -99,7 +99,7 @@ Production-only additions synchronized back into source control are documented i
 - **Phase 4.4 — HE Battle and hosted arcade refinements (implemented):** HE-only respawn gameplay, Arms Race purchase/pickup enforcement and two-kill progression, distributed DM/AR spawns, v3 crosshairs, and pinned ReAPI-backed weapon tuning.
 - **Phase 4.5 — hosted rules and Knife 35HP (implemented):** team-based Knife 35HP, mode-specific map routing, HE standings/kill limit, shared AR/HE spawn protection, and persisted Deathmatch loadouts.
 - **Phase 5 — Map & Mode Voting (implemented in source):** `/rtv`, `/votemode`, `/votemap`, `/nextmap`, installed-map validation, mode-specific pools, Classic-safe deferral, and single-use cross-map mode restoration. See [docs/MAP_VOTING.md](docs/MAP_VOTING.md).
-- **Phase 6 — Custom Admin Menu V1 (implemented and compile-tested):** permission-checked native menus for modes, maps, Classic lifecycle, YaPB, player actions and safe server controls. Hosted gameplay validation remains pending. See [docs/ADMIN_MENU.md](docs/ADMIN_MENU.md).
+- **Phase 6 — Custom Admin Menu V1 (implemented):** permission-checked native menus for modes, maps, Classic lifecycle, YaPB, player actions and safe server controls. The owner confirmed hosted gameplay validation for V1. See [docs/ADMIN_MENU.md](docs/ADMIN_MENU.md).
 - **Later shared systems:** SQLite profiles, global XP/levels/coins, separate competitive rating, mastery, achievements, enhanced HUD, cosmetics, leaderboards, missions and events.
 - **Optional later:** Next.js/TypeScript management dashboard and public-hosting hardening.
 
