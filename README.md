@@ -2,7 +2,7 @@
 
 A modular Counter-Strike 1.6 / GoldSrc server built for private LAN play and Linux hosting. The project uses SteamCMD HLDS, Metamod-P, AMX Mod X and Pawn. ReGameDLL_CS supplies the continuous-round controls required by the respawn-based arcade modes.
 
-The current development baseline contains seven playable modes, centralized mode ownership, mode-specific map/mode voting, and a permission-checked in-game administration panel. XP, coins, rankings, persistent profiles and the website are not implemented.
+The current development baseline contains eight playable modes, centralized mode ownership, mode-specific map/mode voting, and a permission-checked in-game administration panel. XP, coins, rankings, persistent profiles and the website are not implemented. See [hosted synchronization notes](docs/HOSTED_SYNC_20261103.md) for the latest module changes and validation limits.
 
 > **Release status:** source compilation and automated regression checks pass without warnings. Final hosted gameplay validation of the V1 admin workflows is still required before publishing `v1.0.0` as stable.
 
@@ -10,11 +10,12 @@ The current development baseline contains seven playable modes, centralized mode
 
 - **Classic:** nine balanced and unbalanced formats, team limits, warmup, ready-up, scoring, halftime, overtime and match administration.
 - **Deathmatch:** free-for-all targeting, automatic respawns, weapon selection, spawn protection and session leaderboard.
-- **Arms Race:** free-for-all 15-level weapon progression, immediate loadouts, respawns, HUD and final knife-kill victory.
+- **Arms Race:** free-for-all 17-level weapon progression, immediate loadouts, respawns, HUD and final knife-kill victory.
 - **AWP Only:** free-for-all AWP/Knife restriction, respawns, protection, standings and configurable `awp_` map selection.
 - **HE Battle:** team-aware HE-only loadouts, automatic grenade replenishment, enemy-kill standings, purchase/pickup restrictions and respawns.
 - **Knife 35HP:** team-based knife-only rounds with 35 HP, no armor/buying, and routing to installed `35hp`/`ka_` maps.
 - **Football:** team-based ball physics, dribbling, shoot/pass controls, goal scoring and kickoff resets on a configured pitch. See [Football setup and tests](docs/FOOTBALL.md).
+- **Combat Surf:** scoped surfing physics, respawn/loadouts, speed HUD and configurable jail bypass on separately installed Surf maps. See [Surf setup](docs/SURF.md).
 - **Player settings:** `/settings` or `/set` opens ordinary-player crosshair, DM loadout, personal status, leaderboard, voting/next-map, and rules shortcuts.
 - **Arcade refinements:** distributed Deathmatch/Arms Race spawns, stricter Arms Race pickup controls, two-kill gun levels with knife demotion, and optional grounded/stationary weapon tuning.
 - **Voting:** `/rtv`, `/votemode`, `/votemap` and `/nextmap` with installed-map validation and one authoritative next mode/map decision.
@@ -90,7 +91,7 @@ Production-only additions synchronized back into source control are documented i
 - **Phase 2.3 — voting design (superseded by Phase 5):** the initial voting placeholder was replaced by the centralized Phase 5 implementation.
 - **Phase 3 — Classic (implemented):** nine team formats, enforced capacities, warmup/ready/live/paused/halftime/finished lifecycle, MR3/MR5/MR12 rules, MR12 overtime, side switching, scoring, HUD, and admin controls. Unbalanced matches remain casual.
 - **Phase 4.1 — Deathmatch MVP (implemented):** FFA targeting, respawns, weapon selection, ammunition replenishment, spawn protection, and a transient leaderboard.
-- **Phase 4.2 — Arms Race MVP (implemented):** configurable 15-level FFA gun progression, respawns, HUD/leaderboard, and a final knife-kill victory.
+- **Phase 4.2 — Arms Race MVP (implemented):** configurable FFA gun progression (now 17 levels), respawns, HUD/leaderboard, and a final knife-kill victory.
 - **Phase 4.3 — AWP Only MVP (implemented):** FFA AWP/Knife restriction, respawns, protection, standings, and configurable dedicated-map selection.
 - **Phase 4.3.1 — shared round fix (implemented in source):** centralized arcade round/objective policy with required-versus-optional ReGameDLL cvar detection.
 - **Phase 4.3.2 — isolated ReGameDLL trial (core validation passed):** clone-only setup/install/start/stop/status/rollback scripts, pinned official artifact verification, separate port/state, and observed Classic/arcade transition checks. Arms Race final completion and the complete AWP map-change path remain manual checks.

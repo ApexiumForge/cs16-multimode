@@ -20,7 +20,7 @@
 - `mm_he_battle` owns HE-only loadouts, grenade replenishment, purchase/pickup restrictions, and respawns. It must remain inactive outside HE Battle and use the shared arcade round controller.
 - `mm_knife` owns team-based Knife 35HP rounds, loadouts, damage rules, and safe routing to installed knife maps.
 - `mm_arcade_protection` owns spawn protection for Arms Race and HE Battle only; attacking must cancel protection.
-- `mm_random_spawns` may relocate players only in Deathmatch, Arms Race, and HE Battle. It must reject blocked hulls, hazards, and active transitions.
+- `mm_random_spawns` may relocate players only in Deathmatch and Arms Race. Dedicated HE arenas retain their map spawns. Reject blocked hulls, hazards, and active transitions.
 - `mm_settings` is an ordinary-player routing menu. It must delegate to existing command handlers and must not duplicate mode state, bypass vote safeguards, or expose privileged commands.
 - `mm_football` owns team Football ball physics, pitch geometry, scoring, controls, loadouts and cleanup. Preserve its GPL notices. `mm_mode_maps` routes dedicated HE/Knife/Football maps through voting; individual modes must not duplicate its routing.
 - ReAPI is a pinned explicit dependency only for documented server-side weapon hooks and engine-level purchase/default-item restrictions. Do not add other ReAPI dependencies casually.

@@ -1,5 +1,24 @@
 # Hosted changes synchronized on 2026-11-03
 
+## Verification and deployment boundary
+
+All default plugins compiled with AMXX 1.10.0.5487 without warnings. Optional model plugins were compiled separately. Nine CLI suites passed: phase2-1, phase2-2, phase3, phase4-1, phase6, player-settings, hosted-features, remote-sync and regression. The installation regression uses fake SteamCMD/compiler fixtures; it does not reinstall a real server.
+
+The isolated Windows steam_legacy/ReGameDLL/ReAPI clone on UDP 27018 executed Football -> Deathmatch -> Football -> Classic with 18 lifecycle assertions, including ball cleanup, FFA restoration and ordinary Classic rounds. Football deterministic checks covered goal segments (6), colors (2), shot directions (4), pitch boundaries (11), restart classification (6), restart ownership (6), and rolling stop/tick invariance. These headless checks do not validate actual player input, contacts, scoring under latency or client presentation.
+
+No human clients or bots were launched. Surf BSPs are absent in the clone: installed-map filtering was exercised, but surfing/jail gameplay was not. Optional models, crosshair downloads, spectator cameras, permissions, live vote menus, full-capacity respawns and real match results require manual gameplay validation. No claim of bug-free operation is made. Live OptikLink and the normal local HLDS installation were not redeployed; build output went to the isolated clone only.
+
+To rebuild manually after stopping the target server yourself:
+
+```powershell
+Set-Location C:\Projcets\server-1.6
+.\scripts\build-plugins.ps1 -ServerDir .\runtime\hlds-steam-legacy
+```
+
+Back up the target's plugins/configs/sprites before deployment. Test each mode with at least two clients, confirm Classic restoration between arcade modes, then test voting/rematches and optional cosmetics. Missing Surf maps/models must be installed separately from authorized sources. Publish v5 sprites to FastDL before testing a clean downloading client.
+
+For a published rollback, use `git revert <feature-commit>` rather than resetting shared history. Check dependent commits first (new result consumers require the presentation contract, and Surf consumers require the extended mode contract). Rebuild and restore the corresponding configuration/assets from your deployment backup while the target is stopped. Individual commits are reviewable units; removing a shared API may require reverting its dependent features as well.
+
 ## Menu merge decisions
 
 Mode descriptions/chat formatting follow the hosted menu, but Player Settings is retained (the hosted source had removed it). Configurable Classic practice money is deliberately retained rather than replaced by the hosted hard-coded 16000 balance. Shared router vote/decision guards are also retained. These are reviewed merges, not byte-for-byte copies of every live source.
