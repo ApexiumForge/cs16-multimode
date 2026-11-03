@@ -1,5 +1,9 @@
 # Hosted changes synchronized on 2026-11-03
 
+## Weapon tuning
+
+Hosted tuning adds grounded moving/SMG scales and opening-burst tracking with a configurable settling threshold. It reads real active items rather than the fake crosshair HUD ID. Review fixes separate the integer next-shot count from the Float timestamp declaration to prevent Pawn tag mismatch/reference errors. `mm_weapon_burst_selftest` covers eight pause/spray/weapon-switch boundaries. This is the friend's non-vanilla preset; `mm_weapon_tuning 0` restores native shots.
+
 ## Football visual goals
 
 Goal lights/outlines/trails use temporary entities and stock sprites; no damage or ball force is introduced. This separate commit can be reverted without removing possession/scoring. `mm_football_goal_lights 0` disables goal visuals; `mm_football_light_test t|ct` previews them only while the active pitch is ready. Repeating light tasks are cancelled at shutdown.
