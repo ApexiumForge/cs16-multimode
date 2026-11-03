@@ -1,5 +1,9 @@
 # Hosted changes synchronized on 2026-11-03
 
+## Combat Surf
+
+The eighth mode adds saved/restored airaccelerate/maxvelocity, per-player bhop and speed display, scoped protection, respawn/loadouts and optional jail bypass. Use `/surf`, `/surfhelp`, `/respawn` and `mm_surf_set_jail 0|1` (ADMIN_CFG). Jail target files are map-specific; normal teleports remain intact. Runtime saved settings are not overwritten by the build. Maps must be installed separately; pools accept only `surf_` BSPs. Original source attribution to Hawk552's uSurf and OneEyed's Surf Olympics is preserved; feature references are not verification of third-party asset licenses.
+
 ## Counter-strafe preset
 
 The shooting-mode movement preset saves/restores accelerate/friction/stopspeed, clamps configuration, and preserves deliberate external edits. It is removed before mode transitions and inactive in Football/Knife/HE/Surf. ReHLDS uses its direct-cvar hook; stock HLDS reapplies only native reset values after GameRules think. ReHLDS is not required. Use `mm_counterstrafe 0` to disable and `mm_counterstrafe_status` to inspect the saved baseline.

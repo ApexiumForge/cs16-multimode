@@ -3,7 +3,7 @@
 #include <mm_voting_api>
 
 new const PLUGIN_NAME[] = "Multi-Mode Dedicated Map Pools"
-new const PLUGIN_VERSION[] = "1.1.0"
+new const PLUGIN_VERSION[] = "1.2.0"
 new const PLUGIN_AUTHOR[] = "Torbeshi"
 #define MM_ROUTE_TASK 896000
 new const MAP_POOLS[][] = {
@@ -13,7 +13,8 @@ new const MAP_POOLS[][] = {
     "addons/amxmodx/configs/mm_voting/maps_awponly.ini",
     "addons/amxmodx/configs/mm_voting/maps_hebattle.ini",
     "addons/amxmodx/configs/mm_voting/maps_knife.ini",
-    "addons/amxmodx/configs/mm_voting/maps_football.ini"
+    "addons/amxmodx/configs/mm_voting/maps_football.ini",
+    "addons/amxmodx/configs/mm_voting/maps_surf.ini"
 }
 
 public plugin_init()
@@ -23,7 +24,7 @@ public plugin_init()
     log_amx("Dedicated HE/Knife map routing initialized.")
 }
 
-bool:mm_dedicated(MmMode:mode) {return mode == MM_MODE_HE_BATTLE || mode == MM_MODE_KNIFE || mode == MM_MODE_FOOTBALL;}
+bool:mm_dedicated(MmMode:mode) {return mode == MM_MODE_HE_BATTLE || mode == MM_MODE_KNIFE || mode == MM_MODE_FOOTBALL || mode == MM_MODE_SURF;}
 
 public mm_mode_transition_started(old_mode, new_mode) remove_task(MM_ROUTE_TASK)
 public mm_mode_changed(old_mode, new_mode)

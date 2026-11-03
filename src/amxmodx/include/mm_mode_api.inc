@@ -12,6 +12,7 @@ enum MmMode
     MM_MODE_HE_BATTLE,
     MM_MODE_KNIFE,
     MM_MODE_FOOTBALL,
+    MM_MODE_SURF,
     MM_MODE_COUNT
 }
 
