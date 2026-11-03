@@ -1,5 +1,9 @@
 # Hosted changes synchronized on 2026-11-03
 
+## Crosshair v5
+
+The sprite/descriptor pairs are committed with the matching source. Real item clip/reserve IDs replace reads from the fake CurWeapon HUD cache, fixing weapon identity and ammo indicators. Each v5 descriptor has transparent ammo icons and validated IDSP sprite headers. Earlier v1/v3 resources remain for rollback. Runtime publication to FastDL is a separate operation; clean clients must validate v5 downloads and scope behavior.
+
 ## Distributed spawns
 
 Spawn selection is now limited to 32 candidate samples and two nearby line-of-sight traces per candidate, penalizing exposed/recently used locations. Hull/hazard checks and ordinary-spawn fallback remain. It applies only to Deathmatch/Arms Race; dedicated HE arenas retain their map starts. Verify crowded-server respawns and protection with bots/humans; this is a bounded heuristic, not a guarantee of invisible spawns.

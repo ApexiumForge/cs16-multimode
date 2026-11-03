@@ -1,6 +1,7 @@
 #include <amxmodx>
 #include <cstrike>
 #include <nvault>
+#include <reapi>
 
 #define MM_FAKE_WEAPON 2
 #define MM_HIDE_CROSSHAIR (1<<6)
@@ -9,16 +10,16 @@
 #define MM_NO_VAULT -1
 
 new const PLUGIN_NAME[] = "Torbeshi Crosshair Menu"
-new const PLUGIN_VERSION[] = "1.3"
+new const PLUGIN_VERSION[] = "1.5"
 new const PLUGIN_AUTHOR[] = "Torbeshi"
 new const STYLE_NAMES[][] = {"Tiny cross", "Small cross", "Dot", "Cross + dot", "Medium cross"}
 new const COLOR_NAMES[][] = {"Green", "Cyan", "White", "Red", "Yellow"}
 new g_style[33], g_color[33], g_weapon[33], g_clip[33], g_fov[33], g_hide[33]
 new bool:g_custom[33], bool:g_sending
 new g_data[31][8], bool:g_known[31]
-new const MM_AMMO_ID[] = {-1,9,-1,2,12,5,14,6,4,13,10,7,6,4,4,6,10,10,1,10,3,5,4,10,2,11,8,4,2,-1,7}
+new const MM_AMMO_ID[] = {-1,9,-1,2,12,5,14,6,4,13,10,7,6,4,4,6,6,10,1,10,3,5,4,10,2,11,8,4,2,-1,7}
 new const MM_AMMO_MAX[] = {-1,52,-1,90,1,32,1,100,90,1,120,100,100,90,90,100,120,120,30,120,200,32,90,120,90,2,35,90,90,-1,100}
-new g_msgWeaponList, g_msgCurWeapon, g_msgHide, g_msgFov, g_vault = MM_NO_VAULT
+new g_msgWeaponList, g_msgCurWeapon, g_msgHide, g_msgFov, g_msgAmmoX, g_vault = MM_NO_VAULT
 
 public plugin_precache()
 {
@@ -27,13 +28,14 @@ public plugin_precache()
     {
         for (new color = 0; color < MM_COLOR_COUNT; color++)
         {
-            formatex(path, charsmax(path), "sprites/mm_xh_v3_%d_%d.spr", shape, color)
+            formatex(path, charsmax(path), "sprites/mm_xh_v5_%d_%d.spr", shape, color)
             precache_generic(path)
-            formatex(path, charsmax(path), "sprites/mm_xh_v3_%d_%d.txt", shape, color)
+            formatex(path, charsmax(path), "sprites/mm_xh_v5_%d_%d.txt", shape, color)
             precache_generic(path)
         }
     }
 }
+
 public plugin_init()
 {
     register_plugin(PLUGIN_NAME, PLUGIN_VERSION, PLUGIN_AUTHOR)
@@ -45,6 +47,7 @@ public plugin_init()
     g_msgCurWeapon = get_user_msgid("CurWeapon")
     g_msgHide = get_user_msgid("HideWeapon")
     g_msgFov = get_user_msgid("SetFOV")
+    g_msgAmmoX = get_user_msgid("AmmoX")
     register_message(g_msgWeaponList, "mm_weapon_list")
     register_event("CurWeapon", "mm_current_weapon_event", "be", "1=1", "2!2")
     register_srvcmd("mm_crosshair_status", "mm_crosshair_status")
@@ -54,7 +57,7 @@ public plugin_init()
     for (new shape = 0; shape < MM_STYLE_COUNT; shape++)
         for (new color = 0; color < MM_COLOR_COUNT; color++)
         {
-            formatex(command, charsmax(command), "mm_xh_v3_%d_%d", shape, color)
+            formatex(command, charsmax(command), "mm_xh_v5_%d_%d", shape, color)
             register_clcmd(command, "mm_select_current_weapon")
         }
     g_vault = nvault_open("mm_crosshair")
@@ -153,9 +156,21 @@ public mm_current_weapon_event(id)
 
 public mm_crosshair_status()
 {
+    server_print("[Crosshair] version=%s hud=mm_xh_v5 ammo_icons=transparent", PLUGIN_VERSION)
     for (new id = 1; id <= MaxClients; id++)
         if (is_user_connected(id) && !is_user_bot(id))
+        {
             server_print("[Crosshair] client=%d style=%d color=%d weapon=%d fov=%d hide=%d custom=%d alive=%d", id, g_style[id], g_color[id], g_weapon[id], g_fov[id], g_hide[id], g_custom[id], is_user_alive(id))
+            if (is_user_alive(id))
+            {
+                new item = get_member(id, m_pActiveItem)
+                if (!is_nullent(item))
+                {
+                    new ammo = get_member(item, m_Weapon_iPrimaryAmmoType)
+                    server_print("[Crosshair] client=%d actual_weapon=%d clip=%d ammo_type=%d reserve=%d", id, get_member(item, m_iId), get_member(item, m_Weapon_iClip), ammo, ammo >= 0 && ammo < 32 ? get_member(id, m_rgAmmo, ammo) : 0)
+                }
+            }
+        }
 }
 
 public mm_set_fov(msg, destination, id)
@@ -190,7 +205,14 @@ bool:mm_can_draw(id)
 mm_refresh(id)
 {
     if (!is_user_connected(id)) return
-    if (is_user_alive(id)) g_weapon[id] = get_user_weapon(id, g_clip[id])
+    if (is_user_alive(id))
+    {
+        // The fake CurWeapon message changes AMXX's HUD cache. Always read
+        // the real equipped item for weapon identity and magazine ammo.
+        new item = get_member(id, m_pActiveItem)
+        g_weapon[id] = is_nullent(item) ? 0 : get_member(item, m_iId)
+        g_clip[id] = is_nullent(item) ? -1 : get_member(item, m_Weapon_iClip)
+    }
     if (mm_can_draw(id)) mm_draw(id)
     else if (g_custom[id]) mm_restore(id)
 }
@@ -198,11 +220,13 @@ mm_refresh(id)
 mm_draw(id)
 {
     new name[48], weapon = g_weapon[id]
-    formatex(name, charsmax(name), "mm_xh_v3_%d_%d", g_style[id] - 1, g_color[id])
+    new item = get_member(id, m_pActiveItem)
+    new ammo = is_nullent(item) ? MM_AMMO_ID[weapon] : get_member(item, m_Weapon_iPrimaryAmmoType)
+    formatex(name, charsmax(name), "mm_xh_v5_%d_%d", g_style[id] - 1, g_color[id])
     g_sending = true
     message_begin(MSG_ONE, g_msgWeaponList, _, id)
     write_string(name)
-    write_byte(g_known[weapon] ? g_data[weapon][0] : MM_AMMO_ID[weapon])
+    write_byte(ammo)
     write_byte(g_known[weapon] ? g_data[weapon][1] : MM_AMMO_MAX[weapon])
     write_byte(-1)
     write_byte(-1)
@@ -211,6 +235,14 @@ mm_draw(id)
     write_byte(MM_FAKE_WEAPON)
     write_byte(0)
     message_end()
+    if (ammo >= 0 && ammo < 32)
+    {
+        // Explicitly synchronize the same real reserve pool used by the weapon.
+        message_begin(MSG_ONE, g_msgAmmoX, _, id)
+        write_byte(ammo)
+        write_byte(clamp(get_member(id, m_rgAmmo, ammo), 0, 255))
+        message_end()
+    }
     message_begin(MSG_ONE, g_msgHide, _, id)
     write_byte(g_hide[id] | MM_HIDE_CROSSHAIR)
     message_end()
@@ -263,7 +295,8 @@ public mm_select_current_weapon(id)
 {
     if (!is_user_alive(id)) return PLUGIN_HANDLED
     new name[32]
-    if (get_weaponname(get_user_weapon(id), name, charsmax(name))) engclient_cmd(id, name)
+    new item = get_member(id, m_pActiveItem)
+    if (!is_nullent(item) && get_weaponname(get_member(item, m_iId), name, charsmax(name))) engclient_cmd(id, name)
     return PLUGIN_HANDLED
 }
 

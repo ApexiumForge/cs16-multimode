@@ -40,7 +40,7 @@ Assert-Match $announcer 'MM_MODE_CLASSIC' 'Optional announcer must preserve Clas
 if ($build -match "Name = 'mm_announcer'") { throw 'Remote-sync check failed: the resource-dependent announcer must not enter the default production build.' }
 
 $expected = @()
-foreach ($version in @('v1', 'v3')) {
+foreach ($version in @('v1', 'v3', 'v5')) {
     $lastShape = if ($version -eq 'v1') { 3 } else { 4 }
     foreach ($shape in 0..$lastShape) {
         foreach ($color in 0..4) {

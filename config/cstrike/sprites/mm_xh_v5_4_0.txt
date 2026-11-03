@@ -1,0 +1,13 @@
+12
+crosshair 320 mm_xh_v5_4_0 0 0 15 15
+autoaim 320 mm_xh_v5_4_0 0 0 15 15
+zoom 320 mm_xh_v5_4_0 0 0 15 15
+zoom_autoaim 320 mm_xh_v5_4_0 0 0 15 15
+ammo 320 mm_xh_v5_4_0 0 0 1 1
+ammo2 320 mm_xh_v5_4_0 0 0 1 1
+crosshair 640 mm_xh_v5_4_0 0 0 15 15
+autoaim 640 mm_xh_v5_4_0 0 0 15 15
+zoom 640 mm_xh_v5_4_0 0 0 15 15
+zoom_autoaim 640 mm_xh_v5_4_0 0 0 15 15
+ammo 640 mm_xh_v5_4_0 0 0 1 1
+ammo2 640 mm_xh_v5_4_0 0 0 1 1
