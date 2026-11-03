@@ -10,11 +10,13 @@
 #define MM_MIN_PLAYER_DISTANCE 384.0
 
 new const PLUGIN_NAME[] = "Torbeshi Distributed Spawns"
-new const PLUGIN_VERSION[] = "1.1"
+new const PLUGIN_VERSION[] = "1.3"
 new const PLUGIN_AUTHOR[] = "Torbeshi"
 new Float:g_points[MM_MAX_POINTS][3], Float:g_angles[MM_MAX_POINTS][3]
 new g_count, g_next, g_enabled, g_moves, g_rejected, g_hazards[128], g_hazard_count, g_seeds
 new bool:g_ready
+new Float:g_last_used[MM_MAX_POINTS]
+new g_visibility_checks
 new const Float:MM_OFFSETS[8][2] = {
     {MM_GRID_STEP,0.0}, {-MM_GRID_STEP,0.0}, {0.0,MM_GRID_STEP}, {0.0,-MM_GRID_STEP},
     {MM_GRID_STEP,MM_GRID_STEP}, {-MM_GRID_STEP,MM_GRID_STEP}, {MM_GRID_STEP,-MM_GRID_STEP}, {-MM_GRID_STEP,-MM_GRID_STEP}
@@ -70,7 +72,7 @@ public mm_expand_points()
     {
         remove_task(MM_BUILD_TASK)
         g_ready = g_count > 0
-        log_amx("Distributed spawn scan complete: %d grounded points. DM/Arms Race/HE Battle only.", g_count)
+        log_amx("Distributed spawn scan complete: %d grounded points. DM/Arms Race only.", g_count)
     }
 }
 
@@ -159,7 +161,7 @@ bool:mm_target_mode()
 {
     if (!get_pcvar_num(g_enabled) || mm_get_transition_state() != MM_TRANSITION_IDLE) return false
     new MmMode:mode = mm_get_active_mode()
-    return mode == MM_MODE_DEATHMATCH || mode == MM_MODE_ARMS_RACE || mode == MM_MODE_HE_BATTLE
+    return mode == MM_MODE_DEATHMATCH || mode == MM_MODE_ARMS_RACE
 }
 
 public mm_spawn_post(id)
@@ -172,33 +174,52 @@ public mm_place_player(task)
 {
     new id = task - MM_SPAWN_TASK
     if (!is_user_alive(id) || !g_ready || !mm_target_mode()) return
-    new players[32], count, Float:others[32][3], Float:point[3], Float:nearest, Float:score, Float:best = -1.0
+    new players[32], count, Float:others[32][3], Float:point[3], Float:nearest, Float:score, Float:best = -100000.0
     get_players(players, count, "ah")
     for (new i = 0; i < count; i++) pev(players[i], pev_origin, others[i])
-    new candidate = -1, start = random_num(0, g_count - 1)
-    for (new offset = 0; offset < g_count; offset++)
+    new candidate = -1
+    new trace = create_tr2()
+    // Bounded sampling keeps a full server's respawn work predictable.
+    for (new offset = 0; offset < min(g_count, 32); offset++)
     {
-        new index = (start + offset) % g_count
+        new index = random_num(0, g_count-1)
         for (new axis = 0; axis < 3; axis++) point[axis] = g_points[index][axis]
         if (!mm_clear(point, id, true)) continue
         nearest = 100000.0
+        new closest = -1, second = -1, Float:second_distance = 100000.0
         for (new i = 0; i < count; i++)
         {
             if (players[i] == id) continue
             new Float:distance = get_distance_f(point, others[i])
-            if (distance < nearest) nearest = distance
+            if (distance < nearest) {second = closest; second_distance = nearest; nearest = distance; closest = i;}
+            else if (distance < second_distance) {second = i; second_distance = distance;}
         }
         if (nearest < 80.0) continue
-        score = nearest
+        score = floatmin(nearest, 2000.0)+random_float(0.0, 80.0)
+        if (get_gametime()-g_last_used[index] < 4.0) score -= 200.0
+        for (new check = 0; check < 2; check++)
+        {
+            new enemy = check ? second : closest
+            if (enemy < 0 || get_distance_f(point, others[enemy]) > 1600.0) continue
+            new Float:eye[3], Float:target[3], Float:view[3]
+            pev(players[enemy], pev_view_ofs, view)
+            for (new axis = 0; axis < 3; axis++) {eye[axis] = others[enemy][axis]+view[axis]; target[axis] = point[axis];}
+            target[2] += 28.0
+            engfunc(EngFunc_TraceLine, eye, target, IGNORE_MONSTERS, players[enemy], trace)
+            new Float:fraction; get_tr2(trace, TR_flFraction, fraction)
+            g_visibility_checks++
+            if (fraction >= 0.99) score -= get_distance_f(point, others[enemy]) < 400.0 ? 1800.0 : 700.0
+        }
         if (score > best) {best = score; candidate = index;}
-        if (nearest >= MM_MIN_PLAYER_DISTANCE) break
     }
+    free_tr2(trace)
     if (candidate == -1) {g_rejected++; return;}
     engfunc(EngFunc_SetOrigin, id, g_points[candidate])
     set_pev(id, pev_velocity, Float:{0.0,0.0,0.0})
     set_pev(id, pev_angles, g_angles[candidate])
     set_pev(id, pev_v_angle, g_angles[candidate])
     set_pev(id, pev_fixangle, 1)
+    g_last_used[candidate] = get_gametime()
     g_moves++
 }
 
@@ -222,6 +243,7 @@ public mm_spawn_status()
         if (nearest >= 256.0) distributed++
     }
     server_print("[Spawn] points=%d seeds=%d away_from_base=%d ready=%d enabled=%d active=%d moved=%d fallback=%d", g_count, g_seeds, distributed, g_ready, get_pcvar_num(g_enabled), mm_target_mode(), g_moves, g_rejected)
+    server_print("[Spawn] version=%s visibility_checks=%d candidate_budget=32", PLUGIN_VERSION, g_visibility_checks)
 }
 public plugin_end()
 {

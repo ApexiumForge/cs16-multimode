@@ -1,5 +1,9 @@
 # Hosted changes synchronized on 2026-11-03
 
+## Distributed spawns
+
+Spawn selection is now limited to 32 candidate samples and two nearby line-of-sight traces per candidate, penalizing exposed/recently used locations. Hull/hazard checks and ordinary-spawn fallback remain. It applies only to Deathmatch/Arms Race; dedicated HE arenas retain their map starts. Verify crowded-server respawns and protection with bots/humans; this is a bounded heuristic, not a guarantee of invisible spawns.
+
 ## Weapon tuning
 
 Hosted tuning adds grounded moving/SMG scales and opening-burst tracking with a configurable settling threshold. It reads real active items rather than the fake crosshair HUD ID. Review fixes separate the integer next-shot count from the Float timestamp declaration to prevent Pawn tag mismatch/reference errors. `mm_weapon_burst_selftest` covers eight pause/spray/weapon-switch boundaries. This is the friend's non-vanilla preset; `mm_weapon_tuning 0` restores native shots.
