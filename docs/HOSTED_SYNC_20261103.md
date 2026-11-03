@@ -1,5 +1,9 @@
 # Hosted changes synchronized on 2026-11-03
 
+## Classic readiness and results
+
+Full teams enter ready-up immediately; live countdown, side-aware score HUD and end podium are added. Review fixes reject spectator `/unready` attempts (which could cancel another team's countdown) and clear per-slot kills/deaths on joining. Match-team limits, roster ownership, overtime and committed-match safeguards remain in Classic. Verify readiness cancellation and disconnect/rejoin during countdown with real clients.
+
 ## Arms Race
 
 The hosted 17-level sequence inserts M3/XM1014 after P90; level 17 remains the final knife kill. Source and configuration are synchronized together. ReAPI reads the actual active weapon independently of custom crosshair HUD IDs; all non-suicide player kills remain eligible in FFA. Preserve two gun kills/one knife advancement and victim knife demotion. Results, leader notices and rematch/map ballots use shared contracts; tasks are cancelled on shutdown. Gameplay verification must cover both shotguns and final-level transitions.
