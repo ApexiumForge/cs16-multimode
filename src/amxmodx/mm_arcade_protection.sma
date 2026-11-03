@@ -4,7 +4,7 @@
 #include <mm_mode_api>
 
 new const PLUGIN_NAME[] = "Multi-Mode Arcade Spawn Protection"
-new const PLUGIN_VERSION[] = "1.0.0"
+new const PLUGIN_VERSION[] = "1.1.0"
 new const PLUGIN_AUTHOR[] = "Torbeshi"
 new Float:g_until[33]
 new g_duration
@@ -12,6 +12,7 @@ new g_duration
 public plugin_init()
 {
     register_plugin(PLUGIN_NAME, PLUGIN_VERSION, PLUGIN_AUTHOR)
+    register_forward(FM_AddToFullPack, "mm_protection_glow", 1)
     RegisterHam(Ham_Spawn, "player", "mm_spawn_post", 1)
     RegisterHam(Ham_Killed, "player", "mm_death_post", 1)
     RegisterHam(Ham_TakeDamage, "player", "mm_damage_pre")
@@ -57,4 +58,18 @@ public mm_mode_transition_started(old_mode, new_mode)
 public mm_mode_changed(old_mode, new_mode)
 {
     for (new id = 1; id <= MaxClients; id++) mm_spawn_post(id)
+}
+
+// Packet-only effect: protection ending restores the normal model automatically.
+public mm_protection_glow(packet, e, entity, host, host_flags, player, pset)
+{
+    if (!player || entity < 1 || entity > MaxClients || !is_user_alive(entity)) return FMRES_IGNORED
+    if (mm_target() && g_until[entity] > get_gametime())
+    {
+        set_es(packet, ES_RenderFx, kRenderFxGlowShell)
+        set_es(packet, ES_RenderColor, {80, 220, 120})
+        set_es(packet, ES_RenderAmt, 8)
+        set_es(packet, ES_RenderMode, kRenderNormal)
+    }
+    return FMRES_IGNORED
 }

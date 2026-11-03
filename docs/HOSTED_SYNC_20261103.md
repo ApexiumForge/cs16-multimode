@@ -1,5 +1,9 @@
 # Hosted changes synchronized on 2026-11-03
 
+## HE teams/FFA and shared protection
+
+HE supports saved admin Team/FFA rules through `/he` and `mm_he_ffa`, team-total scoring, grenade refill HUD and podium. Team/FFA changes start a fresh session to avoid mixing score rules. Shared AR/HE protection now has packet-only glow; no persistent render state is written. Existing damage filters enforce team protection even with the shared arcade FFA cvar.
+
 ## Sniper Arena
 
 AWP Only now supports match-start AWP/Scout ballots, optional admin scoped-only rules, spawn health/armor settings, kill targets, inventory enforcement and result podium. FFA and installed-map loop guards are retained. The selected weapon is validated before loadout grants. Persisted admin scoped-only settings remain local. Verify scoped shots, both loadouts, vote cancellation and task/protection restoration on exit; commands remain `/awp` and `/awptop`.
