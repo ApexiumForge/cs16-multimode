@@ -27,6 +27,7 @@ $crosshairResourceSource = Join-Path $repoRoot 'config\cstrike\sprites'
 $crosshairResourceDestination = Join-Path $ServerDir 'cstrike\sprites'
 $plugins = @(
     @{ Name = 'mm_core'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_core.sma') },
+    @{ Name = 'mm_extendmap'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_extendmap.sma') },
     @{ Name = 'mm_mode_manager'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_mode_manager.sma') },
     @{ Name = 'mm_arcade_rounds'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_arcade_rounds.sma') },
     @{ Name = 'mm_modes'; Source = (Join-Path $repoRoot 'src\amxmodx\mm_modes.sma') },
@@ -86,11 +87,13 @@ foreach ($plugin in $plugins) {
 }
 
 $existingConfig = Get-Content -LiteralPath $pluginsIni | Where-Object {
+    $_ -notmatch '^\s*mm_extendmap\.amxx(?:\s|$)' -and
     $_ -notmatch '^\s*mm_(?:core|mode_manager|arcade_rounds|modes|settings|classic|deathmatch|armsrace|armsrace_restrictions|awponly|he_battle|arcade_protection|knife|football|mode_maps|voting|admin|warmup_money|random_spawns|weapon_tuning|crosshair)\.amxx(?:\s|$)' -and
     $_ -notmatch '^\s*;?\s*(?:mapchooser|nextmap|adminvote|mapsmenu)\.amxx(?:\s|$)' -and
     $_ -ne '; Multi-Mode Network' -and
     $_ -ne '; Stock voting disabled: mm_voting owns map and mode decisions'
 }
 Set-Content -LiteralPath $pluginsIni -Encoding ASCII -Value $existingConfig
+Add-Content -LiteralPath $pluginsIni -Encoding ASCII -Value 'mm_extendmap.amxx'
 Add-Content -LiteralPath $pluginsIni -Encoding ASCII -Value @('', '; Stock voting disabled: mm_voting owns map and mode decisions', '; mapchooser.amxx', '; nextmap.amxx', '; adminvote.amxx', '; mapsmenu.amxx', '', '; Multi-Mode Network', 'mm_core.amxx', 'mm_mode_manager.amxx', 'mm_arcade_rounds.amxx', 'mm_modes.amxx', 'mm_settings.amxx', 'mm_classic.amxx', 'mm_deathmatch.amxx', 'mm_armsrace.amxx', 'mm_armsrace_restrictions.amxx', 'mm_awponly.amxx', 'mm_he_battle.amxx', 'mm_arcade_protection.amxx', 'mm_knife.amxx', 'mm_football.amxx', 'mm_mode_maps.amxx', 'mm_voting.amxx', 'mm_admin.amxx', 'mm_warmup_money.amxx', 'mm_random_spawns.amxx', 'mm_weapon_tuning.amxx', 'mm_crosshair.amxx')
 

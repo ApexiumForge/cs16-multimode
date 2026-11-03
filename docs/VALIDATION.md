@@ -1,5 +1,7 @@
 # Multi-Mode Network validation checklist
 
+Hosted synchronization 2026-11-03: see docs/HOSTED_SYNC_20261103.md for module-specific checks and verification results.
+
 Football: follow docs/FOOTBALL.md for resource installation, two-player controls/scoring, geometry selftest, map persistence and Football -> DM -> Football -> Classic round-policy/ball cleanup checks. Keep the isolated runtime harness out of normal plugin registration.
 
 Optional admin fun: verify a non-admin cannot invoke `/ww1`, `mm_ww1`, `mm_ww1_esp`, or `mm_ww1_recoil`; revoking flag `l` and disabling `mm_admin_fun` must immediately revoke effects. Verify switches reset after reconnect, MOUSE4/MOUSE5 toggle independently, ESP labels appear for living players behind walls and expire when disabled, and other players' recoil remains unchanged. Check pistols/rifles/scoped weapons and client prediction manually; compilation does not establish visual correctness.
