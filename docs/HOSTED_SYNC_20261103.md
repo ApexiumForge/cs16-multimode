@@ -1,5 +1,9 @@
 # Hosted changes synchronized on 2026-11-03
 
+## Shared presentation
+
+`mm_presentation_api.inc` exposes results/podium rendering and a stable ranking helper. It rejects calls for an inactive mode; player IDs are validated before names are read. Help tasks and podium HUD clear on transitions/disconnect. `mm_presentation` is loaded before its consumers. Command hints describe the final synchronized modes and are not additional gameplay ownership.
+
 ## Combat Surf
 
 The eighth mode adds saved/restored airaccelerate/maxvelocity, per-player bhop and speed display, scoped protection, respawn/loadouts and optional jail bypass. Use `/surf`, `/surfhelp`, `/respawn` and `mm_surf_set_jail 0|1` (ADMIN_CFG). Jail target files are map-specific; normal teleports remain intact. Runtime saved settings are not overwritten by the build. Maps must be installed separately; pools accept only `surf_` BSPs. Original source attribution to Hawk552's uSurf and OneEyed's Surf Olympics is preserved; feature references are not verification of third-party asset licenses.
