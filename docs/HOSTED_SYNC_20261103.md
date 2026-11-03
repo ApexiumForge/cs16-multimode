@@ -1,5 +1,9 @@
 # Hosted changes synchronized on 2026-11-03
 
+## Football visual goals
+
+Goal lights/outlines/trails use temporary entities and stock sprites; no damage or ball force is introduced. This separate commit can be reverted without removing possession/scoring. `mm_football_goal_lights 0` disables goal visuals; `mm_football_light_test t|ct` previews them only while the active pitch is ready. Repeating light tasks are cancelled at shutdown.
+
 ## Football possession and boundaries
 
 Football now has explicit carrier possession, tackles, adjustable shoot/pass power, rolling deceleration, pitch boundaries, throw-ins/corners/goal kicks, reserved restart pickups, goals/assists, match clock and podium/countdown. Pitch bounds are shipped with soccerjam coordinates. Our prior missing-resource guard, geometry validation, transition-safe respawn and proper movement restoration are retained instead of reverting to the hosted copies. Isolated HLDS lifecycle checks and the expanded geometry/rolling/shot/restart selftests are exercised before publishing; real kicking/tackling still requires human validation.

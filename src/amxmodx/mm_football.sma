@@ -60,6 +60,8 @@ new bool:g_speed_applied
 new bool:g_bounds_ready
 new Float:g_pitch_min[2], Float:g_pitch_max[2], Float:g_restart_until
 new CsTeams:g_restart_team, CsTeams:g_next_kickoff
+new g_explosion_sprite, g_goal_explosions
+new g_goal_lights, g_light_team, g_light_ticks, g_light_bursts, g_light_pulses
 new g_restart_seconds
 new g_minutes, g_shot_power, g_pass_power, g_goals[33], g_assists[33], g_power[33][2], g_assist
 new Float:g_match_started, Float:g_touch_time
@@ -78,6 +80,7 @@ public plugin_precache()
     precache_sound(BOUNCE_SOUND)
     precache_sound(WHISTLE_SOUND)
     g_trail_sprite = precache_model("sprites/laserbeam.spr")
+    g_explosion_sprite = precache_model("sprites/zerogxplode.spr")
     g_resources_ready = true
 }
 
@@ -114,6 +117,8 @@ public plugin_init()
     g_minutes = register_cvar("mm_football_minutes", "10")
     g_shot_power = register_cvar("mm_football_shot_power", "1100")
     g_pass_power = register_cvar("mm_football_pass_power", "650")
+    g_goal_lights = register_cvar("mm_football_goal_lights", "1")
+    register_srvcmd("mm_football_light_test", "mm_light_test")
     g_goal_limit = register_cvar("mm_football_goal_limit", "5")
     g_hud = CreateHudSyncObj()
     g_notice_hud = CreateHudSyncObj()
@@ -186,7 +191,8 @@ mm_shutdown()
         set_pcvar_float(g_sv_maxspeed, g_saved_maxspeed)
         g_speed_applied = false
     }
-    remove_task(MM_FB_TICK); remove_task(MM_FB_RESET); remove_task(MM_FB_COUNTDOWN)
+    remove_task(MM_FB_TICK); remove_task(MM_FB_RESET); remove_task(MM_FB_COUNTDOWN); remove_task(MM_FB_GOAL_LIGHT)
+    g_light_ticks = 0
     for (new id = 1; id <= MaxClients; id++)
     {
         remove_task(MM_FB_RESPAWN + id); remove_task(MM_FB_LOADOUT + id)
@@ -687,6 +693,7 @@ public mm_tick()
 
 mm_goal(team)
 {
+    mm_goal_light(team)
     g_paused = true
     mm_release_ball()
     entity_set_int(g_ball, EV_INT_movetype, MOVETYPE_NONE)
@@ -762,6 +769,8 @@ public mm_help(id)
 }
 public mm_status()
 {
+    server_print("[Football Lights] enabled=%d bursts=%d pulses=%d remaining=%d", get_pcvar_num(g_goal_lights), g_light_bursts, g_light_pulses, g_light_ticks)
+    server_print("[Football Burst] explosions=%d", g_goal_explosions)
     server_print("[Football] clock_seconds_left=%d goal_target=%d reset_pending=%d countdown=%d", max(0, clamp(get_pcvar_num(g_minutes),1,60)*60-floatround(get_gametime()-g_match_started)), get_pcvar_num(g_goal_limit), task_exists(MM_FB_RESET), g_restart_seconds)
     server_print("[Football] version=%s active=%d ready=%d ball=%d paused=%d score=%d:%d extra_spawns=%d", PLUGIN_VERSION, mm_active(), g_field_ready, is_valid_ent(g_ball), g_paused, g_score[0], g_score[1], g_added_spawns)
     if (is_valid_ent(g_ball))
@@ -985,9 +994,90 @@ public mm_restart_countdown()
     show_dhudmessage(0, "NEW MATCH IN %d", g_restart_seconds--)
 }
 
+// Scoring team owns the color; the illuminated goal belongs to the conceding side.
+mm_goal_light(team)
+{
+    remove_task(MM_FB_GOAL_LIGHT); g_light_ticks = 0
+    if (!g_enabled || !mm_active() || !g_field_ready || !get_pcvar_num(g_goal_lights) || team < 0 || team > 1) return
+    g_light_team = team; g_light_ticks = 6; g_light_bursts++
+    new Float:corners[4][3], red, green, blue
+    mm_goal_light_color(team, red, green, blue)
+    mm_goal_explosion(team, red, green, blue)
+    for (new i=0; i<4; i++)
+    {
+        corners[i][0] = g_goal[1-team][0] + (g_goal[1-team][0] > g_spawn[0] ? -8.0 : 8.0)
+        corners[i][1] = g_goal[1-team][1] + (i == 0 || i == 3 ? -145.0 : 145.0)
+        corners[i][2] = g_goal[1-team][2] + (i < 2 ? -50.0 : 55.0)
+    }
+    // A visible outline also works for clients with dynamic lighting disabled.
+    for (new i=0; i<4; i++)
+    {
+        new next = (i+1)%4
+        message_begin(MSG_BROADCAST, SVC_TEMPENTITY)
+        write_byte(TE_BEAMPOINTS)
+        for (new axis=0; axis<3; axis++) write_coord_f(corners[i][axis])
+        for (new axis=0; axis<3; axis++) write_coord_f(corners[next][axis])
+        write_short(g_trail_sprite)
+        write_byte(0); write_byte(0); write_byte(26); write_byte(20); write_byte(0)
+        write_byte(red); write_byte(green); write_byte(blue); write_byte(255); write_byte(0)
+        message_end()
+    }
+    mm_goal_light_pulse()
+    set_task(0.4, "mm_goal_light_pulse", MM_FB_GOAL_LIGHT, "", 0, "b")
+}
 mm_goal_light_color(team, &red, &green, &blue)
 {
     red = team == 0 ? 255 : 55
     green = team == 0 ? 55 : 120
     blue = team == 0 ? 55 : 255
+}
+public mm_goal_light_pulse()
+{
+    if (!g_enabled || !mm_active() || !g_field_ready || !get_pcvar_num(g_goal_lights) || g_light_ticks <= 0)
+    {remove_task(MM_FB_GOAL_LIGHT); g_light_ticks = 0; return;}
+    new red, green, blue, goal = 1-g_light_team
+    mm_goal_light_color(g_light_team, red, green, blue)
+    message_begin(MSG_BROADCAST, SVC_TEMPENTITY)
+    write_byte(TE_DLIGHT)
+    write_coord_f(g_goal[goal][0] + (g_goal[goal][0] > g_spawn[0] ? -24.0 : 24.0))
+    write_coord_f(g_goal[goal][1]); write_coord_f(g_goal[goal][2]+10.0)
+    write_byte(48); write_byte(red); write_byte(green); write_byte(blue)
+    write_byte(9); write_byte(24)
+    message_end()
+    g_light_pulses++; g_light_ticks--
+    if (!g_light_ticks) remove_task(MM_FB_GOAL_LIGHT)
+}
+public mm_light_test()
+{
+    if (!g_enabled || !mm_active() || !g_field_ready) {server_print("[Football Lights] Preview requires the active football pitch."); return;}
+    new arg[8]; read_argv(1, arg, charsmax(arg))
+    if (!equali(arg,"t") && !equali(arg,"ct")) {server_print("[Football Lights] Usage: mm_football_light_test <t|ct>"); return;}
+    mm_goal_light(equali(arg,"ct") ? 1 : 0)
+    server_print("[Football Lights] Preview emitted; scores and possession unchanged.")
+}
+
+// Purely visual temporary entities: no damage, force or change to ball physics.
+mm_goal_explosion(team, red, green, blue)
+{
+    new Float:origin[3], goal = 1-team
+    for (new axis=0; axis<3; axis++) origin[axis] = g_goal[goal][axis]
+    origin[0] += origin[0] > g_spawn[0] ? -24.0 : 24.0
+    message_begin(MSG_BROADCAST, SVC_TEMPENTITY)
+    write_byte(TE_EXPLOSION)
+    for (new axis=0; axis<3; axis++) write_coord_f(origin[axis])
+    write_short(g_explosion_sprite)
+    write_byte(12); write_byte(20)
+    write_byte(TE_EXPLFLAG_NODLIGHTS | TE_EXPLFLAG_NOSOUND)
+    message_end()
+    // Team-colored expanding shockwave behind the initial explosion.
+    origin[2] -= 45.0
+    message_begin(MSG_BROADCAST, SVC_TEMPENTITY)
+    write_byte(TE_BEAMCYLINDER)
+    for (new axis=0; axis<3; axis++) write_coord_f(origin[axis])
+    write_coord_f(origin[0]); write_coord_f(origin[1]); write_coord_f(origin[2]+360.0)
+    write_short(g_trail_sprite)
+    write_byte(0); write_byte(0); write_byte(6); write_byte(24); write_byte(0)
+    write_byte(red); write_byte(green); write_byte(blue); write_byte(255); write_byte(0)
+    message_end()
+    g_goal_explosions++
 }
