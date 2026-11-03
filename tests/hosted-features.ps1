@@ -52,7 +52,7 @@ Assert-Match $restrictions 'mm_get_active_mode\(\) == MM_MODE_ARMS_RACE' 'Arms R
 Assert-Match $restrictions 'RegisterHookChain\(RG_BuyWeaponByWeaponID' 'Engine-level purchases must be blocked.'
 Assert-Match $restrictions 'RegisterHam\(Ham_Touch, "weaponbox"' 'World weapon boxes must be blocked.'
 
-Assert-Match $spawns 'mode == MM_MODE_DEATHMATCH \|\| mode == MM_MODE_ARMS_RACE \|\| mode == MM_MODE_HE_BATTLE' 'Distributed spawns must remain limited to DM, Arms Race, and HE Battle.'
+Assert-Match $spawns 'return mode == MM_MODE_DEATHMATCH \|\| mode == MM_MODE_ARMS_RACE\s*\}' 'Distributed spawns must remain limited to DM and Arms Race; dedicated HE arenas retain their spawns.'
 Assert-Match $spawns 'mm_get_transition_state\(\) != MM_TRANSITION_IDLE' 'Distributed spawns must stop during transitions.'
 Assert-Match $spawns 'mm_hazard\(point\)' 'Distributed spawns must reject trigger_hurt areas.'
 Assert-Match $spawns 'TraceHull' 'Distributed spawns must perform player-hull clearance checks.'

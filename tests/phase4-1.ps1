@@ -32,7 +32,7 @@ Assert-Match $source 'is_user_bot' 'The weapon menu must safely account for bots
 Assert-Match $source 'say /dm' 'The weapon-selection command must exist.'
 Assert-Match $source 'show_primary_menu' 'A primary weapon menu must exist.'
 Assert-Match $source 'show_secondary_menu' 'A secondary weapon menu must exist.'
-Assert-Match $source 'strip_user_weapons' 'Loadouts must replace the prior inventory.'
+Assert-Match $source 'rg_remove_all_items' 'Loadouts must replace the prior inventory through ReAPI.'
 Assert-Match $source 'cs_set_user_bpammo' 'Loadouts/kills must replenish reserve ammunition.'
 Assert-Match $source 'say /top' 'The leaderboard command must exist.'
 Assert-Match $source 'g_kills\[attacker\]\+\+' 'Kills must be tracked.'
