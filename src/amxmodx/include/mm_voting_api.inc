@@ -18,3 +18,8 @@ native bool:mm_voting_is_active()
 native bool:mm_voting_has_decision()
 native MmVotingAdminResult:mm_voting_admin_cancel(requester)
 native MmVotingAdminResult:mm_voting_admin_change(MmMode:mode, const map_name[], requester)
+native bool:mm_voting_start_rematch(MmMode:mode)
+native bool:mm_voting_start_sniper_vote()
+
+// weapon is CSW_AWP or CSW_SCOUT; a cancelled selection resolves to AWP.
+forward mm_sniper_selected(weapon)

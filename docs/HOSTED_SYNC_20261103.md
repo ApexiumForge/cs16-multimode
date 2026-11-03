@@ -1,5 +1,9 @@
 # Hosted changes synchronized on 2026-11-03
 
+## Rematch and sniper ballots
+
+Voting remains the sole owner of map decisions. New natives expose rematch/map choice and AWP/Scout selection. Binary ties/empty ballots select same-map/AWP; mode changes cancel obsolete special ballots. Joins can reopen active ballots; disconnects remove ballots/tasks. Added native argument and transition validation before starting votes. `mm_voting_selftest` exercises four tally cases; human menus and late joins require gameplay checks.
+
 ## Shared presentation
 
 `mm_presentation_api.inc` exposes results/podium rendering and a stable ranking helper. It rejects calls for an inactive mode; player IDs are validated before names are read. Help tasks and podium HUD clear on transitions/disconnect. `mm_presentation` is loaded before its consumers. Command hints describe the final synchronized modes and are not additional gameplay ownership.
