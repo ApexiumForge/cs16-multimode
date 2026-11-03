@@ -1,5 +1,9 @@
 # Hosted changes synchronized on 2026-11-03
 
+## Knife rounds
+
+Knife adds round-target scoring, `/ktop`, `/knifescore`, a result HUD and fresh-session reset. Actual equipped weapon IDs avoid custom crosshair interference; redundant 35hp-map health setters are blocked only while Knife is active. Routing stays exclusively in the shared router. Validate both teams, score boundaries and leaving during the delayed reset.
+
 ## HE teams/FFA and shared protection
 
 HE supports saved admin Team/FFA rules through `/he` and `mm_he_ffa`, team-total scoring, grenade refill HUD and podium. Team/FFA changes start a fresh session to avoid mixing score rules. Shared AR/HE protection now has packet-only glow; no persistent render state is written. Existing damage filters enforce team protection even with the shared arcade FFA cvar.
