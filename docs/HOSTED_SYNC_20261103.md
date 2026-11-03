@@ -1,5 +1,9 @@
 # Hosted changes synchronized on 2026-11-03
 
+## Menu merge decisions
+
+Mode descriptions/chat formatting follow the hosted menu, but Player Settings is retained (the hosted source had removed it). Configurable Classic practice money is deliberately retained rather than replaced by the hosted hard-coded 16000 balance. Shared router vote/decision guards are also retained. These are reviewed merges, not byte-for-byte copies of every live source.
+
 ## Crosshair v5
 
 The sprite/descriptor pairs are committed with the matching source. Real item clip/reserve IDs replace reads from the fake CurWeapon HUD cache, fixing weapon identity and ammo indicators. Each v5 descriptor has transparent ammo icons and validated IDSP sprite headers. Earlier v1/v3 resources remain for rollback. Runtime publication to FastDL is a separate operation; clean clients must validate v5 downloads and scope behavior.
