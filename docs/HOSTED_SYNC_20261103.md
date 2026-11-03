@@ -1,5 +1,9 @@
 # Hosted changes synchronized on 2026-11-03
 
+## Arms Race
+
+The hosted 17-level sequence inserts M3/XM1014 after P90; level 17 remains the final knife kill. Source and configuration are synchronized together. ReAPI reads the actual active weapon independently of custom crosshair HUD IDs; all non-suicide player kills remain eligible in FFA. Preserve two gun kills/one knife advancement and victim knife demotion. Results, leader notices and rematch/map ballots use shared contracts; tasks are cancelled on shutdown. Gameplay verification must cover both shotguns and final-level transitions.
+
 ## Deathmatch refresh
 
 Deathmatch adds `/reuse`, authorization retry for loadout preferences, a configurable kill target, HUD/results reset, packet-only protection glow and disabled death weapon drops. No persistent XP/economy is introduced. Review fixes cancel loadout work during a finished/transitioning match and clean all player tasks at plugin shutdown. Verify cached preferences, respawns, and cosmetic hooks with humans/bots.
