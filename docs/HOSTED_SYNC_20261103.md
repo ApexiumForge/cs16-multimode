@@ -1,5 +1,9 @@
 # Hosted changes synchronized on 2026-11-03
 
+## Football possession and boundaries
+
+Football now has explicit carrier possession, tackles, adjustable shoot/pass power, rolling deceleration, pitch boundaries, throw-ins/corners/goal kicks, reserved restart pickups, goals/assists, match clock and podium/countdown. Pitch bounds are shipped with soccerjam coordinates. Our prior missing-resource guard, geometry validation, transition-safe respawn and proper movement restoration are retained instead of reverting to the hosted copies. Isolated HLDS lifecycle checks and the expanded geometry/rolling/shot/restart selftests are exercised before publishing; real kicking/tackling still requires human validation.
+
 ## Personal cosmetics
 
 Optional weapon models add `/skins` default/custom selection with stable-ID nVault storage. Knife selection gains the default CS 1.6 model alongside Butterfly/pack knife. Knife deployment also uses ReAPI DefaultDeploy, preserving our previously established hosted hook fix rather than relying solely on Ham. Disconnect no longer calls CStrike natives on an out-of-game client. Assets remain separate from the default build.
