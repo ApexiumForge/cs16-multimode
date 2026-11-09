@@ -1,5 +1,7 @@
 # Apexium Forge — CS 1.6 Multi-Mode Network
 
+> **Recovery branch:** hosted work captured on 2026-11-09 is preserved separately under `src/amxmodx/hosted/2026-11-09` and `config/hosted/2026-11-09`. It is not integrated into the default build or the stable release. Read [recovery findings and compile blockers](docs/HOSTED_RECOVERY_20261109.md) before using it.
+
 A modular Counter-Strike 1.6 / GoldSrc server built for private LAN play and Linux hosting. The project uses SteamCMD HLDS, Metamod-P, AMX Mod X and Pawn. ReGameDLL_CS supplies the continuous-round controls required by the respawn-based arcade modes.
 
 The current development baseline contains eight playable modes, centralized mode ownership, mode-specific map/mode voting, and a permission-checked in-game administration panel. XP, coins, rankings, persistent profiles and the website are not implemented. See [hosted synchronization notes](docs/HOSTED_SYNC_20261103.md) for the latest module changes and validation limits.
