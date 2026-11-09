@@ -25,6 +25,8 @@ The ban manager defaults its fake test bot to enabled (`mm_bantestbot 1`). Knife
 
 Each recovered source is compiled independently against the captured shared includes and AMXX 1.10.0.5487 with the existing pinned ReAPI headers. Compiler output stays ignored under `.runtime`. Successful compilation does not establish runtime native availability, load ordering, asset availability, persistence safety or gameplay correctness. No server/game/bots are launched for this recovery.
 
+Result: 142 sources checked, 139 compiled without warnings, three blocked by the missing include described below. Original third-party engine files and license texts are preserved whole; these pre-existing monoliths are exceptions to the small-change preference. Other snapshots are committed by module or bounded class/item groups. No new monolithic implementation was written.
+
 ```powershell
 Set-Location C:\Projcets\server-1.6
 .\scripts\check-hosted-recovery.ps1
