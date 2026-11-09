@@ -1,0 +1,3 @@
+# Recovery snapshots retain the exact uploaded source/configuration bytes.
+src/amxmodx/hosted/2026-11-09/** -text
+config/hosted/2026-11-09/** -text
