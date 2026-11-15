@@ -3,7 +3,7 @@
 #include <reapi>
 #include <mm_mode_api>
 
-new const PLUGIN_NAME[] = "Multi-Mode Arms Race Restrictions"
+new const PLUGIN_NAME[] = "Multi-Mode GunGame Restrictions"
 new const PLUGIN_VERSION[] = "1.2.0"
 new const PLUGIN_AUTHOR[] = "Torbeshi"
 new Float:g_next_notice[33]
@@ -28,7 +28,7 @@ public plugin_init()
     new const commands[][] = {"buy", "buyequip", "autobuy", "rebuy", "cl_autobuy", "cl_rebuy", "buyammo1", "buyammo2"}
     for (new i = 0; i < sizeof commands; i++) register_clcmd(commands[i], "mm_buy_command")
     register_srvcmd("mm_armsrace_restrictions_status", "mm_status")
-    log_amx("Arms Race world pickups and purchases restricted; progression grants preserved.")
+    log_amx("GunGame world pickups and purchases restricted; progression grants preserved.")
 }
 
 public client_disconnected(id) g_next_notice[id] = 0.0
@@ -65,7 +65,7 @@ mm_notice(id)
     new Float:now = get_gametime()
     if (now < g_next_notice[id]) return
     g_next_notice[id] = now + 2.0
-    client_print_color(id, print_team_default, "^4[Arms Race]^1 Buying is disabled. Earn your next weapon with kills.")
+    client_print_color(id, print_team_default, "^4[GunGame]^1 Buying is disabled. Earn your next weapon with kills.")
 }
 
 public mm_buy_command(id)

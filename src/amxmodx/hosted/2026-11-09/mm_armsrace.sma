@@ -7,10 +7,10 @@
 #include <mm_voting_api>
 #include <mm_presentation_api>
 
-#define PLUGIN_NAME    "Multi-Mode Network Arms Race"
-#define PLUGIN_VERSION "0.7.1"
+#define PLUGIN_NAME    "Multi-Mode Network GunGame"
+#define PLUGIN_VERSION "0.7.3"
 #define PLUGIN_AUTHOR  "Multi-Mode Network"
-#define PROJECT_NAME   "Arms Race"
+#define PROJECT_NAME   "GunGame"
 
 #define AR_LEVEL_COUNT 17
 #define TASK_RESPAWN_BASE 51000
@@ -19,6 +19,27 @@
 #define TASK_MATCH_RESET 53001
 #define TASK_REMATCH_VOTE 53002
 #define MATCH_RESET_DELAY 6.0
+
+enum GunGameSound
+{
+    GG_LEVEL_UP,
+    GG_LEVEL_DOWN,
+    GG_LEVEL_STEAL,
+    GG_FINAL_KNIFE,
+    GG_WIN,
+    GG_SOUND_COUNT
+}
+
+new const GG_SOUNDS[GG_SOUND_COUNT][] =
+{
+    "multimode/gg_levelup.wav",
+    "ambience/xtal_down1.wav",
+    "turret/tu_die.wav",
+    "multimode/gg_knife_level.wav",
+    "multimode/gg_brass_bell.wav"
+}
+
+new bool:g_sound_ready[GG_SOUND_COUNT]
 
 enum WeaponCatalog
 {
@@ -94,6 +115,25 @@ new g_announced_leader
 new g_rematch_attempts
 new bool:g_offer_rematch
 
+public plugin_precache()
+{
+    // Leaving Zombie Plague always reloads the map before GunGame can start.
+    if (mm_get_active_mode() == MM_MODE_ZOMBIE) return
+
+    new path[96]
+    for (new GunGameSound:cue = GG_LEVEL_UP; cue < GG_SOUND_COUNT; cue++)
+    {
+        formatex(path, charsmax(path), "sound/%s", GG_SOUNDS[cue])
+        if (!file_exists(path, true))
+        {
+            log_amx("GunGame sound unavailable: %s", path)
+            continue
+        }
+        precache_sound(GG_SOUNDS[cue])
+        g_sound_ready[cue] = true
+    }
+}
+
 public plugin_init()
 {
     register_plugin(PLUGIN_NAME, PLUGIN_VERSION, PLUGIN_AUTHOR)
@@ -123,17 +163,18 @@ public plugin_init()
 
     for (new id = 1; id <= MaxClients; id++) reset_player(id)
     if (mm_get_active_mode() == MM_MODE_ARMS_RACE) activate_armsrace()
-    log_amx("%s Arms Race v%s initialized.", PROJECT_NAME, PLUGIN_VERSION)
+    log_amx("%s v%s initialized.", PROJECT_NAME, PLUGIN_VERSION)
 }
 
 public mm_status()
 {
-    server_print("[Arms Race] version=%s active=%d levels=%d kills_per_gun=2 knife_kills=1", PLUGIN_VERSION, armsrace_active(), AR_LEVEL_COUNT)
+    server_print("[GunGame] version=%s active=%d levels=%d kills_per_gun=2 knife_kills=1", PLUGIN_VERSION, armsrace_active(), AR_LEVEL_COUNT)
+    server_print("[GunGame] cues up=%d down=%d steal=%d knife=%d win=%d", g_sound_ready[GG_LEVEL_UP], g_sound_ready[GG_LEVEL_DOWN], g_sound_ready[GG_LEVEL_STEAL], g_sound_ready[GG_FINAL_KNIFE], g_sound_ready[GG_WIN])
     for (new level = 0; level < AR_LEVEL_COUNT; level++)
     {
         new name[32]
         get_pcvar_string(g_level_cvars[level], name, charsmax(name))
-        server_print("[Arms Race] level=%d weapon=%s", level+1, name)
+        server_print("[GunGame] level=%d weapon=%s", level+1, name)
     }
 }
 
@@ -167,7 +208,7 @@ public player_killed_post(victim, attacker, should_gib)
     if (!armsrace_active() || !is_user_connected(victim)) return HAM_IGNORED
 
     g_deaths[victim]++
-    if (!g_match_finished && is_valid_enemy_kill(victim, attacker))
+    if (!g_match_finished && is_valid_ffa_kill(victim, attacker))
     {
         process_progression_kill(attacker, victim)
     }
@@ -235,13 +276,13 @@ public command_leaderboard(id)
 
     new leaders[32], count
     collect_sorted_players(leaders, count)
-    client_print_color(id, print_team_grey, "^4[%s]^3 Top ^4Arms Race^3 players:", PROJECT_NAME)
+    client_print_color(id, print_team_grey, "^4[%s]^3 Top ^4GunGame^3 players:", PROJECT_NAME)
 
     new limit = min(count, 5)
     for (new rank = 0; rank < limit; rank++)
     {
         new player = leaders[rank]
-        client_print_color(id, player, "^4[Arms Race]^1 #^4%d ^3%n^1 - Level ^4%d/%d^1, ^4%d^1 kills", rank + 1, player, g_level[player] + 1, AR_LEVEL_COUNT, g_kills[player])
+        client_print_color(id, player, "^4[GunGame]^1 #^4%d ^3%n^1 - Level ^4%d/%d^1, ^4%d^1 kills", rank + 1, player, g_level[player] + 1, AR_LEVEL_COUNT, g_kills[player])
     }
     return PLUGIN_HANDLED
 }
@@ -260,11 +301,11 @@ public task_update_hud()
         if (leader)
         {
             new next[32]; mm_next_weapon(id, next, charsmax(next))
-            ShowSyncHudMsg(id, g_hud_sync, "ARMS RACE | Level %d/%d: %s^nProgress %d/%d | Next: %s^nLeader %n (Level %d)", g_level[id] + 1, AR_LEVEL_COUNT, ARCAT_DISPLAY_NAMES[weapon], g_level_kills[id], g_level[id] == AR_LEVEL_COUNT - 1 ? 1 : 2, next, leader, g_level[leader]+1)
+            ShowSyncHudMsg(id, g_hud_sync, "GUNGAME | Level %d/%d: %s^nProgress %d/%d | Next: %s^nLeader %n (Level %d)", g_level[id] + 1, AR_LEVEL_COUNT, ARCAT_DISPLAY_NAMES[weapon], g_level_kills[id], g_level[id] == AR_LEVEL_COUNT - 1 ? 1 : 2, next, leader, g_level[leader]+1)
         }
         else
         {
-            ShowSyncHudMsg(id, g_hud_sync, "Arms Race | Level %d/%d: %s^nProgress: %d/%d | Kills: %d | Waiting for players", g_level[id] + 1, AR_LEVEL_COUNT, ARCAT_DISPLAY_NAMES[weapon], g_level_kills[id], g_level[id] == AR_LEVEL_COUNT - 1 ? 1 : 2, g_kills[id])
+            ShowSyncHudMsg(id, g_hud_sync, "GunGame | Level %d/%d: %s^nProgress: %d/%d | Kills: %d | Waiting for players", g_level[id] + 1, AR_LEVEL_COUNT, ARCAT_DISPLAY_NAMES[weapon], g_level_kills[id], g_level[id] == AR_LEVEL_COUNT - 1 ? 1 : 2, g_kills[id])
         }
     }
 }
@@ -284,7 +325,7 @@ activate_armsrace()
     remove_task(TASK_HUD)
     set_task(1.0, "task_update_hud", TASK_HUD, _, _, "b")
     client_print_color(0, print_team_grey, "^4[%s]^3 ^4Free-for-all^3: ^4two gun kills^3 or ^4one knife kill^3 to advance. Being knifed loses ^4a level^3.", PROJECT_NAME)
-    log_amx("Arms Race activated with a validated %d-level progression.", AR_LEVEL_COUNT)
+    log_amx("GunGame activated with a validated %d-level progression.", AR_LEVEL_COUNT)
 }
 
 disable_armsrace()
@@ -299,7 +340,7 @@ disable_armsrace()
     reset_all_progression()
     server_cmd("exec server.cfg")
     server_exec()
-    log_amx("Arms Race disabled; tasks, progression, and baseline cvars restored.")
+    log_amx("GunGame disabled; tasks, progression, and baseline cvars restored.")
 }
 
 begin_next_match()
@@ -347,7 +388,7 @@ mm_announce_leader()
     collect_sorted_players(players, count)
     if (!count || !g_kills[players[0]] || g_announced_leader == players[0]) return
     g_announced_leader = players[0]
-    client_print_color(0, g_announced_leader, "^4[Arms Race]^1 ^3%n^1 takes the lead at level ^4%d^1!", g_announced_leader, g_level[g_announced_leader]+1)
+    client_print_color(0, g_announced_leader, "^4[GunGame]^1 ^3%n^1 takes the lead at level ^4%d^1!", g_announced_leader, g_level[g_announced_leader]+1)
 }
 
 process_progression_kill(attacker, victim)
@@ -364,7 +405,11 @@ process_progression_kill(attacker, victim)
 
     if (knife_kill)
     {
-        if (g_level[victim] > 0) g_level[victim]--
+        if (g_level[victim] > 0)
+        {
+            g_level[victim]--
+            play_gungame_sound(GG_LEVEL_DOWN, victim)
+        }
         g_level_kills[victim] = 0
         client_print_color(0, attacker, "^4[%s]^3 %n^1 | ^4KNIFE KILL^1 - skips a level!", PROJECT_NAME, attacker)
         client_print_color(0, victim, "^4[%s]^3 %n^1 | LEVEL DOWN | ^4%d^1 - ^4%s", PROJECT_NAME, victim, g_level[victim]+1, ARCAT_DISPLAY_NAMES[g_progression[g_level[victim]]])
@@ -391,25 +436,39 @@ process_progression_kill(attacker, victim)
     mm_announce_leader()
     if (g_level[attacker] == AR_LEVEL_COUNT-1)
     {
-        client_print_color(0, attacker, "^4[Arms Race]^1 ^3%n^1 reached ^4FINAL KNIFE^1! One knife kill wins.", attacker)
+        play_gungame_sound(GG_FINAL_KNIFE)
+        client_print_color(0, attacker, "^4[GunGame]^1 ^3%n^1 reached ^4FINAL KNIFE^1! One knife kill wins.", attacker)
         set_dhudmessage(255, 120, 40, -1.0, 0.30, 0, 0.0, 4.0, 0.1, 0.4)
         show_dhudmessage(0, "FINAL KNIFE LEVEL^n%n needs one knife kill!", attacker)
     }
+    else play_gungame_sound(knife_kill ? GG_LEVEL_STEAL : GG_LEVEL_UP, attacker)
+}
+
+play_gungame_sound(GunGameSound:cue, recipient = 0)
+{
+    if (!g_sound_ready[cue]) return
+    new pitch = cue == GG_LEVEL_DOWN ? 70 : PITCH_NORM
+    new first = recipient ? recipient : 1
+    new last = recipient ? recipient : MaxClients
+    for (new id = first; id <= last; id++)
+        if (is_user_connected(id) && !is_user_bot(id) && !is_user_hltv(id))
+            rh_emit_sound2(id, id, CHAN_ITEM, GG_SOUNDS[cue], 0.8, ATTN_NONE, 0, pitch, SND_EMIT2_NOPAS)
 }
 
 finish_match(winner)
 {
     g_match_finished = true
+    play_gungame_sound(GG_WIN)
     g_offer_rematch = true
     for (new id = 1; id <= MaxClients; id++) clear_player_tasks(id)
-    client_print_color(0, winner, "^4[%s]^1 ^3%n^1 wins ^4Arms Race^1 with the ^4final knife kill^1!", PROJECT_NAME, winner)
+    client_print_color(0, winner, "^4[%s]^1 ^3%n^1 wins ^4GunGame^1 with the ^4final knife kill^1!", PROJECT_NAME, winner)
     set_hudmessage(0, 255, 80, -1.0, 0.30, 0, 1.0, 5.0)
-    ShowSyncHudMsg(0, g_hud_sync, "%n WINS ARMS RACE!^nFinal knife kill completed", winner)
+    ShowSyncHudMsg(0, g_hud_sync, "%n WINS GUNGAME!^nFinal knife kill completed", winner)
     new leaders[32], count, detail[96]
     collect_sorted_players(leaders, count)
     formatex(detail, charsmax(detail), "%n wins! Rematch/map vote follows the round reset.", winner)
-    mm_show_results(MM_MODE_ARMS_RACE, winner, count > 1 ? leaders[1] : 0, count > 2 ? leaders[2] : 0, "ARMS RACE CHAMPION", detail)
-    log_amx("%n won Arms Race with %d valid progression kills.", winner, g_kills[winner])
+    mm_show_results(MM_MODE_ARMS_RACE, winner, count > 1 ? leaders[1] : 0, count > 2 ? leaders[2] : 0, "GUNGAME CHAMPION", detail)
+    log_amx("%n won GunGame with %d valid progression kills.", winner, g_kills[winner])
     set_task(MATCH_RESET_DELAY, "task_reset_match", TASK_MATCH_RESET)
 }
 
@@ -435,7 +494,7 @@ replenish_current_ammunition(id)
     if (weapon != ARCAT_KNIFE) cs_set_user_bpammo(id, ARCAT_IDS[weapon], ARCAT_AMMO[weapon])
 }
 
-bool:is_valid_enemy_kill(victim, attacker)
+bool:is_valid_ffa_kill(victim, attacker)
 {
     if (attacker < 1 || attacker > MaxClients || attacker == victim || !is_user_connected(attacker)) return false
     if (!is_playing_team(victim) || !is_playing_team(attacker)) return false
@@ -462,7 +521,7 @@ load_progression()
         if (_:weapon < 0 || (level == AR_LEVEL_COUNT - 1 && weapon != ARCAT_KNIFE))
         {
             weapon = DEFAULT_PROGRESSION[level]
-            log_amx("Invalid Arms Race weapon '%s' at level %d; using %s.", configured_name, level + 1, ARCAT_NAMES[weapon])
+            log_amx("Invalid GunGame weapon '%s' at level %d; using %s.", configured_name, level + 1, ARCAT_NAMES[weapon])
         }
         g_progression[level] = weapon
     }
@@ -539,7 +598,7 @@ reset_all_progression()
 
 armsrace_inactive_message(id)
 {
-    client_print_color(id, print_team_grey, "^4[%s]^3 These commands are available in ^4Arms Race^3 mode.", PROJECT_NAME)
+    client_print_color(id, print_team_grey, "^4[%s]^3 These commands are available in ^4GunGame^3 mode.", PROJECT_NAME)
     return PLUGIN_HANDLED
 }
 
@@ -561,7 +620,7 @@ mm_action_notice(id, const text[])
     new Float:now = get_gametime()
     if (now < g_next_action_notice[id]) return
     g_next_action_notice[id] = now + 2.0
-    client_print_color(id, print_team_grey, "^4[Arms Race]^3 %s", text)
+    client_print_color(id, print_team_grey, "^4[GunGame]^3 %s", text)
 }
 
 public mm_finished_damage(victim, inflictor, attacker, Float:damage, bits)
