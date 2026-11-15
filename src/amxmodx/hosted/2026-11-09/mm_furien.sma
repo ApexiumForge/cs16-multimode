@@ -9,13 +9,22 @@
 #define TASK_LOADOUT 973000
 const Float:FURIEN_FADE_TIME = 0.45
 const Float:FURIEN_SWAP_WINDOW = 3.0
-const FURIEN_SPAWN_HP = 125
+const FURIEN_SPAWN_HP = 100
 const FURIEN_MAX_HP = 150
-const HEALTH_PURCHASE_HP = 25
+const FURIEN_HEALTH_PURCHASE_HP = 50
+const CT_HEALTH_PURCHASE_HP = 25
+const PLANT_UNLOCK_SECONDS = 90
 const TEAM_AUTO_SELECT_SLOT = 5
-new const PLUGIN_VERSION[] = "0.5.7"
-new const SOUND_HUNT[] = "multimode/furien/fmu_heartbeat.wav"
+new const PLUGIN_VERSION[] = "0.6.2"
 new const SOUND_SWAP[] = "weapons/mastercombat_draw.wav"
+new const ROUND_START_SOUNDS[][] = {
+ "multimode/furien/pickupyourweaponsandfight.wav",
+ "multimode/furien/preparetofight.wav",
+ "multimode/furien/prepareforbattle.wav"
+}
+new const SOUND_PLANT_READY[] = "buttons/blip1.wav"
+new g_round_voices[sizeof ROUND_START_SOUNDS], g_round_voice_count, g_next_round_voice
+new bool:g_freeze_ending, bool:g_winner_announced
 new const NORMAL_KNIFE[]="models/multimode/furien/v_normal.mdl"
 new const SUPER_KNIFE[]="models/multimode/furien/v_super.mdl"
 new Float:g_detach_until[33]
@@ -52,8 +61,18 @@ public plugin_precache()
  precache_model("models/player/mm_furien_altair/mm_furien_altair.mdl");
  precache_model(NORMAL_KNIFE);precache_model(SUPER_KNIFE);
  precache_model("models/p_knife.mdl");
- precache_sound(SOUND_HUNT);
  precache_sound(SOUND_SWAP);
+ for(new i=0;i<sizeof ROUND_START_SOUNDS;i++)
+  if(precache_furien_voice(ROUND_START_SOUNDS[i]))g_round_voices[g_round_voice_count++]=i;
+ precache_sound(SOUND_PLANT_READY);
+}
+bool:precache_furien_voice(const sample[])
+{
+ new path[96];
+ formatex(path,charsmax(path),"sound/%s",sample);
+ if(!file_exists(path)){log_amx("Furien sound unavailable: %s",path);return false;}
+ precache_sound(sample);
+ return true;
 }
 public plugin_init()
 {
@@ -102,7 +121,9 @@ public plugin_init()
  RegisterHookChain(RG_RoundEnd,"round_end_post",true);
  RegisterHookChain(RG_CBasePlayer_AddAccount,"round_reward_pre");
  RegisterHookChain(RG_CSGameRules_RestartRound,"restart_round_post",true);
+ RegisterHookChain(RG_CSGameRules_OnRoundFreezeEnd,"hunt_start_pre");
  RegisterHookChain(RG_CSGameRules_OnRoundFreezeEnd,"hunt_start_post",true);
+ RegisterHookChain(RG_CBasePlayer_Radio,"freeze_radio_pre");
 }
 public plugin_cfg()
 {
@@ -203,11 +224,26 @@ give_human_weapons(id)
  else
   log_amx("Furien CT primary grant failed: player=%d weapon=%s VIP=%d",id,PRIMARY[g_primary[id]],get_member(id,m_bIsVIP));
 }
-public speed_post(id){if(is_furien(id))set_entvar(id,var_maxspeed,get_pcvar_float(g_speed));}
+public speed_post(id)
+{
+ // ReGameDLL sets maxspeed to 1 during freeze time and while arming C4.
+ if(is_furien(id) && !get_member_game(m_bFreezePeriod) && Float:get_entvar(id,var_maxspeed)>1.0)
+  set_entvar(id,var_maxspeed,get_pcvar_float(g_speed));
+}
 public command_start(id,uc,seed)
 {
  if(!g_active || !is_user_alive(id))return FMRES_IGNORED;
  new buttons=get_uc(uc,UC_Buttons);
+ if(get_member_game(m_bFreezePeriod) || (is_furien(id) && Float:get_entvar(id,var_maxspeed)<=1.0))
+ {
+  set_uc(uc,UC_ForwardMove,0.0);
+  set_uc(uc,UC_SideMove,0.0);
+  set_uc(uc,UC_UpMove,0.0);
+  set_uc(uc,UC_Buttons,buttons & ~IN_JUMP);
+  g_movement_input[id]=false;
+  g_previous_buttons[id]=buttons;
+  return FMRES_HANDLED;
+ }
  new Float:forward_move, Float:side_move;
  get_uc(uc,UC_ForwardMove,forward_move);
  get_uc(uc,UC_SideMove,side_move);
@@ -289,6 +325,12 @@ public round_end_pre(WinStatus:status,ScenarioEventEndRound:event,Float:delay)
 public round_end_post(WinStatus:status,ScenarioEventEndRound:event,Float:delay)
 {
  if(!g_active || !GetHookChainReturn(ATYPE_BOOL) || !get_member_game(m_bRoundTerminating))return;
+ if(!g_winner_announced && (status==WINSTATUS_CTS || status==WINSTATUS_TERRORISTS))
+ {
+  g_winner_announced=true;
+  set_hudmessage(255,70,70,-1.0,0.18,0,0.0,4.0,0.1,0.3,4);
+  show_hudmessage(0,status==WINSTATUS_CTS?"Counter-Terrorists have won the round":"Furiens have won the round");
+ }
  if(status!=WINSTATUS_CTS || get_gametime()<g_swap_until)return;
 
  g_swap_until=get_gametime()+FURIEN_SWAP_WINDOW;
@@ -311,8 +353,6 @@ public round_end_post(WinStatus:status,ScenarioEventEndRound:event,Float:delay)
   rg_reset_maxspeed(id);
  }
  play_furien_sound(SOUND_SWAP);
- set_hudmessage(210,140,65,-1.0,0.22,0,0.0,FURIEN_SWAP_WINDOW,0.05,0.2,-1);
- show_hudmessage(0,"Anti-Furiens win!^nTeams switched");
 }
 public round_reward_pre(id,amount,RewardType:type,bool:track_change)
 {
@@ -325,19 +365,34 @@ public round_reward_pre(id,amount,RewardType:type,bool:track_change)
  }
  return HC_CONTINUE;
 }
+public hunt_start_pre()
+{
+ g_freeze_ending=g_active && g_round_voice_count>0;
+ return HC_CONTINUE;
+}
+public freeze_radio_pre(id,const msg_id[],const verbose[],pitch,bool:show_icon)
+{
+ return g_freeze_ending?HC_SUPERCEDE:HC_CONTINUE;
+}
 public hunt_start_post()
 {
- if(g_active)play_furien_sound(SOUND_HUNT);
+ g_freeze_ending=false;
+ if(!g_active)return;
+ if(g_round_voice_count>0)
+ {
+  play_furien_sound(ROUND_START_SOUNDS[g_round_voices[g_next_round_voice]],CHAN_VOICE);
+  g_next_round_voice=(g_next_round_voice+1)%g_round_voice_count;
+ }
 }
 public restart_round_post()
 {
  if(g_active)arrayset(g_round_reward_team,TEAM_UNASSIGNED,sizeof g_round_reward_team);
 }
-play_furien_sound(const sample[])
+play_furien_sound(const sample[],channel=CHAN_STATIC)
 {
  for(new id=1;id<=MaxClients;id++)
   if(is_user_connected(id) && !is_user_bot(id) && !is_user_hltv(id))
-   rh_emit_sound2(id,id,CHAN_STATIC,sample,0.65,ATTN_NONE,0,PITCH_NORM,SND_EMIT2_NOPAS);
+   rh_emit_sound2(id,id,channel,sample,0.65,ATTN_NONE,0,PITCH_NORM,SND_EMIT2_NOPAS);
 }
 public round_start()
 {
@@ -345,6 +400,7 @@ public round_start()
 
  for(new i=1;i<=MaxClients;i++){g_health_buys[i]=0;g_grenade_buys[i]=0;}
  g_plant_announced=false;
+ g_winner_announced=false;
  g_swap_until=0.0;
 }
 public command_menu(id)
@@ -401,6 +457,7 @@ public plugin_end(){cleanup();}
 public command_status()
 {
  server_print("[Furien] version=%s active=%d speed=%.0f gravity=%.2f swap_active=%d fade_ms=%d",PLUGIN_VERSION,g_active,get_pcvar_float(g_speed),get_pcvar_float(g_gravity),get_gametime()<g_swap_until,floatround(FURIEN_FADE_TIME*1000.0));
+ server_print("[Furien] upgrade_hp=%d plant_unlock=%d round_start_voices=%d/%d",FURIEN_HEALTH_PURCHASE_HP,PLANT_UNLOCK_SECONDS,g_round_voice_count,sizeof ROUND_START_SOUNDS);
  server_print("[Furien] auto_join=%d auto_balance=%d team_limit=%d spawn_hp=%d max_hp=%d",get_cvar_num("mp_auto_join_team"),get_cvar_num("mp_autoteambalance"),get_cvar_num("mp_limitteams"),FURIEN_SPAWN_HP,FURIEN_MAX_HP);
 }
 
@@ -438,7 +495,7 @@ show_knife_shop(id)
  if(g_superknife[id])copy(label,charsmax(label),"Super Knife - ACTIVE");
  else formatex(label,charsmax(label),"Super Knife - $%d | %.1fx damage",clamp(get_pcvar_num(g_knife_cost),0,16000),floatclamp(get_pcvar_float(g_knife_damage),1.0,5.0));
  menu_additem(menu,label,"super",0,g_knife_callback);
- formatex(label,charsmax(label),"+%d HP (max %d, %d/round) - $%d",HEALTH_PURCHASE_HP,health_cap(id),health_limit(id),get_pcvar_num(g_hp_cost));
+ formatex(label,charsmax(label),"+%d HP (max %d, %d/round) - $%d",health_purchase(id),health_cap(id),health_limit(id),get_pcvar_num(g_hp_cost));
  menu_additem(menu,label,"health",0,g_health_callback);
  formatex(label,charsmax(label),"HE grenade (twice/round) - $%d",get_pcvar_num(g_he_cost));
  menu_additem(menu,label,"grenade");
@@ -450,6 +507,7 @@ public knife_availability(id,menu,item)
 }
 health_cap(id){return is_furien(id)?FURIEN_MAX_HP:150;}
 health_limit(id){return is_furien(id)?1:2;}
+health_purchase(id){return is_furien(id)?FURIEN_HEALTH_PURCHASE_HP:CT_HEALTH_PURCHASE_HP;}
 bool:can_buy_health(id){return get_user_health(id)<health_cap(id) && g_health_buys[id]<health_limit(id);}
 public health_availability(id,menu,item){return can_buy_health(id)?ITEM_ENABLED:ITEM_DISABLED;}
 public knife_selected(id,menu,item)
@@ -466,10 +524,13 @@ public knife_selected(id,menu,item)
    client_print_color(id,print_team_default,"^4[^1Furien^4]^1 Item unavailable: already full or round limit reached.");
   else if(cs_get_user_money(id)<cost)client_print_color(id,print_team_default,"^4[^1Furien^4]^1 You need ^3$%d^1.",cost);
   else {
-   if(health){set_user_health(id,min(health_cap(id),get_user_health(id)+HEALTH_PURCHASE_HP));g_health_buys[id]++;}
+   if(health){set_user_health(id,min(health_cap(id),get_user_health(id)+health_purchase(id)));g_health_buys[id]++;}
    else {if(is_nullent(rg_give_item(id,"weapon_hegrenade")))return PLUGIN_HANDLED;g_grenade_buys[id]++;}
    cs_set_user_money(id,cs_get_user_money(id)-cost,1);
-   client_print_color(id,print_team_red,"^4[^1Furien^4]^1 Bought ^3%s^1 for ^3$%d^1.",health?"25 HP":"HE grenade",cost);
+   new item_name[24];
+   if(health)formatex(item_name,charsmax(item_name),"%d HP",health_purchase(id));
+   else copy(item_name,charsmax(item_name),"HE grenade");
+   client_print_color(id,print_team_red,"^4[^1Furien^4]^1 Bought ^3%s^1 for ^3$%d^1.",item_name,cost);
   }
   show_knife_shop(id);return PLUGIN_HANDLED;
  }
@@ -502,9 +563,9 @@ public team_changed()
 
 plant_wait()
 {
- if(get_member_game(m_bFreezePeriod))return max(0,get_member_game(m_iRoundTime)-60);
+ if(get_member_game(m_bFreezePeriod))return max(0,get_member_game(m_iRoundTime)-PLANT_UNLOCK_SECONDS);
  new Float:elapsed=get_gametime()-Float:get_member_game(m_fRoundStartTime);
- return max(0,floatround(float(get_member_game(m_iRoundTime))-elapsed-60.0,floatround_ceil));
+ return max(0,floatround(float(get_member_game(m_iRoundTime)-PLANT_UNLOCK_SECONDS)-elapsed,floatround_ceil));
 }
 plant_hud(id)
 {
@@ -577,10 +638,13 @@ public shop_chat(id)
 }
 plant_announcement()
 {
- if(g_plant_announced || get_member_game(m_bFreezePeriod) || plant_wait()>0)return;
+ if(g_plant_announced || get_member_game(m_bFreezePeriod) || get_member_game(m_bRoundTerminating) || !get_member_game(m_bMapHasBombTarget) || plant_wait()>0)return;
  g_plant_announced=true;
  set_hudmessage(80,255,80,-1.0,0.18,0,0.0,4.0,0.1,0.3,4);
  show_hudmessage(0,"Furiens can now plant the bomb!");
+ for(new id=1;id<=MaxClients;id++)
+  if(is_user_alive(id) && is_furien(id) && !is_user_bot(id))
+   rh_emit_sound2(id,id,CHAN_ITEM,SOUND_PLANT_READY,0.65,ATTN_NONE,0,PITCH_NORM,SND_EMIT2_NOPAS);
 }
 
 public latched_attack(weapon)
