@@ -7,15 +7,72 @@
 #include <mm_mode_api>
 #define GOLD_TAG 901727
 new g_item,g_armor;
+new g_tracer_sprite, g_gold_bullets;
+new bool:g_trace_gold_shot[33];
 new const VIEW[]="models/zombie_plague/v_golden_ak47.mdl",PLAYER[]="models/zombie_plague/p_golden_ak47.mdl";
-public plugin_precache(){if(mm_get_active_mode()==MM_MODE_ZOMBIE){precache_model(VIEW);precache_model(PLAYER);}}
+public plugin_precache()
+{
+ if(mm_get_active_mode()!=MM_MODE_ZOMBIE)return;
+ precache_model(VIEW);
+ precache_model(PLAYER);
+ g_tracer_sprite=precache_model("sprites/laserbeam.spr");
+}
 public plugin_init(){
- register_plugin("Classic ZP Golden AK / Armor","1.0.0","ApexiumForge");
+ register_plugin("Classic ZP Golden AK / Armor","1.1.0","ApexiumForge");
  if(mm_get_active_mode()!=MM_MODE_ZOMBIE)return;
  g_item=zp_register_extra_item("Golden AK47 (+20% damage)",30,ZP_TEAM_HUMAN);
  g_armor=zp_register_extra_item("Anti-infection armor (+50)",15,ZP_TEAM_HUMAN);
  RegisterHam(Ham_Item_Deploy,"weapon_ak47","mm_deploy",1);RegisterHam(Ham_TakeDamage,"player","mm_damage");
  register_forward(FM_UpdateClientData,"mm_model",1);
+ g_gold_bullets=register_cvar("zp_goldenak_gold_bullets","1");
+ RegisterHookChain(RG_CBaseEntity_FireBullets3,"mm_gold_shot_pre");
+ RegisterHookChain(RG_CBaseEntity_FireBullets3,"mm_gold_shot_post",true);
+ register_forward(FM_TraceLine,"mm_gold_trace",1);
+}
+
+// AlejandroSk's Golden AK tracer, drawn along the actual first bullet trace.
+public mm_gold_shot_pre(id)
+{
+ if(id<1 || id>MaxClients || !get_pcvar_num(g_gold_bullets) || !is_user_alive(id) || zp_get_user_zombie(id))
+  return HC_CONTINUE;
+ new weapon=get_member(id,m_pActiveItem);
+ g_trace_gold_shot[id]=!is_nullent(weapon) && get_member(weapon,m_iId)==WEAPON_AK47 && pev(weapon,pev_iuser4)==GOLD_TAG;
+ return HC_CONTINUE;
+}
+
+public mm_gold_shot_post(id)
+{
+ if(id>=1 && id<=MaxClients)g_trace_gold_shot[id]=false;
+ return HC_CONTINUE;
+}
+
+public mm_gold_trace(const Float:start[3],const Float:end[3],flags,id,trace)
+{
+ if(id<1 || id>MaxClients || !g_trace_gold_shot[id])return FMRES_IGNORED;
+ g_trace_gold_shot[id]=false;
+ new Float:hit[3],Float:muzzle[3];
+ get_tr2(trace,TR_vecEndPos,hit);
+ new Float:distance=get_distance_f(start,hit);
+ if(distance<=24.0)return FMRES_IGNORED;
+ for(new axis=0;axis<3;axis++)muzzle[axis]=start[axis]+(hit[axis]-start[axis])*24.0/distance;
+ muzzle[2]-=4.0;
+ engfunc(EngFunc_MessageBegin,MSG_PAS,SVC_TEMPENTITY,start,0);
+ write_byte(TE_BEAMPOINTS);
+ for(new axis=0;axis<3;axis++)engfunc(EngFunc_WriteCoord,muzzle[axis]);
+ for(new axis=0;axis<3;axis++)engfunc(EngFunc_WriteCoord,hit[axis]);
+ write_short(g_tracer_sprite);
+ write_byte(0); // Start frame
+ write_byte(0); // Frame rate
+ write_byte(1); // Life in tenths of a second
+ write_byte(2); // Width
+ write_byte(0); // Noise
+ write_byte(255);
+ write_byte(190);
+ write_byte(40);
+ write_byte(205); // Brightness
+ write_byte(0); // Scroll speed
+ message_end();
+ return FMRES_IGNORED;
 }
 public zp_extra_item_selected(id,item){
  if(item!=g_item && item!=g_armor)return PLUGIN_CONTINUE;
