@@ -3,6 +3,7 @@
 #include <reapi>
 #include <hamsandwich>
 #include <nvault>
+#include <mm_mode_api>
 
 new const MM_MODELS[][] = {
     "models/multimode/csgo_inspect/v_ak47.mdl",
@@ -65,6 +66,7 @@ public plugin_precache()
     new file = fopen("models/multimode/csgo_inspect/sounds.ini", "rt")
     if (!file) { log_amx("Weapon model sound manifest missing; cosmetics disabled."); return; }
     new sound[96], bool:ready = true
+    new bool:zombie_mode = mm_get_active_mode() == MM_MODE_ZOMBIE
     while (!feof(file))
     {
         fgets(file, sound, charsmax(sound)); trim(sound)
@@ -72,7 +74,9 @@ public plugin_precache()
         new path[112]
         formatex(path, charsmax(path), "sound/%s", sound)
         if (contain(sound, "multimode/csgo_inspect/") != 0 || contain(sound, "..") != -1 || !file_exists(path)) { ready = false; break; }
-        precache_sound(sound)
+        // Studio animation events play these files on the client.
+        if (zombie_mode) precache_generic(path)
+        else precache_sound(sound)
     }
     fclose(file)
     if (!ready) { log_amx("Weapon model sound resources incomplete; cosmetics disabled."); return; }
@@ -81,7 +85,7 @@ public plugin_precache()
 }
 public plugin_init()
 {
-    register_plugin("Multi-Mode Weapon Models", "1.1.0", "ApexiumForge")
+    register_plugin("Multi-Mode Weapon Models", "1.1.1", "ApexiumForge")
     register_clcmd("say /skins", "mm_toggle_skins")
     register_clcmd("say_team /skins", "mm_toggle_skins")
     g_vault = nvault_open("mm_weapon_skin_choice")
@@ -113,7 +117,7 @@ public mm_status()
 {
     new count, viewmodel[96]
     for (new i = 0; i < sizeof MM_MODELS; i++) if (g_mm_available[i]) count++
-    server_print("[Weapon Models] version=1.1.0 enabled=%d precached=%d/24 deploys=%d applied=%d", get_pcvar_num(g_mm_enabled), count, g_mm_deploys, g_mm_applied)
+    server_print("[Weapon Models] version=1.1.1 enabled=%d precached=%d/24 deploys=%d applied=%d", get_pcvar_num(g_mm_enabled), count, g_mm_deploys, g_mm_applied)
     for (new id = 1; id <= MaxClients; id++)
     {
         if (!is_user_alive(id)) continue

@@ -7,7 +7,7 @@
 #include <mm_mode_api>
 
 #define PLUGIN_NAME "Multi-Mode HD Skins"
-#define PLUGIN_VERSION "0.4.5"
+#define PLUGIN_VERSION "0.4.7"
 #define PLUGIN_AUTHOR "ApexiumForge"
 
 #define CT_MODEL_NAME "mm_ct_hd"
@@ -76,6 +76,7 @@ public plugin_init()
     g_vault = nvault_open("mm_knife_choice")
     RegisterHam(Ham_Spawn, "player", "on_player_spawn", 1)
     RegisterHam(Ham_Item_Deploy, "weapon_knife", "on_knife_deploy", 1)
+    RegisterHookChain(RG_CBasePlayerWeapon_DefaultDeploy, "mm_knife_deploy_pre", false)
     set_task(0.2, "mm_refresh_knives", 895000, "", 0, "b")
     register_srvcmd("mm_skins_status", "mm_skins_status")
     log_amx("%s v%s initialized.", PLUGIN_NAME, PLUGIN_VERSION)
@@ -87,6 +88,7 @@ public on_knife_deploy(weapon)
     new id = get_member(weapon, m_pPlayer)
     if (id >= 1 && id <= MaxClients && is_user_alive(id))
     {
+        if(mm_get_active_mode()==MM_MODE_DEATHRUN)return HAM_IGNORED;
         if(mm_get_active_mode()==MM_MODE_FURIEN && cs_get_user_team(id)==CS_TEAM_T)return HAM_IGNORED;
         new model[96]
         mm_knife_model(id, model, charsmax(model))
@@ -140,6 +142,7 @@ public mm_refresh_knives()
     for (new id = 1; id <= MaxClients; id++)
     {
         if (!is_user_alive(id)) continue
+        if(mm_get_active_mode()==MM_MODE_DEATHRUN)continue;
         if(mm_get_active_mode()==MM_MODE_FURIEN && cs_get_user_team(id)==CS_TEAM_T)continue;
         new item = get_member(id, m_pActiveItem)
         if (is_nullent(item) || get_member(item, m_iId) != WEAPON_KNIFE) continue
@@ -226,4 +229,18 @@ public mm_knife_selected(id, menu, item)
     mm_refresh_knives()
     client_print_color(id, print_team_default, "^4[Skins]^1 Knife selected: ^4%s^1.", KNIFE_NAMES[choice])
     return PLUGIN_HANDLED
+}
+
+public mm_knife_deploy_pre(item, const viewmodel[], const weaponmodel[], animation, const extension[], skiplocal)
+{
+    new MmMode:mode=mm_get_active_mode();
+    if(mode==MM_MODE_ZOMBIE || mode==MM_MODE_COD)return HC_CONTINUE;
+    if (is_nullent(item) || get_member(item, m_iId) != WEAPON_KNIFE) return HC_CONTINUE
+    new id = get_member(item, m_pPlayer), model[96]
+    if (id < 1 || id > MaxClients || !is_user_alive(id)) return HC_CONTINUE
+    if(mode==MM_MODE_DEATHRUN)return HC_CONTINUE;
+    if(mode==MM_MODE_FURIEN && cs_get_user_team(id)==CS_TEAM_T)return HC_CONTINUE;
+    mm_knife_model(id, model, charsmax(model))
+    SetHookChainArg(2, ATYPE_STRING, model)
+    return HC_CONTINUE
 }
