@@ -1141,7 +1141,7 @@ public cmdNick(id, level, cid)
 	get_user_authid(player, authid2, 31)
 	get_user_name(player, name2, 31)
 
-	client_cmd(player, "name ^"%s^"", arg2)
+	set_user_info(player, "name", arg2)
 
 	log_amx("Cmd: ^"%s<%d><%s><>^" change nick to ^"%s^" ^"%s<%d><%s><>^"", name, get_user_userid(id), authid, arg2, name2, get_user_userid(player), authid2)
 
