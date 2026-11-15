@@ -3,7 +3,7 @@
 #include <mm_mode_api>
 
 #define PLUGIN_NAME    "Multi-Mode Network Mode Manager"
-#define PLUGIN_VERSION "0.10.0"
+#define PLUGIN_VERSION "0.10.1"
 #define PLUGIN_AUTHOR  "Multi-Mode Network"
 #define PROJECT_NAME   "Multi-Mode Network"
 #define MODE_CONFIG_DIR "addons/amxmodx/configs/mm_modes"
@@ -14,7 +14,7 @@ new const MODE_NAMES[MM_MODE_COUNT][] =
 {
     "Classic",
     "Deathmatch",
-    "Arms Race",
+    "GunGame",
     "AWP Only",
     "HE Battle",
     "Knife 35HP",

@@ -6,7 +6,7 @@
 #include <mm_voting_api>
 
 #define PLUGIN_NAME "Multi-Mode Network Voting"
-#define PLUGIN_VERSION "0.10.0"
+#define PLUGIN_VERSION "0.12.1"
 #define PLUGIN_AUTHOR "Multi-Mode Network"
 #define PROJECT_NAME "Multi-Mode Network"
 
@@ -14,11 +14,16 @@
 #define MAX_MAPS_PER_MODE 64
 #define MAX_MAP_NAME 32
 #define MAX_VOTE_CHOICES SUPPORTED_MODE_COUNT
+#define ADMIN_MAP_CHOICES 5
+#define ADMIN_POLL_CHOICES 5
+#define MAP_PICK_PAGE_SIZE 7
 #define TASK_END_VOTE 51001
 #define TASK_APPLY_DECISION 51002
 #define TASK_AUTO_VOTE 51003
 #define TASK_RESTORE_MODE 51004
+#define TASK_MAP_CONFIRM 51005
 #define TASK_REOPEN_VOTE 51100
+#define MAP_CONFIRM_SECONDS 30
 #define COMMAND_SPAM_SECONDS 5
 #define APPLY_DELAY_SECONDS 10.0
 #define APPLY_DELAY_DISPLAY 10
@@ -32,14 +37,15 @@ enum VotePhase
     VOTE_MAP,
     VOTE_REMATCH,
     VOTE_SNIPER,
-    VOTE_COD_END
+    VOTE_COD_END,
+    VOTE_POLL
 }
 
 new const MODE_NAMES[SUPPORTED_MODE_COUNT][] =
 {
     "Classic",
     "Deathmatch",
-    "Arms Race",
+    "GunGame",
     "AWP Only",
     "HE Battle",
     "Knife 35HP",
@@ -86,6 +92,11 @@ new VotePhase:g_vote_phase = VOTE_NONE
 new g_vote_candidates[MAX_VOTE_CHOICES]
 new g_vote_candidate_count
 new g_vote_counts[MAX_VOTE_CHOICES]
+new bool:g_manual_map
+new g_map_vote_owner = -1, g_map_confirm_menu = -1
+new g_poll_question[96], g_poll_answers[ADMIN_POLL_CHOICES][48]
+new MmMode:g_draft_mode[33]
+new bool:g_draft_maps[33][MAX_MAPS_PER_MODE], g_draft_count[33]
 new g_player_vote[33]
 new bool:g_rtv_requested[33]
 new g_rtv_count
@@ -142,8 +153,9 @@ public native_cod_vote(plugin, params)
 
 public native_start_rematch(plugin, params)
 {
+    if (params != 1 || mm_get_transition_state() != MM_TRANSITION_IDLE) return false
     new MmMode:mode = MmMode:get_param(1)
-    if (!get_pcvar_num(g_enabled_cvar) || mode != mm_get_active_mode() || g_vote_phase != VOTE_NONE || g_has_decision || !eligible_player_count()) return false
+    if (!is_supported_mode(mode) || !get_pcvar_num(g_enabled_cvar) || mode != mm_get_active_mode() || g_vote_phase != VOTE_NONE || g_has_decision || !eligible_player_count()) return false
     g_planned_mode = mode
     reset_vote_state(VOTE_REMATCH)
     g_vote_candidate_count = 2
@@ -155,6 +167,7 @@ public native_start_rematch(plugin, params)
 
 public native_start_sniper_vote()
 {
+    if (mm_get_transition_state() != MM_TRANSITION_IDLE) return false
     if (!get_pcvar_num(g_enabled_cvar) || mm_get_active_mode() != MM_MODE_AWP_ONLY || g_vote_phase != VOTE_NONE || g_has_decision || !eligible_player_count()) return false
     reset_vote_state(VOTE_SNIPER)
     g_vote_candidate_count = 2
@@ -208,7 +221,10 @@ public plugin_init()
     register_plugin(PLUGIN_NAME, PLUGIN_VERSION, PLUGIN_AUTHOR)
     register_srvcmd("mm_voting_selftest", "mm_vote_selftest")
 
-    register_clcmd("amx_votemapmenu", "mm_admin_map_vote", ADMIN_MAP)
+    register_concmd("amx_vote", "command_admin_poll", ADMIN_VOTE, "<question> [answer1 answer2 ... answer5]")
+    register_concmd("amx_votemap", "command_admin_map_vote", ADMIN_MAP, "<map1> [map2] [map3] [map4] [map5]")
+    register_srvcmd("amx_votemapconfirm", "command_server_map_confirmation")
+    register_clcmd("amx_votemapmenu", "mm_admin_map_vote", ADMIN_MAP, "- select two to five maps")
     register_clcmd("say /rtv", "command_rtv")
     register_clcmd("say_team /rtv", "command_rtv")
     register_clcmd("say /votemode", "command_vote_mode")
@@ -271,6 +287,17 @@ public task_reopen_vote(task)
 
 public client_disconnected(id)
 {
+    if (id == g_map_vote_owner)
+    {
+        if (g_has_decision) cancel_map_confirmation("The initiating admin left. The current map stays.")
+        else if (g_vote_phase == VOTE_MAP && g_manual_map)
+        {
+            cancel_active_vote("Map vote cancelled because the initiating admin left.")
+            schedule_automatic_vote()
+        }
+    }
+    g_draft_count[id] = 0
+    arrayset(g_draft_maps[id], false, sizeof g_draft_maps[])
     remove_task(TASK_REOPEN_VOTE+id)
     remove_player_ballot(id)
 
@@ -533,6 +560,8 @@ reset_vote_state(VotePhase:phase)
 {
     g_vote_phase = phase
     g_rematch_map = false
+    g_manual_map = false
+    g_map_vote_owner = -1
     g_vote_candidate_count = 0
     arrayset(g_vote_candidates, 0, sizeof g_vote_candidates)
     arrayset(g_vote_counts, 0, sizeof g_vote_counts)
@@ -568,6 +597,22 @@ show_active_vote(id)
         show_map_vote(id)
     }
     else if (g_vote_phase == VOTE_REMATCH || g_vote_phase == VOTE_SNIPER || g_vote_phase == VOTE_COD_END) show_binary_vote(id)
+    else if (g_vote_phase == VOTE_POLL) show_poll(id)
+}
+
+show_poll(id)
+{
+    new menu = menu_create(g_poll_question, "handle_poll_vote")
+    for (new answer = 0; answer < g_vote_candidate_count; answer++)
+        menu_additem(menu, g_poll_answers[answer])
+    menu_display(id, menu)
+}
+
+public handle_poll_vote(id, menu, item)
+{
+    menu_destroy(menu)
+    if (item >= 0) record_vote(id, item, VOTE_POLL)
+    return PLUGIN_HANDLED
 }
 
 show_binary_vote(id)
@@ -613,7 +658,8 @@ show_map_vote(id)
     {
         num_to_str(candidate, info, charsmax(info))
         new pool_index = g_vote_candidates[candidate]
-        menu_additem(menu, g_map_pool[_:g_planned_mode][pool_index], info)
+        if (pool_index < 0) menu_additem(menu, "Keep the current map", info)
+        else menu_additem(menu, g_map_pool[_:g_planned_mode][pool_index], info)
     }
     menu_setprop(menu, MPROP_EXITNAME, "Close")
     menu_display(id, menu)
@@ -661,7 +707,9 @@ record_vote(id, candidate, VotePhase:expected_phase)
     g_player_vote[id] = candidate
     g_vote_counts[candidate]++
 
-    if (expected_phase == VOTE_REMATCH || expected_phase == VOTE_SNIPER || expected_phase == VOTE_COD_END)
+    if (expected_phase == VOTE_POLL)
+        client_print_color(id, print_team_grey, "^1[^4Vote^1]^3 Your vote: ^4%s", g_poll_answers[candidate])
+    else if (expected_phase == VOTE_REMATCH || expected_phase == VOTE_SNIPER || expected_phase == VOTE_COD_END)
     {
         new label[48]
         if (expected_phase == VOTE_COD_END) copy(label, charsmax(label), candidate ? "Next map" : "Extend 15 minutes")
@@ -676,7 +724,10 @@ record_vote(id, candidate, VotePhase:expected_phase)
     else
     {
         new pool_index = g_vote_candidates[candidate]
-        client_print_color(id, print_team_blue, "^4[%s]^3 VOTE^1 | Your vote: %s.", PROJECT_NAME, g_map_pool[_:g_planned_mode][pool_index])
+        if (pool_index < 0)
+            client_print_color(id, print_team_grey, "^1[^4Vote^1]^3 Your vote: ^4Keep the current map")
+        else
+            client_print_color(id, print_team_blue, "^4[%s]^3 VOTE^1 | Your vote: %s.", PROJECT_NAME, g_map_pool[_:g_planned_mode][pool_index])
     }
 }
 
@@ -710,7 +761,20 @@ public task_finish_vote()
         if (g_vote_phase == VOTE_NONE) schedule_automatic_vote()
         return
     }
-    if (eligible_player_count() < (g_vote_phase == VOTE_MAP && g_rematch_map ? 1 : clamp(get_pcvar_num(g_min_players_cvar), 1, 12)))
+    if (g_vote_phase == VOTE_POLL)
+    {
+        new bool:poll_tied
+        new answer = choose_vote_winner(poll_tied)
+        g_vote_phase = VOTE_NONE
+        g_last_vote_finished = get_systime()
+        reset_player_ballots()
+        if (answer < 0) client_print_color(0, print_team_grey, "^1[^4Vote^1]^3 No ballots were cast.")
+        else if (poll_tied) client_print_color(0, print_team_grey, "^1[^4Vote^1]^3 The poll ended in a tie.")
+        else client_print_color(0, print_team_grey, "^1[^4Vote^1]^3 Winning answer: ^4%s", g_poll_answers[answer])
+        schedule_automatic_vote()
+        return
+    }
+    if (eligible_player_count() < (g_vote_phase == VOTE_MAP && (g_rematch_map || g_manual_map) ? 1 : clamp(get_pcvar_num(g_min_players_cvar), 1, 12)))
     {
         cancel_active_vote("Vote cancelled: not enough human players remain.")
         return
@@ -728,6 +792,16 @@ public task_finish_vote()
     g_vote_phase = VOTE_NONE
     reset_player_ballots()
 
+    if (finished_phase == VOTE_MAP && g_manual_map && g_vote_candidates[1] < 0 && (tie || g_vote_candidates[winner] < 0))
+    {
+        g_manual_map = false
+        g_map_vote_owner = -1
+        g_last_vote_finished = get_systime()
+        client_print_color(0, print_team_grey, "^1[^4Vote^1]^3 The current map stays.")
+        schedule_automatic_vote()
+        return
+    }
+
     if (tie)
     {
         client_print_color(0, print_team_blue, "^4[%s]^3 VOTE^1 | The vote tied; one of the tied choices was selected randomly.", PROJECT_NAME)
@@ -744,13 +818,87 @@ public task_finish_vote()
     new pool_index = g_vote_candidates[winner]
     copy(g_planned_map, charsmax(g_planned_map), g_map_pool[_:g_planned_mode][pool_index])
     g_has_decision = true
-    g_change_queued = true
     g_defer_announced = false
     g_last_vote_finished = get_systime()
     clear_rtv_requests()
+    if (g_manual_map) request_map_confirmation()
+    else queue_map_decision()
+}
+
+queue_map_decision()
+{
+    clear_map_confirmation()
+    g_change_queued = true
     client_print_color(0, print_team_grey, "^4[%s]^3 Next: %s on %s. Change begins in %d seconds when safe.", PROJECT_NAME, MODE_NAMES[_:g_planned_mode], g_planned_map, APPLY_DELAY_DISPLAY)
     remove_task(TASK_APPLY_DECISION)
     set_task(APPLY_DELAY_SECONDS, "task_apply_decision", TASK_APPLY_DECISION)
+}
+
+request_map_confirmation()
+{
+    if (g_map_vote_owner > 0 && (!is_user_connected(g_map_vote_owner) || !(get_user_flags(g_map_vote_owner) & ADMIN_MAP)))
+    {
+        cancel_map_confirmation("The initiating admin is unavailable. The current map stays.")
+        return
+    }
+    client_print_color(0, print_team_grey, "^1[^4Vote^1]^3 ^4%s^3 won. Waiting for admin confirmation.", g_planned_map)
+    set_task(float(MAP_CONFIRM_SECONDS), "task_map_confirmation_timeout", TASK_MAP_CONFIRM)
+    if (!g_map_vote_owner)
+    {
+        server_print("[Vote] %s won. Use amx_votemapconfirm yes or no within %d seconds.", g_planned_map, MAP_CONFIRM_SECONDS)
+        return
+    }
+    new title[80]
+    formatex(title, charsmax(title), "\y%s won\w^nProceed?", g_planned_map)
+    g_map_confirm_menu = menu_create(title, "handle_map_confirmation")
+    menu_additem(g_map_confirm_menu, "Yes")
+    menu_additem(g_map_confirm_menu, "No")
+    menu_display(g_map_vote_owner, g_map_confirm_menu, 0, MAP_CONFIRM_SECONDS)
+}
+
+public handle_map_confirmation(id, menu, item)
+{
+    if (!g_has_decision || menu != g_map_confirm_menu || id != g_map_vote_owner) return PLUGIN_HANDLED
+    if (item == 0 && (get_user_flags(id) & ADMIN_MAP)) queue_map_decision()
+    else cancel_map_confirmation("Map change declined. The current map stays.")
+    return PLUGIN_HANDLED
+}
+
+public command_server_map_confirmation()
+{
+    if (!g_has_decision || g_map_vote_owner != 0 || g_change_queued)
+    {
+        server_print("[Vote] No console-started map vote is awaiting confirmation.")
+        return PLUGIN_HANDLED
+    }
+    new answer[8]
+    read_argv(1, answer, charsmax(answer))
+    if (equali(answer, "yes")) queue_map_decision()
+    else if (equali(answer, "no")) cancel_map_confirmation("Map change declined. The current map stays.")
+    else server_print("[Vote] Use amx_votemapconfirm yes or no.")
+    return PLUGIN_HANDLED
+}
+
+public task_map_confirmation_timeout()
+{
+    cancel_map_confirmation("Map confirmation expired. The current map stays.")
+}
+
+cancel_map_confirmation(const reason[])
+{
+    clear_decision()
+    client_print_color(0, print_team_grey, "^1[^4Vote^1]^3 %s", reason)
+    schedule_automatic_vote()
+}
+
+clear_map_confirmation()
+{
+    remove_task(TASK_MAP_CONFIRM)
+    g_map_vote_owner = -1
+    if (g_map_confirm_menu == -1) return
+    new menu = g_map_confirm_menu
+    g_map_confirm_menu = -1
+    menu_destroy(menu)
 }
 
 choose_vote_winner(&bool:tie)
@@ -1077,6 +1225,7 @@ show_next_decision(id)
     }
 
     new suffix[48]
+    if (g_map_vote_owner >= 0) copy(suffix, charsmax(suffix), " (awaiting admin confirmation)")
     if (g_defer_announced)
     {
         copy(suffix, charsmax(suffix), " (queued after Classic)")
@@ -1117,6 +1266,8 @@ cancel_active_vote(const reason[])
     remove_task(TASK_END_VOTE)
     g_vote_phase = VOTE_NONE
     g_rematch_map = false
+    g_manual_map = false
+    g_map_vote_owner = -1
     reset_player_ballots()
     clear_rtv_requests()
     g_last_vote_finished = get_systime()
@@ -1130,7 +1281,7 @@ cancel_active_vote(const reason[])
 
 public mm_status()
 {
-    server_print("[Voting] version=%s phase=%d choices=%d votes=%d:%d decision=%d", PLUGIN_VERSION, _:g_vote_phase, g_vote_candidate_count, g_vote_counts[0], g_vote_counts[1], g_has_decision)
+    server_print("[Voting] version=%s phase=%d choices=%d votes=%d:%d decision=%d awaiting_confirm=%d", PLUGIN_VERSION, _:g_vote_phase, g_vote_candidate_count, g_vote_counts[0], g_vote_counts[1], g_has_decision, g_has_decision && g_map_vote_owner >= 0)
 }
 
 vote_cooldown_remaining()
@@ -1144,6 +1295,7 @@ vote_cooldown_remaining()
 
 clear_decision()
 {
+    clear_map_confirmation()
     remove_task(TASK_APPLY_DECISION)
     g_has_decision = false
     g_change_queued = false
@@ -1199,16 +1351,182 @@ MmMode:find_supported_mode(const key[])
     return MmMode:-1
 }
 
-public mm_admin_map_vote(id)
+bool:can_start_admin_vote(id)
 {
-    if (!is_user_connected(id) || !(get_user_flags(id) & ADMIN_MAP)) return PLUGIN_HANDLED
-    if (g_vote_phase != VOTE_NONE || g_has_decision)
+    if (!get_pcvar_num(g_enabled_cvar) || !eligible_player_count())
     {
-        client_print_color(id, print_team_grey, "^4[%s]^3 Finish or cancel the pending vote first.", PROJECT_NAME)
+        console_print(id, "[Vote] Voting is disabled or no players are available.")
+        return false
+    }
+    if (g_vote_phase != VOTE_NONE || g_has_decision || mm_get_transition_state() != MM_TRANSITION_IDLE)
+    {
+        console_print(id, "[Vote] Finish or cancel the current vote or mode change first.")
+        return false
+    }
+    return true
+}
+
+public command_admin_poll(id, level, cid)
+{
+    if (!cmd_access(id, level, cid, 2) || !can_start_admin_vote(id)) return PLUGIN_HANDLED
+    new count = read_argc() - 2
+    if (count == 1 || count > ADMIN_POLL_CHOICES)
+    {
+        console_print(id, "Usage: amx_vote <question> [answer1 answer2 ... answer5]")
         return PLUGIN_HANDLED
     }
-    g_planned_mode = mm_get_active_mode()
-    if (is_supported_mode(g_planned_mode)) start_map_vote()
+    read_argv(1, g_poll_question, charsmax(g_poll_question))
+    trim(g_poll_question)
+    if (!g_poll_question[0])
+    {
+        console_print(id, "[Vote] Enter a question.")
+        return PLUGIN_HANDLED
+    }
+    if (!count)
+    {
+        count = 2
+        copy(g_poll_answers[0], charsmax(g_poll_answers[]), "Yes")
+        copy(g_poll_answers[1], charsmax(g_poll_answers[]), "No")
+    }
+    else for (new answer = 0; answer < count; answer++)
+    {
+        read_argv(answer + 2, g_poll_answers[answer], charsmax(g_poll_answers[]))
+        trim(g_poll_answers[answer])
+        if (!g_poll_answers[answer][0])
+        {
+            console_print(id, "[Vote] Answers cannot be empty.")
+            return PLUGIN_HANDLED
+        }
+        for (new previous = 0; previous < answer; previous++)
+            if (equali(g_poll_answers[previous], g_poll_answers[answer]))
+            {
+                console_print(id, "[Vote] Choose different answers.")
+                return PLUGIN_HANDLED
+            }
+    }
+    reset_vote_state(VOTE_POLL)
+    g_vote_candidate_count = count
+    client_print_color(0, print_team_grey, "^1[^4Vote^1]^3 %s", g_poll_question)
+    show_vote_to_all()
+    schedule_vote_end()
+    return PLUGIN_HANDLED
+}
+
+public command_admin_map_vote(id, level, cid)
+{
+    if (!cmd_access(id, level, cid, 2) || !can_start_admin_vote(id)) return PLUGIN_HANDLED
+    new MmMode:mode = mm_get_active_mode()
+    if (!is_supported_mode(mode)) return PLUGIN_HANDLED
+    new count = read_argc() - 1, selected[ADMIN_MAP_CHOICES], name[MAX_MAP_NAME]
+    if (count > ADMIN_MAP_CHOICES)
+    {
+        console_print(id, "[Vote] Choose one to five maps.")
+        return PLUGIN_HANDLED
+    }
+    for (new choice = 0; choice < count; choice++)
+    {
+        read_argv(choice + 1, name, charsmax(name))
+        selected[choice] = -1
+        for (new index = 0; index < g_map_count[_:mode]; index++)
+            if (equali(name, g_map_pool[_:mode][index])) { selected[choice] = index; break; }
+        if (selected[choice] < 0 || !is_map_valid(name))
+        {
+            console_print(id, "[Vote] %s is unavailable in the %s pool.", name, MODE_NAMES[_:mode])
+            return PLUGIN_HANDLED
+        }
+        for (new previous = 0; previous < choice; previous++)
+            if (selected[previous] == selected[choice])
+            {
+                console_print(id, "[Vote] Choose different maps.")
+                return PLUGIN_HANDLED
+            }
+    }
+    start_admin_map_vote(id, mode, selected, count)
+    return PLUGIN_HANDLED
+}
+
+start_admin_map_vote(id, MmMode:mode, const selected[], count)
+{
+    g_planned_mode = mode
+    reset_vote_state(VOTE_MAP)
+    g_manual_map = true
+    g_map_vote_owner = id
+    g_vote_candidate_count = count
+    for (new i = 0; i < count; i++) g_vote_candidates[i] = selected[i]
+    if (count == 1)
+    {
+        g_vote_candidates[1] = -1
+        g_vote_candidate_count = 2
+    }
+    client_print_color(0, print_team_grey, "^1[^4Vote^1]^3 Choose the next ^4%s^3 map. Use ^4/votemap^3 to reopen the ballot.", MODE_NAMES[_:mode])
+    show_vote_to_all()
+    schedule_vote_end()
+}
+
+public mm_admin_map_vote(id, level, cid)
+{
+    if (!cmd_access(id, level, cid, 1) || !can_start_admin_vote(id)) return PLUGIN_HANDLED
+    g_draft_mode[id] = mm_get_active_mode()
+    if (!is_supported_mode(g_draft_mode[id]) || g_map_count[_:g_draft_mode[id]] < 2)
+    {
+        console_print(id, "[Vote] This mode needs at least two installed maps.")
+        return PLUGIN_HANDLED
+    }
+    g_draft_count[id] = 0
+    arrayset(g_draft_maps[id], false, sizeof g_draft_maps[])
+    show_map_picker(id, 0)
+    return PLUGIN_HANDLED
+}
+
+show_map_picker(id, page)
+{
+    new title[96], label[64], data[8]
+    formatex(title, charsmax(title), "\y%s map vote\w^nSelect 2 to %d maps (%d selected)", MODE_NAMES[_:g_draft_mode[id]], ADMIN_MAP_CHOICES, g_draft_count[id])
+    new menu = menu_create(title, "handle_map_picker")
+    menu_additem(menu, "Start vote", "-1")
+    for (new index = 0; index < g_map_count[_:g_draft_mode[id]]; index++)
+    {
+        formatex(label, charsmax(label), "%s%s", g_draft_maps[id][index] ? "\y[Selected] \w" : "", g_map_pool[_:g_draft_mode[id]][index])
+        num_to_str(index, data, charsmax(data))
+        menu_additem(menu, label, data)
+    }
+    menu_display(id, menu, page)
+}
+
+public handle_map_picker(id, menu, item)
+{
+    new data[8], label[64], access, callback
+    if (item >= 0) menu_item_getinfo(menu, item, access, data, charsmax(data), label, charsmax(label), callback)
+    menu_destroy(menu)
+    if (item < 0 || !(get_user_flags(id) & ADMIN_MAP) || !can_start_admin_vote(id)) return PLUGIN_HANDLED
+    new MmMode:mode = g_draft_mode[id]
+    if (mode != mm_get_active_mode())
+    {
+        console_print(id, "[Vote] The mode changed. Open amx_votemapmenu again.")
+        return PLUGIN_HANDLED
+    }
+    new index = str_to_num(data)
+    if (index < 0 && g_draft_count[id] >= 2)
+    {
+        new selected[ADMIN_MAP_CHOICES], count
+        for (new map = 0; map < g_map_count[_:mode]; map++)
+            if (g_draft_maps[id][map]) selected[count++] = map
+        start_admin_map_vote(id, mode, selected, count)
+        return PLUGIN_HANDLED
+    }
+    if (index < 0) console_print(id, "[Vote] Select at least two maps.")
+    else if (g_draft_maps[id][index])
+    {
+        g_draft_maps[id][index] = false
+        g_draft_count[id]--
+    }
+    else if (g_draft_count[id] < ADMIN_MAP_CHOICES)
+    {
+        g_draft_maps[id][index] = true
+        g_draft_count[id]++
+    }
+    else console_print(id, "[Vote] Deselect a map before adding another.")
+    show_map_picker(id, item / MAP_PICK_PAGE_SIZE)
     return PLUGIN_HANDLED
 }
 
@@ -1221,11 +1539,12 @@ public mm_mode_transition_started(old_mode, new_mode)
         clear_decision(); clear_rtv_requests()
         log_amx("Cancelled the previous mode's queued map route.")
     }
-    if (old_mode != new_mode && (g_vote_phase == VOTE_REMATCH || g_vote_phase == VOTE_SNIPER || g_vote_phase == VOTE_COD_END || g_rematch_map)) cancel_active_vote("Mode changed: vote cancelled.")
+    if (old_mode != new_mode && (g_vote_phase == VOTE_REMATCH || g_vote_phase == VOTE_SNIPER || g_vote_phase == VOTE_COD_END || g_vote_phase == VOTE_POLL || (g_vote_phase == VOTE_MAP && (g_rematch_map || g_manual_map)))) cancel_active_vote("Mode changed: vote cancelled.")
     schedule_automatic_vote()
 }
 public plugin_end()
 {
+    clear_map_confirmation()
     remove_task(TASK_END_VOTE); remove_task(TASK_APPLY_DECISION); remove_task(TASK_AUTO_VOTE); remove_task(TASK_RESTORE_MODE)
     for (new id=1; id<=MaxClients; id++) remove_task(TASK_REOPEN_VOTE+id)
     DestroyForward(g_cod_extend_forward)

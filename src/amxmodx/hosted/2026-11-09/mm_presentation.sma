@@ -11,7 +11,7 @@ public plugin_natives()
 }
 public plugin_init()
 {
-    register_plugin("Multi-Mode Match Presentation", "1.2.0", "Torbeshi")
+    register_plugin("Multi-Mode Match Presentation", "1.2.1", "Torbeshi")
     g_podium_hud = CreateHudSyncObj()
     register_event("ResetHUD", "mm_spawn_help", "be")
     register_clcmd("say /chatpreview", "mm_preview")
@@ -50,20 +50,21 @@ public mm_help(task)
     {
         case MM_MODE_CLASSIC: client_print_color(id, print_team_grey, "^4[Classic]^3 Join T/CT, then ^1/ready^3 when teams are full. ^1/score^3 shows the match score.")
         case MM_MODE_DEATHMATCH: client_print_color(id, print_team_grey, "^4[Deathmatch]^3 Everyone is an enemy. ^1/dm^3 selects a saved loadout; ^1/reuse^3 equips it. ^1/top^3 for scores.")
-        case MM_MODE_ARMS_RACE: client_print_color(id, print_team_grey, "^4[Arms Race]^3 ^4Two gun kills^3 advance; a knife kill skips a level and demotes the victim. ^1/ar^3 / ^1/artop^3.")
+        case MM_MODE_ARMS_RACE: client_print_color(id, print_team_grey, "^4[GunGame]^3 ^4Two gun kills^3 advance; a knife kill skips a level and demotes the victim. ^1/ar^3 / ^1/artop^3.")
         case MM_MODE_AWP_ONLY: client_print_color(id, print_team_grey, "^4[Sniper Arena]^3 Vote ^4AWP or Scout^3 at match start. ^1/awp^3 shows rules, ^1/awptop^3 scores.")
         case MM_MODE_HE_BATTLE: client_print_color(id, print_team_grey, "^4[HE Battle]^3 HE grenades refill automatically. ^1/he^3 shows Team/FFA rules; ^1/hetop^3 for scores.")
         case MM_MODE_KNIFE: client_print_color(id, print_team_grey, "^4[Knife 35HP]^3 Team elimination, ^435 HP^3. ^1/knifescore^3 shows rounds; ^1/ktop^3 the knife leaderboard.")
-        case MM_MODE_DEATHRUN: client_print_color(id,print_team_grey,"^4[^1Deathrun^4]^1 CTs run the course. One T operates the traps.")
-        case MM_MODE_FURIEN: client_print_color(id,print_team_grey,"^4[^1Furien^4]^1 T: fast stealth knives. CT: guns. Use ^3/furien^1 for weapons and rules.")
-        case MM_MODE_ZOMBIE: client_print_color(id, print_team_grey,"^4[^1ZP^4]^1 Classic infection! Survive with teammates, earn ^3ammo packs^1. Press ^3M^1 for weapons, zombie classes and extra items.")
-        case MM_MODE_COD: client_print_color(id, print_team_grey, "^4[CoD]^1 Team deathmatch! ^3/cod^1 classes, upgrades, perks and shop. ^3/codhelp^1 for commands.")
+        case MM_MODE_DEATHRUN: client_print_color(id, print_team_grey, "^1[^4Deathrun^1]^3 CTs run the course. One T operates the traps.")
+        case MM_MODE_FURIEN: client_print_color(id, print_team_grey, "^1[^4Furien^1]^3 T: fast stealth knives. CT: guns. Use ^1/furien^3 for weapons and rules.")
+        case MM_MODE_ZOMBIE: client_print_color(id, print_team_grey, "^1[^4ZP^1]^3 Classic infection! Survive with teammates, earn ^4ammo packs^3. Press ^1M^3 for weapons, zombie classes and extra items.")
+        case MM_MODE_COD: client_print_color(id, print_team_grey, "^1[^4CoD^1]^3 Team deathmatch! ^1/cod^3 classes, upgrades, perks and shop. ^1/codhelp^3 for commands.")
         case MM_MODE_SURF: client_print_color(id, print_team_grey, "^4[Surf]^3 Combat Surf: ride ramps and collect weapons. ^1/surf^3 options, ^1/surfhelp^3 guide. Fall damage is off; teammates are solid.")
         case MM_MODE_FOOTBALL: client_print_color(id, print_team_grey, "^4[Football]^3 Run onto the ball. ^4E/left click^3 shoots; ^4R/right click^3 passes. ^1/football^3 power settings; ^1/ftop^3 goals/assists.")
     }
 }
 public mm_native_results(plugin, params)
 {
+    if (params != 6) return false
     if (MmMode:get_param(1) != mm_get_active_mode()) return false
     new title[64], detail[128], text[256], names[3][32]
     get_string(5, title, charsmax(title)); get_string(6, detail, charsmax(detail))
@@ -92,6 +93,6 @@ public mm_preview(id)
     client_print_color(id, print_team_grey, "^4[Info]^3 Clean white text | ^4Key values^3 | ^1/menu^3 command")
     client_print_color(id, print_team_blue, "^4[Vote]^3 VOTE^1 | Choose ^4AWP^1 or ^4Scout^1 in the menu.")
     client_print_color(id, print_team_red, "^4[Notice]^3 NOTICE^1 |  Voting is unavailable during a transition.")
-    client_print_color(id, id, "^4[Arms Race]^3 %n^1 | LEVEL UP | ^47^1 - ^4M3", id)
+    client_print_color(id, id, "^4[GunGame]^3 %n^1 | LEVEL UP | ^47^1 - ^4M3", id)
     return PLUGIN_HANDLED
 }

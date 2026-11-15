@@ -3,12 +3,27 @@
 #include <mm_mode_api>
 
 #define PLUGIN_NAME    "Multi-Mode Network Menus"
-#define PLUGIN_VERSION "0.9.1"
+#define PLUGIN_VERSION "0.9.2"
 #define PLUGIN_AUTHOR  "Multi-Mode Network"
 #define PROJECT_NAME   "Multi-Mode Network"
 
 new MmMode:g_pending_mode[33]
 new MmClassicFormat:g_pending_format[33]
+new const MODE_DESCRIPTIONS[][] =
+{
+    "Team rounds and objectives",
+    "FFA | /dm weapons, /top scores",
+    "FFA | 2 gun kills or 1 knife kill to advance",
+    "FFA | AWP and knife",
+    "Teams | unlimited HE, first to 30 kills",
+    "Teams | knives only, 35 HP, round-based",
+    "Teams | E shoots, R passes, first to 5 goals",
+    "Combat | ramps, weapons, quick respawns | /surf",
+    "Team DM | classes, XP, perks and shop | /cod",
+    "Infection | zombie classes, ammo packs | /zpmenu",
+    "Stealth knives vs guns | /furien",
+    "CTs run the course while one T operates the traps"
+}
 
 public plugin_init()
 {
@@ -18,6 +33,7 @@ public plugin_init()
     register_clcmd("say /modes", "handle_modes_menu_command")
     register_clcmd("say_team /modes", "handle_modes_menu_command")
     register_clcmd("amx_gamemodemenu", "handle_admin_modes_menu_command", ADMIN_CFG, "- open Game Mode Manager")
+    register_srvcmd("mm_modes_selftest", "test_mode_menu")
     register_clcmd("say /rules", "mm_rules")
     register_clcmd("say_team /rules", "mm_rules")
     log_amx("%s menu module v%s initialized successfully.", PROJECT_NAME, PLUGIN_VERSION)
@@ -64,6 +80,7 @@ show_main_menu(id)
     menu_additem(menu, "Classic Match Formats", "2")
     menu_additem(menu, "Server Information", "3")
     menu_additem(menu, "Mode Rules / How to Play", "4")
+    menu_additem(menu, "Player Settings", "5")
     menu_setprop(menu, MPROP_EXITNAME, "Close")
     menu_display(id, menu)
 }
@@ -81,6 +98,7 @@ public handle_main_menu_selection(id, menu, item)
     switch (str_to_num(info))
     {
         case 4: mm_rules(id)
+        case 5: client_cmd(id, "say /settings")
         case 1: show_modes_menu(id)
         case 2: show_classic_formats_menu(id)
         case 3: client_print_color(id, print_team_grey, "^4[%s]^3 Server Foundation %s", PROJECT_NAME, PLUGIN_VERSION)
@@ -93,13 +111,29 @@ show_modes_menu(id)
     new title[96], active_name[32]
     mm_get_mode_name(mm_get_active_mode(), active_name, charsmax(active_name))
     formatex(title, charsmax(title), "Available Game Modes^n\yActive: %s", active_name)
+    new menu = build_modes_menu(title)
+    menu_display(id, menu)
+}
+
+build_modes_menu(const title[])
+{
     new menu = menu_create(title, "handle_mode_selection")
     for (new MmMode:mode = MM_MODE_CLASSIC; mode < MM_MODE_COUNT; mode++)
     {
         add_mode_item(menu, mode)
     }
     menu_setprop(menu, MPROP_EXITNAME, "Close")
-    menu_display(id, menu)
+    return menu
+}
+
+public test_mode_menu()
+{
+    new menu = build_modes_menu("Game Mode Manager")
+    new count = menu_items(menu), info[4], label[160], access, callback
+    new bool:has_deathrun = menu_item_getinfo(menu, _:MM_MODE_DEATHRUN, access, info, charsmax(info), label, charsmax(label), callback)
+        && str_to_num(info) == _:MM_MODE_DEATHRUN && containi(label, "Deathrun") >= 0
+    menu_destroy(menu)
+    server_print("[MM] Game Mode Manager menu: %d/%d modes, Deathrun present=%d", count, _:MM_MODE_COUNT, has_deathrun)
 }
 
 add_mode_item(menu, MmMode:mode)
@@ -108,8 +142,8 @@ add_mode_item(menu, MmMode:mode)
     mm_get_mode_name(mode, mode_name, charsmax(mode_name))
     if (mode == mm_get_active_mode()) formatex(item_name, charsmax(item_name), "%s \y[ACTIVE]", mode_name)
     else copy(item_name, charsmax(item_name), mode_name)
-    new const descriptions[][] = {"Team rounds and objectives", "FFA | /dm weapons, /top scores", "FFA | 2 gun kills or 1 knife kill to advance", "FFA | AWP and knife", "Teams | unlimited HE, first to 30 kills", "Teams | knives only, 35 HP, round-based", "Teams | E shoots, R passes, first to 5 goals", "Combat | ramps, weapons, quick respawns | /surf", "Team DM | classes, XP, perks and shop | /cod", "Infection | zombie classes, ammo packs | /zpmenu", "Stealth knives vs guns | /furien"}
-    format(item_name, charsmax(item_name), "%s \d- %s", item_name, descriptions[_:mode])
+    if (_:mode < sizeof MODE_DESCRIPTIONS)
+        format(item_name, charsmax(item_name), "%s \d- %s", item_name, MODE_DESCRIPTIONS[_:mode])
     num_to_str(_:mode, info, charsmax(info))
     menu_additem(menu, item_name, info)
 }
